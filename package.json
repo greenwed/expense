@@ -12,29 +12,22 @@
     "test:api": "node scratch/test-api.js"
   },
   "dependencies": {
-    "@prisma/client": "^5.19.1",
     "bcryptjs": "^2.4.3",
-    "canvas-confetti": "^1.9.3",
     "clsx": "^2.1.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "framer-motion": "^11.5.4",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.439.0",
-    "mongoose": "^9.9.4",
-    "next": "^14.2.10",
     "pg": "^8.23.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^3.10.1",
-    "stripe": "^16.10.0",
     "tailwind-merge": "^2.5.2",
     "uuid": "^14.0.2"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "@types/canvas-confetti": "^1.9.0",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20",
     "@types/react": "^18",
@@ -44,7 +37,6 @@
     "concurrently": "^10.0.5",
     "nodemon": "^3.1.14",
     "postcss": "^8.4.45",
-    "prisma": "^5.19.1",
     "tailwindcss": "^3.4.11",
     "typescript": "^5",
     "vite": "^8.2.2"
