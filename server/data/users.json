@@ -1,0 +1,47 @@
+[
+  {
+    "_id": "doc_1787917108295_2nsne01wj",
+    "id": "doc_1787917108295_2nsne01wj",
+    "name": "Alice Smith",
+    "username": "alice",
+    "password": "$2a$10$LATmbxUW/MYar1Z4yczK3.4BqMzmNWb0DuYCrLcqfmvrgvaLSAIym",
+    "createdAt": "2026-08-28T11:38:28.292Z",
+    "updatedAt": "2026-08-28T11:38:28.295Z"
+  },
+  {
+    "_id": "doc_1787917108413_qq38laizu",
+    "id": "doc_1787917108413_qq38laizu",
+    "name": "Bob Smith",
+    "username": "bob",
+    "password": "$2a$10$H9QFWIYdZzWdsd0YuWmSR.g9q5.00p0h7VWu2sFupaid2XRJbnNWu",
+    "createdAt": "2026-08-28T11:38:28.413Z",
+    "updatedAt": "2026-08-28T11:38:28.413Z"
+  },
+  {
+    "_id": "doc_1787917739937_iz3rigfkl",
+    "id": "doc_1787917739937_iz3rigfkl",
+    "name": "Karthik",
+    "username": "karthik",
+    "password": "$2a$10$xlnXgyGVyTYRVT8gS/7rku8Aucgu2JIVHgznsZnyEwG4TZpQ/aThi",
+    "createdAt": "2026-08-28T11:48:59.937Z",
+    "updatedAt": "2026-08-28T11:48:59.937Z"
+  },
+  {
+    "_id": "doc_1787917740044_7uz5yixlv",
+    "id": "doc_1787917740044_7uz5yixlv",
+    "name": "Priya",
+    "username": "priya",
+    "password": "$2a$10$zKuastBIpHS7xCwRlBFuPe.uhIkdb13h5KXFEX5d/uaHY9rcAX7Oe",
+    "createdAt": "2026-08-28T11:49:00.044Z",
+    "updatedAt": "2026-08-28T11:49:00.044Z"
+  },
+  {
+    "_id": "doc_1787917740145_zop1jh711",
+    "id": "doc_1787917740145_zop1jh711",
+    "name": "Rahul",
+    "username": "rahul",
+    "password": "$2a$10$ED/0u3bMitkvbcjdGBWSmOwu2ACPmIwcuaRrs9k.oVWQeGYrQrXHa",
+    "createdAt": "2026-08-28T11:49:00.145Z",
+    "updatedAt": "2026-08-28T11:49:00.145Z"
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "_id": "doc_1787917108468_u3abk1t1h",
+    "id": "doc_1787917108468_u3abk1t1h",
+    "groupId": "doc_1787917108466_wbtovfmtb",
+    "month": "2026-08",
+    "amount": 30000,
+    "updatedBy": "doc_1787917108295_2nsne01wj",
+    "updatedAt": "2026-08-28T11:38:28.468Z",
+    "createdAt": "2026-08-28T11:38:28.468Z"
+  },
+  {
+    "_id": "doc_1787917124773_zhwabkcdk",
+    "id": "doc_1787917124773_zhwabkcdk",
+    "groupId": "doc_1787917124769_61utm2hdz",
+    "month": "2026-08",
+    "amount": 30000,
+    "updatedBy": "doc_1787917108295_2nsne01wj",
+    "updatedAt": "2026-08-28T11:38:44.773Z",
+    "createdAt": "2026-08-28T11:38:44.773Z"
+  },
+  {
+    "_id": "doc_1787917740227_b35c44tdj",
+    "id": "doc_1787917740227_b35c44tdj",
+    "groupId": "doc_1787917740223_pbkoqqhx9",
+    "month": "2026-08",
+    "amount": 50000,
+    "updatedBy": "doc_1787917739937_iz3rigfkl",
+    "updatedAt": "2026-08-28T11:49:00.227Z",
+    "createdAt": "2026-08-28T11:49:00.227Z"
+  },
+  {
+    "_id": "doc_1787924686767_shhk4k7b5",
+    "id": "doc_1787924686767_shhk4k7b5",
+    "groupId": "doc_1787924686762_ssjjkpoaz",
+    "month": "2026-08",
+    "amount": 50000,
+    "updatedBy": "doc_1787917739937_iz3rigfkl",
+    "updatedAt": "2026-08-28T13:44:46.767Z",
+    "createdAt": "2026-08-28T13:44:46.767Z"
+  }
+]

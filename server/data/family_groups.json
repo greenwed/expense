@@ -1,0 +1,134 @@
+[
+  {
+    "_id": "doc_1787917108466_wbtovfmtb",
+    "id": "doc_1787917108466_wbtovfmtb",
+    "name": "Smith Family",
+    "createdBy": "doc_1787917108295_2nsne01wj",
+    "members": [
+      {
+        "userId": "doc_1787917108295_2nsne01wj",
+        "name": "Alice Smith",
+        "username": "alice",
+        "role": "admin",
+        "joinedAt": "2026-08-28T11:38:28.465Z"
+      },
+      {
+        "userId": "doc_1787917108413_qq38laizu",
+        "name": "Bob Smith",
+        "username": "bob",
+        "role": "moderator",
+        "joinedAt": "2026-08-28T11:38:28.467Z"
+      }
+    ],
+    "inviteToken": "0340ff50-dd5e-49f8-ada5-e5f58cd4d178",
+    "createdAt": "2026-08-28T11:38:28.466Z",
+    "updatedAt": "2026-08-28T11:38:28.472Z"
+  },
+  {
+    "_id": "doc_1787917124769_61utm2hdz",
+    "id": "doc_1787917124769_61utm2hdz",
+    "name": "Smith Family",
+    "createdBy": "doc_1787917108295_2nsne01wj",
+    "members": [
+      {
+        "userId": "doc_1787917108295_2nsne01wj",
+        "name": "Alice Smith",
+        "username": "alice",
+        "role": "admin",
+        "joinedAt": "2026-08-28T11:38:44.768Z"
+      },
+      {
+        "userId": "doc_1787917108413_qq38laizu",
+        "name": "Bob Smith",
+        "username": "bob",
+        "role": "moderator",
+        "joinedAt": "2026-08-28T11:38:44.770Z"
+      }
+    ],
+    "inviteToken": "b3347963-febd-43b9-aea2-ee6ccec2b201",
+    "createdAt": "2026-08-28T11:38:44.769Z",
+    "updatedAt": "2026-08-28T11:38:44.776Z"
+  },
+  {
+    "_id": "doc_1787917740223_pbkoqqhx9",
+    "id": "doc_1787917740223_pbkoqqhx9",
+    "name": "MyHome Family",
+    "createdBy": "doc_1787917739937_iz3rigfkl",
+    "members": [
+      {
+        "userId": "doc_1787917739937_iz3rigfkl",
+        "name": "Karthik",
+        "username": "karthik",
+        "role": "admin",
+        "joinedAt": "2026-08-28T11:49:00.223Z"
+      },
+      {
+        "userId": "doc_1787917740044_7uz5yixlv",
+        "name": "Priya",
+        "username": "priya",
+        "role": "moderator",
+        "joinedAt": "2026-08-28T11:49:00.224Z"
+      },
+      {
+        "userId": "doc_1787917740145_zop1jh711",
+        "name": "Rahul",
+        "username": "rahul",
+        "role": "member",
+        "joinedAt": "2026-08-28T11:49:00.225Z"
+      }
+    ],
+    "inviteToken": "78b2179b-1624-4dae-8051-588c8c4b41cd",
+    "createdAt": "2026-08-28T11:49:00.223Z",
+    "updatedAt": "2026-08-28T11:49:00.226Z"
+  },
+  {
+    "_id": "doc_1787919604148_7mctskjsl",
+    "id": "doc_1787919604148_7mctskjsl",
+    "name": "Family2",
+    "createdBy": "doc_1787917739937_iz3rigfkl",
+    "members": [
+      {
+        "userId": "doc_1787917739937_iz3rigfkl",
+        "name": "Karthik",
+        "username": "karthik",
+        "role": "admin",
+        "joinedAt": "2026-08-28T12:20:04.145Z"
+      }
+    ],
+    "inviteToken": "f2ac31eb-d6e4-406c-bad1-04ed23675691",
+    "createdAt": "2026-08-28T12:20:04.148Z",
+    "updatedAt": "2026-08-28T12:20:04.148Z"
+  },
+  {
+    "_id": "doc_1787924686762_ssjjkpoaz",
+    "id": "doc_1787924686762_ssjjkpoaz",
+    "name": "MyHome Family",
+    "createdBy": "doc_1787917739937_iz3rigfkl",
+    "members": [
+      {
+        "userId": "doc_1787917739937_iz3rigfkl",
+        "name": "Karthik",
+        "username": "karthik",
+        "role": "admin",
+        "joinedAt": "2026-08-28T13:44:46.762Z"
+      },
+      {
+        "userId": "doc_1787917740044_7uz5yixlv",
+        "name": "Priya",
+        "username": "priya",
+        "role": "moderator",
+        "joinedAt": "2026-08-28T13:44:46.764Z"
+      },
+      {
+        "userId": "doc_1787917740145_zop1jh711",
+        "name": "Rahul",
+        "username": "rahul",
+        "role": "member",
+        "joinedAt": "2026-08-28T13:44:46.765Z"
+      }
+    ],
+    "inviteToken": "7c0d0ced-7b54-4f27-9f1e-dc1cddcc3621",
+    "createdAt": "2026-08-28T13:44:46.762Z",
+    "updatedAt": "2026-08-28T13:44:46.766Z"
+  }
+]

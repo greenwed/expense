@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 241, 245, 249;
+  --background-start-rgb: 5, 19, 41;
+  --background-end-rgb: 2, 6, 23;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: radial-gradient(circle at 50% 20%, #0a2540 0%, #030d1a 100%);
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom Aquatic Glassmorphism */
+.glass-panel {
+  background: rgba(11, 37, 69, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+}
+
+.glass-panel-glow {
+  background: rgba(14, 165, 233, 0.08);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 0 25px rgba(14, 165, 233, 0.15);
+}
+
+.glass-dropdown {
+  background: rgba(8, 28, 54, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
+}
+
+/* Aquatic Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(3, 13, 26, 0.8);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.6);
+}
+
+/* Shimmer & Glow Effects */
+.text-glow {
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+}
+
+.text-gold-glow {
+  text-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+}
+
+/* Danger pulsating animation for fish in trouble */
+@keyframes dangerPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    border-color: rgba(239, 68, 68, 0.9);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(239, 68, 68, 0.9);
+    border-color: rgba(248, 113, 113, 1);
+  }
+}
+
+.danger-pulse {
+  animation: dangerPulse 1.5s infinite;
+}

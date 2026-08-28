@@ -1,0 +1,20 @@
+[
+  {
+    "_id": "doc_1787917108356_8jgziuthu",
+    "id": "doc_1787917108356_8jgziuthu",
+    "userId": "doc_1787917108295_2nsne01wj",
+    "month": "2026-08",
+    "amount": 10000,
+    "updatedAt": "2026-08-28T11:38:44.709Z",
+    "createdAt": "2026-08-28T11:38:28.356Z"
+  },
+  {
+    "_id": "doc_1787917740197_8cfwvnbde",
+    "id": "doc_1787917740197_8cfwvnbde",
+    "userId": "doc_1787917739937_iz3rigfkl",
+    "month": "2026-08",
+    "amount": 20000,
+    "updatedAt": "2026-08-28T13:44:46.738Z",
+    "createdAt": "2026-08-28T11:49:00.197Z"
+  }
+]

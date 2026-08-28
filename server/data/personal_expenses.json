@@ -1,0 +1,188 @@
+[
+  {
+    "_id": "doc_1787917108358_3yulzy9fs",
+    "id": "doc_1787917108358_3yulzy9fs",
+    "userId": "doc_1787917108295_2nsne01wj",
+    "amount": 500,
+    "category": "Food",
+    "description": "Quick grocery snack",
+    "createdAt": "2026-08-28T11:38:28.358Z",
+    "updatedAt": "2026-08-28T11:38:28.362Z"
+  },
+  {
+    "_id": "doc_1787917108359_yzxeaimb5",
+    "id": "doc_1787917108359_yzxeaimb5",
+    "userId": "doc_1787917108295_2nsne01wj",
+    "amount": 7000,
+    "category": "Shopping",
+    "description": "New shoes & clothes",
+    "date": "2026-08-15T15:30:00.000Z",
+    "createdAt": "2026-08-28T11:38:28.359Z",
+    "updatedAt": "2026-08-28T11:38:28.359Z"
+  },
+  {
+    "_id": "doc_1787917124711_rxq7nevbi",
+    "id": "doc_1787917124711_rxq7nevbi",
+    "userId": "doc_1787917108295_2nsne01wj",
+    "amount": 500,
+    "category": "Food",
+    "description": "Quick grocery snack",
+    "date": "2026-08-10T12:00:00.000Z",
+    "createdAt": "2026-08-28T11:38:44.711Z",
+    "updatedAt": "2026-08-28T11:38:44.715Z"
+  },
+  {
+    "_id": "doc_1787917124712_l4owfe3mj",
+    "id": "doc_1787917124712_l4owfe3mj",
+    "userId": "doc_1787917108295_2nsne01wj",
+    "amount": 7000,
+    "category": "Shopping",
+    "description": "New shoes & clothes",
+    "date": "2026-08-15T15:30:00.000Z",
+    "createdAt": "2026-08-28T11:38:44.712Z",
+    "updatedAt": "2026-08-28T11:38:44.712Z"
+  },
+  {
+    "_id": "doc_1787917740198_bbmw1rjfk",
+    "id": "doc_1787917740198_bbmw1rjfk",
+    "userId": "doc_1787917739937_iz3rigfkl",
+    "amount": 3500,
+    "category": "Food",
+    "description": "Weekly groceries from Nature Basket",
+    "date": "2026-08-02T10:30:00.000Z",
+    "createdAt": "2026-08-28T11:49:00.198Z",
+    "updatedAt": "2026-08-28T11:49:00.198Z"
+  },
+  {
+    "_id": "doc_1787917740199_tpoc4l6w2",
+    "id": "doc_1787917740199_tpoc4l6w2",
+    "userId": "doc_1787917739937_iz3rigfkl",
+    "amount": 4200,
+    "category": "Shopping",
+    "description": "Zara summer shirts & accessories",
+    "date": "2026-08-08T18:15:00.000Z",
+    "createdAt": "2026-08-28T11:49:00.199Z",
+    "updatedAt": "2026-08-28T11:49:00.199Z"
+  },
+  {
+    "_id": "doc_1787917740200_nw37uehqy",
+    "id": "doc_1787917740200_nw37uehqy",
+    "userId": "doc_1787917739937_iz3rigfkl",
+    "amount": 1800,
+    "category": "Entertainment",
+    "description": "IMAX movie tickets & snacks",
+    "date": "2026-08-14T20:00:00.000Z",
+    "createdAt": "2026-08-28T11:49:00.200Z",
+    "updatedAt": "2026-08-28T11:49:00.200Z"
+  },
+  {
+    "_id": "doc_1787917740201_quobwd8mq",
+    "id": "doc_1787917740201_quobwd8mq",
+    "userId": "doc_1787917739937_iz3rigfkl",
+    "amount": 2500,
+    "category": "Medical",
+    "description": "Annual health checkup & supplements",
+    "date": "2026-08-19T09:00:00.000Z",
+    "createdAt": "2026-08-28T11:49:00.201Z",
+    "updatedAt": "2026-08-28T11:49:00.201Z"
+  },
+  {
+    "_id": "doc_1787917740201_y3tltdftm",
+    "id": "doc_1787917740201_y3tltdftm",
+    "userId": "doc_1787917739937_iz3rigfkl",
+    "amount": 3000,
+    "category": "Transport",
+    "description": "Monthly metro pass + Uber rides",
+    "date": "2026-08-22T14:45:00.000Z",
+    "createdAt": "2026-08-28T11:49:00.201Z",
+    "updatedAt": "2026-08-28T11:49:00.201Z"
+  },
+  {
+    "_id": "doc_1787917740202_zmxln7u8i",
+    "id": "doc_1787917740202_zmxln7u8i",
+    "userId": "doc_1787917739937_iz3rigfkl",
+    "amount": 2000,
+    "category": "Others",
+    "description": "High-speed broadband recharge",
+    "date": "2026-08-25T11:20:00.000Z",
+    "createdAt": "2026-08-28T11:49:00.202Z",
+    "updatedAt": "2026-08-28T11:49:00.202Z"
+  },
+  {
+    "_id": "doc_1787919555634_6ew3xcy8h",
+    "id": "doc_1787919555634_6ew3xcy8h",
+    "userId": "doc_1787917739937_iz3rigfkl",
+    "amount": 300,
+    "category": "Food",
+    "description": "Dinner",
+    "date": "2026-08-28T12:18:00.000Z",
+    "createdAt": "2026-08-28T12:19:15.634Z",
+    "updatedAt": "2026-08-28T12:19:15.634Z"
+  },
+  {
+    "_id": "doc_1787924686739_wg3wpwfwh",
+    "id": "doc_1787924686739_wg3wpwfwh",
+    "userId": "doc_1787917739937_iz3rigfkl",
+    "amount": 3500,
+    "category": "Food",
+    "description": "Weekly groceries from Nature Basket",
+    "date": "2026-08-02T10:30:00.000Z",
+    "createdAt": "2026-08-28T13:44:46.739Z",
+    "updatedAt": "2026-08-28T13:44:46.739Z"
+  },
+  {
+    "_id": "doc_1787924686741_2huf4h3p8",
+    "id": "doc_1787924686741_2huf4h3p8",
+    "userId": "doc_1787917739937_iz3rigfkl",
+    "amount": 4200,
+    "category": "Shopping",
+    "description": "Zara summer shirts & accessories",
+    "date": "2026-08-08T18:15:00.000Z",
+    "createdAt": "2026-08-28T13:44:46.741Z",
+    "updatedAt": "2026-08-28T13:44:46.741Z"
+  },
+  {
+    "_id": "doc_1787924686742_6qxpwv4zq",
+    "id": "doc_1787924686742_6qxpwv4zq",
+    "userId": "doc_1787917739937_iz3rigfkl",
+    "amount": 1800,
+    "category": "Entertainment",
+    "description": "IMAX movie tickets & snacks",
+    "date": "2026-08-14T20:00:00.000Z",
+    "createdAt": "2026-08-28T13:44:46.742Z",
+    "updatedAt": "2026-08-28T13:44:46.742Z"
+  },
+  {
+    "_id": "doc_1787924686743_gwi3snb2z",
+    "id": "doc_1787924686743_gwi3snb2z",
+    "userId": "doc_1787917739937_iz3rigfkl",
+    "amount": 2500,
+    "category": "Medical",
+    "description": "Annual health checkup & supplements",
+    "date": "2026-08-19T09:00:00.000Z",
+    "createdAt": "2026-08-28T13:44:46.743Z",
+    "updatedAt": "2026-08-28T13:44:46.743Z"
+  },
+  {
+    "_id": "doc_1787924686744_792gtrtz2",
+    "id": "doc_1787924686744_792gtrtz2",
+    "userId": "doc_1787917739937_iz3rigfkl",
+    "amount": 3000,
+    "category": "Transport",
+    "description": "Monthly metro pass + Uber rides",
+    "date": "2026-08-22T14:45:00.000Z",
+    "createdAt": "2026-08-28T13:44:46.744Z",
+    "updatedAt": "2026-08-28T13:44:46.744Z"
+  },
+  {
+    "_id": "doc_1787924686746_pwryv1ry7",
+    "id": "doc_1787924686746_pwryv1ry7",
+    "userId": "doc_1787917739937_iz3rigfkl",
+    "amount": 2000,
+    "category": "Others",
+    "description": "High-speed broadband recharge",
+    "date": "2026-08-25T11:20:00.000Z",
+    "createdAt": "2026-08-28T13:44:46.746Z",
+    "updatedAt": "2026-08-28T13:44:46.746Z"
+  }
+]
