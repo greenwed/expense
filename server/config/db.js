@@ -8,46 +8,75 @@ const { Pool } = pg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
+// In Vercel / serverless environments, only /tmp is writable
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const DATA_DIR = isServerless ? '/tmp' : path.join(__dirname, '..', 'data');
+
 if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  } catch (e) {
+    // Ignore directory creation error if /tmp already exists
+  }
 }
 
 let pgPool = null;
 let isPgConnected = false;
+let connectPromise = null;
 
 export async function connectDB() {
-  const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.NEON_DATABASE_URL;
+  if (isPgConnected && pgPool) return;
+  if (connectPromise) return connectPromise;
 
-  if (dbUrl && (dbUrl.startsWith('postgres://') || dbUrl.startsWith('postgresql://'))) {
-    try {
-      pgPool = new Pool({
-        connectionString: dbUrl,
-        ssl: {
-          rejectUnauthorized: false
-        },
-        max: 10,
-        idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 5000,
-      });
+  connectPromise = (async () => {
+    const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.NEON_DATABASE_URL;
 
-      // Test connection
-      const client = await pgPool.connect();
-      client.release();
-      isPgConnected = true;
-      console.log('✅ Connected successfully to Neon Serverless PostgreSQL Database!');
+    if (dbUrl && (dbUrl.startsWith('postgres://') || dbUrl.startsWith('postgresql://'))) {
+      try {
+        if (!pgPool) {
+          pgPool = new Pool({
+            connectionString: dbUrl,
+            ssl: {
+              rejectUnauthorized: false
+            },
+            max: 10,
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 10000,
+          });
+        }
 
-      // Initialize database tables if they do not exist
-      await initPostgresSchema(pgPool);
-      return;
-    } catch (err) {
-      console.warn(`⚠️ PostgreSQL connection error (${err.message}). Using persistent local storage store.`);
+        // Test connection
+        const client = await pgPool.connect();
+        client.release();
+        isPgConnected = true;
+        console.log('✅ Connected successfully to Neon Serverless PostgreSQL Database!');
+
+        // Initialize database tables if they do not exist
+        await initPostgresSchema(pgPool);
+        return;
+      } catch (err) {
+        console.error(`⚠️ PostgreSQL connection error (${err.message})`);
+        isPgConnected = false;
+        pgPool = null;
+        connectPromise = null;
+        throw err;
+      }
+    } else {
+      if (isServerless) {
+        console.warn('⚠️ WARNING: No DATABASE_URL environment variable provided in Vercel. Please add DATABASE_URL in Vercel Project Settings.');
+      } else {
+        console.log(`ℹ️ No PostgreSQL DATABASE_URL provided. Using persistent local storage store at ${DATA_DIR}`);
+      }
       isPgConnected = false;
-      pgPool = null;
     }
-  } else {
-    console.log(`ℹ️ No PostgreSQL DATABASE_URL provided. Using persistent local storage store at ${DATA_DIR}`);
-    isPgConnected = false;
+  })();
+
+  try {
+    await connectPromise;
+  } finally {
+    if (!isPgConnected) {
+      connectPromise = null;
+    }
   }
 }
 
@@ -132,12 +161,17 @@ export class JsonStore {
   constructor(collectionName) {
     this.filePath = path.join(DATA_DIR, `${collectionName}.json`);
     if (!fs.existsSync(this.filePath)) {
-      fs.writeFileSync(this.filePath, JSON.stringify([], null, 2), 'utf-8');
+      try {
+        fs.writeFileSync(this.filePath, JSON.stringify([], null, 2), 'utf-8');
+      } catch (e) {
+        // Handle read-only file systems gracefully
+      }
     }
   }
 
   read() {
     try {
+      if (!fs.existsSync(this.filePath)) return [];
       const data = fs.readFileSync(this.filePath, 'utf-8');
       return JSON.parse(data || '[]');
     } catch (e) {
@@ -146,7 +180,12 @@ export class JsonStore {
   }
 
   write(data) {
-    fs.writeFileSync(this.filePath, JSON.stringify(data, null, 2), 'utf-8');
+    try {
+      fs.writeFileSync(this.filePath, JSON.stringify(data, null, 2), 'utf-8');
+    } catch (e) {
+      console.error(`Failed to write to ${this.filePath}:`, e.message);
+      throw new Error(`Database error: Please ensure DATABASE_URL is configured in your Vercel Project Environment Variables.`);
+    }
   }
 
   find(filterFn) {

@@ -21,6 +21,21 @@ const PORT = process.env.PORT || 5001;
 app.use(cors());
 app.use(express.json());
 
+// Database connection middleware for Serverless & Long-running runtimes
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    try {
+      await connectDB();
+    } catch (err) {
+      console.error('Database initialization error:', err);
+      return res.status(500).json({
+        error: 'Database connection error: ' + err.message + '. Please ensure DATABASE_URL is set in Vercel Environment Variables.'
+      });
+    }
+  }
+  next();
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/personal', personalRoutes);
