@@ -184,5 +184,27 @@
     "date": "2026-08-25T11:20:00.000Z",
     "createdAt": "2026-08-28T13:44:46.746Z",
     "updatedAt": "2026-08-28T13:44:46.746Z"
+  },
+  {
+    "_id": "doc_1787926020053_i8oxvla5t",
+    "id": "doc_1787926020053_i8oxvla5t",
+    "userId": "doc_1787917108295_2nsne01wj",
+    "amount": 500,
+    "category": "Food",
+    "description": "Quick grocery snack",
+    "date": "2026-08-10T12:00:00.000Z",
+    "createdAt": "2026-08-28T14:07:00.053Z",
+    "updatedAt": "2026-08-28T14:07:00.057Z"
+  },
+  {
+    "_id": "doc_1787926020054_2m9vs6oah",
+    "id": "doc_1787926020054_2m9vs6oah",
+    "userId": "doc_1787917108295_2nsne01wj",
+    "amount": 7000,
+    "category": "Shopping",
+    "description": "New shoes & clothes",
+    "date": "2026-08-15T15:30:00.000Z",
+    "createdAt": "2026-08-28T14:07:00.054Z",
+    "updatedAt": "2026-08-28T14:07:00.054Z"
   }
 ]

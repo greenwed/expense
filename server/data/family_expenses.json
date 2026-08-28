@@ -151,5 +151,19 @@
     "date": "2026-08-24T15:00:00.000Z",
     "createdAt": "2026-08-28T13:44:46.770Z",
     "updatedAt": "2026-08-28T13:44:46.770Z"
+  },
+  {
+    "_id": "doc_1787926020112_uhreoh0jn",
+    "id": "doc_1787926020112_uhreoh0jn",
+    "groupId": "doc_1787926020109_51swojjoj",
+    "userId": "doc_1787917108413_qq38laizu",
+    "userName": "Bob Smith",
+    "userUsername": "bob",
+    "amount": 4300,
+    "category": "Medical",
+    "description": "Pharmacy medicines (discounted)",
+    "date": "2026-08-18T10:00:00.000Z",
+    "createdAt": "2026-08-28T14:07:00.112Z",
+    "updatedAt": "2026-08-28T14:07:00.116Z"
   }
 ]

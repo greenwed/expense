@@ -1,40 +1,30 @@
-import mongoose from 'mongoose';
-import { getIsMongooseConnected, JsonStore } from '../config/db.js';
+import { getPgPool, JsonStore } from '../config/db.js';
+import { v4 as uuidv4 } from 'uuid';
 
 export const VALID_CATEGORIES = ['Food', 'Shopping', 'Entertainment', 'Medical', 'Transport', 'Others'];
-
-const PersonalExpenseSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  amount: { type: Number, required: true, min: 0.01 },
-  category: { type: String, required: true, enum: VALID_CATEGORIES },
-  description: { type: String, required: true, trim: true },
-  date: { type: Date, required: true, default: Date.now },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
-
-const MongoosePersonalExpense = mongoose.models.PersonalExpense || mongoose.model('PersonalExpense', PersonalExpenseSchema);
 const expenseStore = new JsonStore('personal_expenses');
 
 export const PersonalExpenseModel = {
   async create({ userId, amount, category, description, date }) {
     const parsedDate = date ? new Date(date) : new Date();
     const numAmount = Number(amount);
-    
-    if (getIsMongooseConnected()) {
-      const exp = new MongoosePersonalExpense({
-        userId,
-        amount: numAmount,
-        category,
-        description,
-        date: parsedDate
-      });
-      const saved = await exp.save();
-      return saved.toObject();
+    const uIdStr = String(userId);
+    const id = `pex_${uuidv4().replace(/-/g, '').slice(0, 16)}`;
+    const pool = getPgPool();
+
+    if (pool) {
+      const res = await pool.query(
+        `INSERT INTO personal_expenses (id, user_id, amount, category, description, date, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+         RETURNING *`,
+        [id, uIdStr, numAmount, category, description, parsedDate]
+      );
+      return formatExpense(res.rows[0]);
     }
 
     return expenseStore.insert({
-      userId: String(userId),
+      id,
+      userId: uIdStr,
       amount: numAmount,
       category,
       description,
@@ -44,18 +34,22 @@ export const PersonalExpenseModel = {
 
   async findByMonth(userId, month) {
     const uIdStr = String(userId);
-    // Month format: YYYY-MM
-    if (getIsMongooseConnected()) {
-      const startOfMonth = new Date(`${month}-01T00:00:00.000Z`);
+    const pool = getPgPool();
+
+    if (pool) {
+      const startOfMonth = `${month}-01 00:00:00+00`;
       const [year, m] = month.split('-').map(Number);
-      const endOfMonth = new Date(Date.UTC(year, m, 1, 0, 0, 0, 0));
+      const nextMonthYear = m === 12 ? year + 1 : year;
+      const nextMonthVal = m === 12 ? 1 : m + 1;
+      const endOfMonth = `${nextMonthYear}-${String(nextMonthVal).padStart(2, '0')}-01 00:00:00+00`;
 
-      const expenses = await MongoosePersonalExpense.find({
-        userId,
-        date: { $gte: startOfMonth, $lt: endOfMonth }
-      }).sort({ date: -1 });
-
-      return expenses.map(e => e.toObject());
+      const res = await pool.query(
+        `SELECT * FROM personal_expenses
+         WHERE user_id = $1 AND date >= $2 AND date < $3
+         ORDER BY date DESC`,
+        [uIdStr, startOfMonth, endOfMonth]
+      );
+      return res.rows.map(formatExpense);
     }
 
     const expenses = expenseStore.find(e => {
@@ -69,40 +63,44 @@ export const PersonalExpenseModel = {
   },
 
   async findById(id) {
-    if (getIsMongooseConnected()) {
-      const exp = await MongoosePersonalExpense.findById(id);
-      return exp ? exp.toObject() : null;
+    const pool = getPgPool();
+    if (pool) {
+      const res = await pool.query('SELECT * FROM personal_expenses WHERE id = $1 LIMIT 1', [id]);
+      return res.rows[0] ? formatExpense(res.rows[0]) : null;
     }
     return expenseStore.findById(id);
   },
 
   async update(id, userId, { amount, category, description, date }) {
     const uIdStr = String(userId);
-    const updateData = {};
-    if (amount !== undefined) updateData.amount = Number(amount);
-    if (category !== undefined) updateData.category = category;
-    if (description !== undefined) updateData.description = description;
-    if (date !== undefined) updateData.date = new Date(date);
-    updateData.updatedAt = new Date();
+    const pool = getPgPool();
 
-    if (getIsMongooseConnected()) {
-      const updated = await MongoosePersonalExpense.findOneAndUpdate(
-        { _id: id, userId },
-        updateData,
-        { new: true }
+    if (pool) {
+      const current = await this.findById(id);
+      if (!current) return null;
+
+      const newAmount = amount !== undefined ? Number(amount) : current.amount;
+      const newCategory = category !== undefined ? category : current.category;
+      const newDesc = description !== undefined ? description : current.description;
+      const newDate = date !== undefined ? new Date(date) : new Date(current.date);
+
+      const res = await pool.query(
+        `UPDATE personal_expenses
+         SET amount = $1, category = $2, description = $3, date = $4, updated_at = NOW()
+         WHERE id = $5 AND user_id = $6
+         RETURNING *`,
+        [newAmount, newCategory, newDesc, newDate, id, uIdStr]
       );
-      return updated ? updated.toObject() : null;
+      return res.rows[0] ? formatExpense(res.rows[0]) : null;
     }
 
     const updatePayload = {
-      ...updateData,
-      updatedAt: updateData.updatedAt ? updateData.updatedAt.toISOString() : new Date().toISOString()
+      updatedAt: new Date().toISOString()
     };
-    if (updateData.date) {
-      updatePayload.date = updateData.date.toISOString();
-    } else {
-      delete updatePayload.date;
-    }
+    if (amount !== undefined) updatePayload.amount = Number(amount);
+    if (category !== undefined) updatePayload.category = category;
+    if (description !== undefined) updatePayload.description = description;
+    if (date !== undefined) updatePayload.date = new Date(date).toISOString();
 
     return expenseStore.update(
       e => (e.id === id || e._id === id) && String(e.userId) === uIdStr,
@@ -112,13 +110,34 @@ export const PersonalExpenseModel = {
 
   async delete(id, userId) {
     const uIdStr = String(userId);
-    if (getIsMongooseConnected()) {
-      const res = await MongoosePersonalExpense.deleteOne({ _id: id, userId });
-      return res.deletedCount > 0;
+    const pool = getPgPool();
+
+    if (pool) {
+      const res = await pool.query(
+        'DELETE FROM personal_expenses WHERE id = $1 AND user_id = $2',
+        [id, uIdStr]
+      );
+      return res.rowCount > 0;
     }
+
     const count = expenseStore.delete(e => (e.id === id || e._id === id) && String(e.userId) === uIdStr);
     return count > 0;
   }
 };
+
+function formatExpense(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    _id: row.id,
+    userId: row.user_id,
+    amount: Number(row.amount),
+    category: row.category,
+    description: row.description,
+    date: row.date,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
 
 export default PersonalExpenseModel;
