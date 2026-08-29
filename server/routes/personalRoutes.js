@@ -64,6 +64,7 @@ router.get('/dashboard', async (req, res) => {
       percentSpent,
       isExceeding80,
       isExceeding100,
+      categories: categoryBreakdown,
       categoryBreakdown,
       expenses
     });

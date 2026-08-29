@@ -63,5 +63,15 @@
     "password": "$2a$10$X3fIJmDElx8kAvMIcVak7.ocfXVkTkp8Kxxo39JWJTHhSNeoi43aO",
     "createdAt": "2026-08-29T04:08:11.749Z",
     "updatedAt": "2026-08-29T04:08:11.906Z"
+  },
+  {
+    "_id": "usr_3b7a59677d4649e0",
+    "id": "usr_3b7a59677d4649e0",
+    "name": "Test Explorer",
+    "username": "user_1787977507337",
+    "email": "user_1787977507337@example.com",
+    "password": "$2a$10$MmfSF7UYMzaP2NY3MZ/kbe.sEW.tFOnlwFpZMqRKGHmkwu2KuH4Ou",
+    "createdAt": "2026-08-29T04:25:07.422Z",
+    "updatedAt": "2026-08-29T04:25:07.577Z"
   }
 ]

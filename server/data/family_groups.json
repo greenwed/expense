@@ -205,5 +205,30 @@
     "inviteToken": "36415dcc-a956-4baa-9d27-355a361188fd",
     "createdAt": "2026-08-29T04:08:12.183Z",
     "updatedAt": "2026-08-29T04:08:12.189Z"
+  },
+  {
+    "_id": "grp_5ee5a32395bd40aa",
+    "id": "grp_5ee5a32395bd40aa",
+    "name": "Smith Family",
+    "createdBy": "doc_1787917108295_2nsne01wj",
+    "members": [
+      {
+        "userId": "doc_1787917108295_2nsne01wj",
+        "name": "Alice Smith",
+        "username": "alice",
+        "role": "admin",
+        "joinedAt": "2026-08-29T04:25:07.851Z"
+      },
+      {
+        "userId": "doc_1787917108413_qq38laizu",
+        "name": "Bob Smith",
+        "username": "bob",
+        "role": "moderator",
+        "joinedAt": "2026-08-29T04:25:07.853Z"
+      }
+    ],
+    "inviteToken": "e0c48ddd-2ad8-410f-b1ad-4432cbc39aeb",
+    "createdAt": "2026-08-29T04:25:07.852Z",
+    "updatedAt": "2026-08-29T04:25:07.857Z"
   }
 ]

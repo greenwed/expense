@@ -206,6 +206,7 @@ router.get('/groups/:groupId/dashboard', requireGroupMember, async (req, res) =>
       percentSpent,
       isExceeding80,
       isExceeding100,
+      categories: categoryBreakdown,
       categoryBreakdown,
       expenses
     });

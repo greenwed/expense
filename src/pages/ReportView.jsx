@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { ArrowLeft, ChevronDown, Calendar, TrendingUp, DollarSign, Award, Sparkles } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { ArrowLeft, ChevronDown, Calendar, TrendingUp, DollarSign, Award } from 'lucide-react';
 import CategoryPieChart from '../components/CategoryPieChart';
-import { formatINR, getMonthName } from '../utils/formatters';
+import { formatINR, getMonthName, CATEGORY_CONFIG } from '../utils/formatters';
 
 export default function ReportView({
   personalData,
@@ -14,12 +14,43 @@ export default function ReportView({
 }) {
   const isPersonal = activeWorkspace === 'personal';
   const currentData = isPersonal ? personalData : familyData;
-  const categories = currentData?.categories || [];
-  const totalSpent = currentData?.totalSpent || 0;
-  const budget = currentData?.budget || 0;
 
-  // Find top category
-  const topCategory = [...categories].sort((a, b) => b.amount - a.amount)[0];
+  // Resilient category breakdown extraction (handles categories or categoryBreakdown or calculates from expenses)
+  const categories = useMemo(() => {
+    if (currentData?.categories && Array.isArray(currentData.categories) && currentData.categories.length > 0) {
+      return currentData.categories;
+    }
+    if (currentData?.categoryBreakdown && Array.isArray(currentData.categoryBreakdown) && currentData.categoryBreakdown.length > 0) {
+      return currentData.categoryBreakdown;
+    }
+    if (currentData?.expenses && Array.isArray(currentData.expenses)) {
+      const totals = {};
+      Object.keys(CATEGORY_CONFIG).forEach((cat) => { totals[cat] = 0; });
+      let total = 0;
+      currentData.expenses.forEach((e) => {
+        const amt = Number(e.amount) || 0;
+        total += amt;
+        const cat = CATEGORY_CONFIG[e.category] ? e.category : 'Others';
+        totals[cat] = (totals[cat] || 0) + amt;
+      });
+      return Object.keys(CATEGORY_CONFIG).map((cat) => ({
+        category: cat,
+        amount: totals[cat] || 0,
+        percentage: total > 0 ? Number(((totals[cat] / total) * 100).toFixed(1)) : 0
+      }));
+    }
+    return Object.keys(CATEGORY_CONFIG).map((cat) => ({ category: cat, amount: 0, percentage: 0 }));
+  }, [currentData]);
+
+  const totalSpent = Number(currentData?.totalSpent) || 0;
+  const budget = Number(currentData?.budget) || 0;
+
+  // Find top category with highest spending
+  const topCategory = useMemo(() => {
+    const activeCats = categories.filter((c) => Number(c.amount) > 0);
+    if (activeCats.length === 0) return null;
+    return [...activeCats].sort((a, b) => Number(b.amount) - Number(a.amount))[0];
+  }, [categories]);
 
   return (
     <div className="space-y-6 animate-fadeIn pb-24 lg:pb-8">
@@ -109,7 +140,7 @@ export default function ReportView({
               Top Category
             </span>
             <span className="text-base sm:text-lg font-extrabold text-slate-900 block truncate">
-              {topCategory?.amount > 0 ? topCategory.category : 'None'} ({topCategory?.percentage || 0}%)
+              {topCategory ? `${topCategory.category} (${topCategory.percentage}%)` : 'None (0%)'}
             </span>
           </div>
         </div>
@@ -123,7 +154,7 @@ export default function ReportView({
               Budget Status
             </span>
             <span className="text-base sm:text-lg font-extrabold text-slate-900 block">
-              {budget > 0 ? `${((totalSpent / budget) * 100).toFixed(0)}% Used` : 'No Budget'}
+              {budget > 0 ? `${((totalSpent / budget) * 100).toFixed(0)}% Used` : 'No Budget Set'}
             </span>
           </div>
         </div>

@@ -68,5 +68,15 @@
     "updatedBy": "doc_1787917108295_2nsne01wj",
     "updatedAt": "2026-08-29T04:08:12.185Z",
     "createdAt": "2026-08-29T04:08:12.185Z"
+  },
+  {
+    "_id": "doc_1787977507854_m6idkhcxf",
+    "id": "doc_1787977507854_m6idkhcxf",
+    "groupId": "grp_5ee5a32395bd40aa",
+    "month": "2026-08",
+    "amount": 30000,
+    "updatedBy": "doc_1787917108295_2nsne01wj",
+    "updatedAt": "2026-08-29T04:25:07.854Z",
+    "createdAt": "2026-08-29T04:25:07.854Z"
   }
 ]
