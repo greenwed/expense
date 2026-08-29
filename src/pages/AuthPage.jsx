@@ -12,7 +12,8 @@ import {
   HelpCircle,
   RefreshCw,
   X,
-  Sparkles
+  Sparkles,
+  Zap
 } from 'lucide-react';
 
 export default function AuthPage({ onSuccess }) {
@@ -28,6 +29,7 @@ export default function AuthPage({ onSuccess }) {
   const [otpSent, setOtpSent] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [otpCooldown, setOtpCooldown] = useState(0);
+  const [detectedOtp, setDetectedOtp] = useState(null);
 
   // Login States
   const [loginIdentifier, setLoginIdentifier] = useState('');
@@ -40,12 +42,14 @@ export default function AuthPage({ onSuccess }) {
   const [resetOtp, setResetOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [resetStep, setResetStep] = useState(1); // 1: request, 2: enter OTP & new pass
+  const [resetStep, setResetStep] = useState(1);
+  const [resetDetectedOtp, setResetDetectedOtp] = useState(null);
 
   // Forgot Username States
   const [recoverEmail, setRecoverEmail] = useState('');
+  const [recoveredUsername, setRecoveredUsername] = useState(null);
 
-  // General States
+  // Feedback States
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
@@ -87,7 +91,14 @@ export default function AuthPage({ onSuccess }) {
 
       setOtpSent(true);
       startCooldown();
-      setSuccessMsg(data.previewOtp ? `Code sent! (Dev preview: ${data.previewOtp})` : data.message);
+
+      if (data.previewOtp) {
+        setDetectedOtp(data.previewOtp);
+        setRegOtp(data.previewOtp);
+        setSuccessMsg(`Verification code generated! (Auto-filled: ${data.previewOtp})`);
+      } else {
+        setSuccessMsg(data.message || 'Verification code sent to your email!');
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -103,7 +114,7 @@ export default function AuthPage({ onSuccess }) {
       return;
     }
     if (!regOtp || regOtp.trim().length !== 6) {
-      setError('Please enter the 6-digit verification code sent to your email.');
+      setError('Please enter the 6-digit verification code.');
       return;
     }
 
@@ -166,7 +177,14 @@ export default function AuthPage({ onSuccess }) {
       setResetEmail(data.email);
       setResetMaskedEmail(data.maskedEmail);
       setResetStep(2);
-      setSuccessMsg(data.previewOtp ? `Reset code sent! (Dev preview: ${data.previewOtp})` : data.message);
+
+      if (data.previewOtp) {
+        setResetDetectedOtp(data.previewOtp);
+        setResetOtp(data.previewOtp);
+        setSuccessMsg(`Reset code generated! (Auto-filled: ${data.previewOtp})`);
+      } else {
+        setSuccessMsg(data.message);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -220,7 +238,12 @@ export default function AuthPage({ onSuccess }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to process request.');
 
-      setSuccessMsg(data.message);
+      if (data.previewUsername) {
+        setRecoveredUsername(data.previewUsername);
+        setSuccessMsg(`Your registered username is @${data.previewUsername}`);
+      } else {
+        setSuccessMsg(data.message);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -229,35 +252,40 @@ export default function AuthPage({ onSuccess }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-slate-950">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[#F8FAFC] relative overflow-hidden">
+      
+      {/* Background Ambient Violet / Indigo Glow Orbs */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-gradient-to-b from-indigo-200/40 via-purple-100/30 to-transparent blur-3xl pointer-events-none rounded-full" />
+      <div className="absolute -bottom-20 right-10 w-96 h-96 bg-purple-200/30 blur-3xl pointer-events-none rounded-full" />
+
+      <div className="w-full max-w-md relative z-10">
         
         {/* Brand Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 shadow-xl shadow-emerald-500/20 mb-4 ring-1 ring-emerald-400/40">
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-[24px] bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-xl shadow-indigo-500/25 mb-3.5 border-2 border-white">
             <IndianRupee className="w-9 h-9 text-white stroke-[2.5]" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
             RupeeTrack
           </h1>
-          <p className="text-slate-400 text-sm mt-1.5">
+          <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1">
             Personal & Collaborative Family Expense Tracker
           </p>
         </div>
 
-        {/* Auth Form Card */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+        {/* Floating Fintech Card */}
+        <div className="bg-white border border-slate-200/80 rounded-[32px] p-6 sm:p-8 shadow-2xl shadow-slate-900/5">
           
           {/* Main Navigation Tabs */}
           {activeTab !== 'forgot_password' && activeTab !== 'forgot_username' && (
-            <div className="flex bg-slate-950 p-1 rounded-xl mb-6 border border-slate-800">
+            <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-6 border border-slate-200/60">
               <button
                 type="button"
                 onClick={() => { setActiveTab('login'); setError(''); setSuccessMsg(''); }}
-                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+                className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${
                   activeTab === 'login'
-                    ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 Sign In
@@ -265,10 +293,10 @@ export default function AuthPage({ onSuccess }) {
               <button
                 type="button"
                 onClick={() => { setActiveTab('register'); setError(''); setSuccessMsg(''); }}
-                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+                className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${
                   activeTab === 'register'
-                    ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 Register
@@ -278,13 +306,13 @@ export default function AuthPage({ onSuccess }) {
 
           {/* Feedback Messages */}
           {error && (
-            <div className="mb-4 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs sm:text-sm font-medium leading-relaxed">
+            <div className="mb-4 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-semibold leading-relaxed">
               {error}
             </div>
           )}
           {successMsg && (
-            <div className="mb-4 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs sm:text-sm font-medium leading-relaxed flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <div className="mb-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold leading-relaxed flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
               <span>{successMsg}</span>
             </div>
           )}
@@ -293,11 +321,11 @@ export default function AuthPage({ onSuccess }) {
           {activeTab === 'register' && (
             <form onSubmit={handleRegister} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Full Name *
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <User className="w-4 h-4" />
                   </span>
                   <input
@@ -306,17 +334,17 @@ export default function AuthPage({ onSuccess }) {
                     placeholder="e.g. Karthik"
                     value={regName}
                     onChange={(e) => setRegName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500 placeholder:text-slate-600"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:bg-white transition-colors"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Email Address (For Verification & Recovery) *
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <Mail className="w-4 h-4" />
                   </span>
                   <input
@@ -324,18 +352,18 @@ export default function AuthPage({ onSuccess }) {
                     required
                     placeholder="name@example.com"
                     value={regEmail}
-                    onChange={(e) => { setRegEmail(e.target.value); setOtpSent(false); }}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500 placeholder:text-slate-600"
+                    onChange={(e) => { setRegEmail(e.target.value); setOtpSent(false); setDetectedOtp(null); }}
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:bg-white transition-colors"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Username (Unique) *
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500 font-mono">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 font-mono">
                     @
                   </span>
                   <input
@@ -343,8 +371,8 @@ export default function AuthPage({ onSuccess }) {
                     required
                     placeholder="e.g. karthik2026"
                     value={regUsername}
-                    onChange={(e) => { setRegUsername(e.target.value.toLowerCase()); setOtpSent(false); }}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500 placeholder:text-slate-600 font-mono"
+                    onChange={(e) => { setRegUsername(e.target.value.toLowerCase()); setOtpSent(false); setDetectedOtp(null); }}
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-bold font-mono focus:outline-none focus:border-indigo-500 focus:bg-white transition-colors"
                   />
                 </div>
               </div>
@@ -355,10 +383,10 @@ export default function AuthPage({ onSuccess }) {
                   type="button"
                   onClick={handleSendRegisterOtp}
                   disabled={sendingOtp || otpCooldown > 0}
-                  className={`w-full py-2 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  className={`w-full py-2.5 px-3 rounded-2xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                     otpSent
-                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                      : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200'
+                      ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                      : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
                   }`}
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${sendingOtp ? 'animate-spin' : ''}`} />
@@ -376,10 +404,17 @@ export default function AuthPage({ onSuccess }) {
 
               {/* OTP Input Field */}
               {otpSent && (
-                <div className="p-3.5 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 space-y-2 animate-fadeIn">
-                  <label className="block text-xs font-bold text-emerald-400 uppercase tracking-wider">
-                    Enter 6-Digit Email Code *
-                  </label>
+                <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-100 space-y-2 animate-fadeIn">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-indigo-900 uppercase tracking-wider">
+                      Enter 6-Digit Email Code *
+                    </label>
+                    {detectedOtp && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                        <Zap className="w-3 h-3" /> Auto-filled
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     maxLength={6}
@@ -387,21 +422,21 @@ export default function AuthPage({ onSuccess }) {
                     placeholder="123456"
                     value={regOtp}
                     onChange={(e) => setRegOtp(e.target.value.replace(/\D/g, ''))}
-                    className="w-full px-4 py-2.5 bg-slate-950 border border-emerald-500/50 rounded-xl text-emerald-300 font-mono text-lg font-bold text-center tracking-widest focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-white border border-indigo-300 rounded-2xl text-indigo-700 font-mono text-xl font-black text-center tracking-widest focus:outline-none shadow-inner"
                     autoFocus
                   />
-                  <span className="text-[11px] text-slate-400 block text-center">
-                    Check your inbox (and spam folder) for the 6-digit code
+                  <span className="text-[11px] text-slate-500 block text-center">
+                    Check your inbox for the code
                   </span>
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Password *
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <Lock className="w-4 h-4" />
                   </span>
                   <input
@@ -410,7 +445,7 @@ export default function AuthPage({ onSuccess }) {
                     placeholder="••••••••"
                     value={regPassword}
                     onChange={(e) => setRegPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500 placeholder:text-slate-600"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:bg-white transition-colors"
                   />
                 </div>
               </div>
@@ -418,7 +453,7 @@ export default function AuthPage({ onSuccess }) {
               <button
                 type="submit"
                 disabled={loading || !otpSent}
-                className="w-full mt-2 py-3 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-40"
+                className="w-full mt-2 py-3.5 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold rounded-2xl shadow-xl shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-40"
               >
                 <span>{loading ? 'Creating Account...' : 'Complete Registration'}</span>
                 <ArrowRight className="w-4 h-4 stroke-[3]" />
@@ -430,39 +465,39 @@ export default function AuthPage({ onSuccess }) {
           {activeTab === 'login' && (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Username or Email *
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <User className="w-4 h-4" />
                   </span>
                   <input
                     type="text"
                     required
-                    placeholder="Username or your email"
+                    placeholder="e.g. karthik or name@example.com"
                     value={loginIdentifier}
                     onChange={(e) => setLoginIdentifier(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500 placeholder:text-slate-600"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:bg-white transition-colors"
                   />
                 </div>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                     Password *
                   </label>
                   <button
                     type="button"
                     onClick={() => { setActiveTab('forgot_password'); setError(''); setSuccessMsg(''); }}
-                    className="text-xs text-emerald-400 hover:text-emerald-300 font-medium"
+                    className="text-xs text-indigo-600 hover:text-indigo-700 font-bold"
                   >
                     Forgot Password?
                   </button>
                 </div>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <Lock className="w-4 h-4" />
                   </span>
                   <input
@@ -471,7 +506,7 @@ export default function AuthPage({ onSuccess }) {
                     placeholder="••••••••"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500 placeholder:text-slate-600"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:bg-white transition-colors"
                   />
                 </div>
               </div>
@@ -479,7 +514,7 @@ export default function AuthPage({ onSuccess }) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 py-3 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                className="w-full mt-2 py-3.5 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold rounded-2xl shadow-xl shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50"
               >
                 <span>{loading ? 'Signing in...' : 'Sign In'}</span>
                 <ArrowRight className="w-4 h-4 stroke-[3]" />
@@ -489,7 +524,7 @@ export default function AuthPage({ onSuccess }) {
                 <button
                   type="button"
                   onClick={() => { setActiveTab('forgot_username'); setError(''); setSuccessMsg(''); }}
-                  className="text-xs text-slate-400 hover:text-slate-300 underline font-medium"
+                  className="text-xs text-slate-400 hover:text-slate-600 font-bold"
                 >
                   Forgot your Username?
                 </button>
@@ -500,14 +535,14 @@ export default function AuthPage({ onSuccess }) {
           {/* ================= FORGOT PASSWORD VIEW ================= */}
           {activeTab === 'forgot_password' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 className="font-bold text-base text-white flex items-center gap-2">
-                  <KeyRound className="w-4 h-4 text-emerald-400" />
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                  <KeyRound className="w-4 h-4 text-indigo-600" />
                   <span>Reset Your Password</span>
                 </h3>
                 <button
                   onClick={() => { setActiveTab('login'); setError(''); setSuccessMsg(''); setResetStep(1); }}
-                  className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -515,11 +550,11 @@ export default function AuthPage({ onSuccess }) {
 
               {resetStep === 1 ? (
                 <form onSubmit={handleRequestResetOtp} className="space-y-4">
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Enter your registered <strong>username or email address</strong>. We will send a 6-digit password reset code to your email.
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Enter your registered <strong>username or email</strong>. We will send a 6-digit password reset code to your email.
                   </p>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                       Username or Email *
                     </label>
                     <input
@@ -528,24 +563,24 @@ export default function AuthPage({ onSuccess }) {
                       placeholder="Username or email"
                       value={resetIdentifier}
                       onChange={(e) => setResetIdentifier(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500 placeholder:text-slate-600"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:bg-white"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-sm transition-all"
+                    className="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold rounded-2xl text-xs shadow-md shadow-indigo-500/20 transition-all"
                   >
                     {loading ? 'Sending Code...' : 'Send Reset Code'}
                   </button>
                 </form>
               ) : (
                 <form onSubmit={handleResetPassword} className="space-y-4">
-                  <p className="text-xs text-slate-300">
-                    We sent a verification code to <strong className="text-emerald-300">{resetMaskedEmail}</strong>.
+                  <p className="text-xs text-slate-500">
+                    We sent a verification code to <strong className="text-indigo-600">{resetMaskedEmail}</strong>.
                   </p>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                       6-Digit Reset Code *
                     </label>
                     <input
@@ -555,11 +590,11 @@ export default function AuthPage({ onSuccess }) {
                       placeholder="123456"
                       value={resetOtp}
                       onChange={(e) => setResetOtp(e.target.value.replace(/\D/g, ''))}
-                      className="w-full px-4 py-2 bg-slate-950 border border-emerald-500/50 rounded-xl text-emerald-300 font-mono text-base font-bold text-center tracking-widest focus:outline-none"
+                      className="w-full px-4 py-2 bg-slate-50 border border-indigo-300 rounded-2xl text-indigo-700 font-mono text-lg font-black text-center tracking-widest focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                       New Password *
                     </label>
                     <input
@@ -568,11 +603,11 @@ export default function AuthPage({ onSuccess }) {
                       placeholder="••••••••"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500"
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm focus:outline-none focus:border-indigo-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                       Confirm New Password *
                     </label>
                     <input
@@ -581,13 +616,13 @@ export default function AuthPage({ onSuccess }) {
                       placeholder="••••••••"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500"
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm focus:outline-none focus:border-indigo-500"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-sm transition-all"
+                    className="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold rounded-2xl text-xs shadow-md shadow-indigo-500/20 transition-all"
                   >
                     {loading ? 'Updating Password...' : 'Reset Password & Log In'}
                   </button>
@@ -599,25 +634,25 @@ export default function AuthPage({ onSuccess }) {
           {/* ================= FORGOT USERNAME VIEW ================= */}
           {activeTab === 'forgot_username' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 className="font-bold text-base text-white flex items-center gap-2">
-                  <HelpCircle className="w-4 h-4 text-emerald-400" />
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                  <HelpCircle className="w-4 h-4 text-indigo-600" />
                   <span>Recover Your Username</span>
                 </h3>
                 <button
                   onClick={() => { setActiveTab('login'); setError(''); setSuccessMsg(''); }}
-                  className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <form onSubmit={handleRecoverUsername} className="space-y-4">
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-xs text-slate-500 leading-relaxed">
                   Enter your registered email address. We will send your RupeeTrack username directly to your inbox.
                 </p>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                     Registered Email Address *
                   </label>
                   <input
@@ -626,13 +661,13 @@ export default function AuthPage({ onSuccess }) {
                     placeholder="name@example.com"
                     value={recoverEmail}
                     onChange={(e) => setRecoverEmail(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500 placeholder:text-slate-600"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:bg-white"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-sm transition-all"
+                  className="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold rounded-2xl text-xs shadow-md shadow-indigo-500/20 transition-all"
                 >
                   {loading ? 'Checking...' : 'Send Username to Email'}
                 </button>
@@ -640,7 +675,7 @@ export default function AuthPage({ onSuccess }) {
                   <button
                     type="button"
                     onClick={() => { setActiveTab('login'); setError(''); setSuccessMsg(''); }}
-                    className="text-xs text-slate-400 hover:text-slate-300"
+                    className="text-xs text-slate-400 hover:text-slate-600 font-bold"
                   >
                     Back to Sign In
                   </button>
@@ -649,11 +684,11 @@ export default function AuthPage({ onSuccess }) {
             </div>
           )}
 
-          {/* Security & Verification Footer Note */}
-          <div className="mt-6 pt-5 border-t border-slate-800 text-center">
-            <p className="text-xs text-slate-400 flex items-center justify-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Protected with Email OTP Verification & Secure Password Hashing</span>
+          {/* Security Footer Note */}
+          <div className="mt-6 pt-5 border-t border-slate-100 text-center">
+            <p className="text-xs text-slate-400 flex items-center justify-center gap-1.5 font-medium">
+              <ShieldCheck className="w-4 h-4 text-emerald-500" />
+              <span>Protected with Email OTP Verification & Encryption</span>
             </p>
           </div>
 

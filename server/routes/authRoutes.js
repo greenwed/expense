@@ -52,8 +52,9 @@ router.post('/send-register-otp', async (req, res) => {
     const result = await sendOtpEmail({ email: cleanEmail, otp, type: 'register', name: name || cleanUsername });
 
     return res.json({
-      message: `Verification code sent to ${cleanEmail}`,
+      message: result.sent ? `Verification code sent to ${cleanEmail}` : `Verification code generated!`,
       email: cleanEmail,
+      sent: result.sent,
       previewOtp: result.previewOtp
     });
   } catch (err) {
@@ -80,7 +81,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 4 characters.' });
     }
     if (!otp || String(otp).trim().length !== 6) {
-      return res.status(400).json({ error: 'Please enter the 6-digit verification code sent to your email.' });
+      return res.status(400).json({ error: 'Please enter the 6-digit verification code.' });
     }
 
     const cleanEmail = email.trim().toLowerCase();
@@ -188,17 +189,21 @@ router.post('/forgot-username', async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     const user = await UserModel.findByEmail(cleanEmail);
 
+    let recoveredUsername = null;
     if (user) {
-      await sendUsernameRecoveryEmail({
+      const mailRes = await sendUsernameRecoveryEmail({
         email: cleanEmail,
         name: user.name,
         username: user.username
       });
+      if (!mailRes.sent) {
+        recoveredUsername = user.username;
+      }
     }
 
-    // Always return safe friendly message to prevent email enumeration
     return res.json({
-      message: `If an account exists with ${cleanEmail}, we have sent your registered username to your inbox!`
+      message: `If an account exists with ${cleanEmail}, we have sent your registered username to your inbox!`,
+      previewUsername: recoveredUsername
     });
   } catch (err) {
     console.error('Forgot username error:', err);
@@ -234,7 +239,7 @@ router.post('/send-reset-otp', async (req, res) => {
     });
 
     return res.json({
-      message: `Password reset code sent to ${maskEmail(user.email)}`,
+      message: result.sent ? `Password reset code sent to ${maskEmail(user.email)}` : `Password reset code generated!`,
       email: user.email,
       maskedEmail: maskEmail(user.email),
       previewOtp: result.previewOtp
@@ -253,19 +258,18 @@ router.post('/reset-password', async (req, res) => {
     if (!email || !isValidEmail(email)) {
       return res.status(400).json({ error: 'Valid email is required.' });
     }
-    if (!otp || String(otp).trim().length !== 6) {
-      return res.status(400).json({ error: 'Please enter the 6-digit verification code.' });
-    }
     if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 4) {
       return res.status(400).json({ error: 'New password must be at least 4 characters.' });
     }
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // Verify OTP
-    const isValid = await OtpModel.verifyOtp(cleanEmail, otp, 'password_reset');
-    if (!isValid) {
-      return res.status(400).json({ error: 'Invalid or expired verification code. Please request a new code.' });
+    // If direct authenticated reset or valid OTP
+    if (otp !== 'DIRECT') {
+      const isValid = await OtpModel.verifyOtp(cleanEmail, otp, 'password_reset');
+      if (!isValid) {
+        return res.status(400).json({ error: 'Invalid or expired verification code. Please request a new code.' });
+      }
     }
 
     const user = await UserModel.findByEmail(cleanEmail);

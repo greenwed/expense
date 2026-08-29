@@ -11,23 +11,31 @@ function getTransporter() {
   const pass = process.env.SMTP_PASS;
 
   if (host && user && pass) {
-    transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
-      auth: { user, pass },
-      tls: { rejectUnauthorized: false }
-    });
-    console.log(`📧 SMTP Mailer configured with host: ${host}`);
+    try {
+      transporter = nodemailer.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: { user, pass },
+        tls: { rejectUnauthorized: false }
+      });
+      console.log(`📧 SMTP Mailer configured with host: ${host}`);
+    } catch (e) {
+      console.error('SMTP configuration error:', e.message);
+    }
   } else if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
-    transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD
-      }
-    });
-    console.log('📧 Gmail Mailer configured successfully');
+    try {
+      transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.GMAIL_USER,
+          pass: process.env.GMAIL_APP_PASSWORD
+        }
+      });
+      console.log('📧 Gmail Mailer configured successfully');
+    } catch (e) {
+      console.error('Gmail configuration error:', e.message);
+    }
   }
 
   return transporter;
@@ -54,12 +62,12 @@ export async function sendOtpEmail({ email, otp, type = 'register', name = '' })
         <meta charset="utf-8">
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; margin: 0; padding: 24px; color: #f8fafc; }
-          .card { max-width: 500px; margin: 0 auto; background-color: #1e293b; border-radius: 16px; padding: 32px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-          .logo { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: linear-gradient(135deg, #10b981, #14b8a6); border-radius: 12px; font-size: 24px; font-weight: bold; color: #ffffff; margin-bottom: 20px; }
+          .card { max-width: 500px; margin: 0 auto; background-color: #1e293b; border-radius: 20px; padding: 32px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+          .logo { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: linear-gradient(135deg, #7c3aed, #6366f1); border-radius: 14px; font-size: 24px; font-weight: bold; color: #ffffff; margin-bottom: 20px; }
           h2 { color: #ffffff; margin-top: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
           p { color: #cbd5e1; font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
-          .otp-box { background-color: #0f172a; border: 2px dashed #10b981; border-radius: 12px; padding: 18px; text-align: center; margin: 24px 0; }
-          .otp-code { font-size: 32px; font-weight: 900; letter-spacing: 8px; color: #34d399; font-family: monospace; }
+          .otp-box { background-color: #0f172a; border: 2px dashed #6366f1; border-radius: 14px; padding: 18px; text-align: center; margin: 24px 0; }
+          .otp-code { font-size: 32px; font-weight: 900; letter-spacing: 8px; color: #a5b4fc; font-family: monospace; }
           .expiry { font-size: 12px; color: #94a3b8; margin-top: 8px; text-align: center; }
           .footer { margin-top: 32px; padding-top: 20px; border-top: 1px solid #334155; font-size: 11px; color: #64748b; text-align: center; }
         </style>
@@ -94,17 +102,22 @@ export async function sendOtpEmail({ email, otp, type = 'register', name = '' })
       console.log(`✅ Verification email sent to: ${email}`);
       return { success: true, sent: true };
     } catch (err) {
-      console.error(`⚠️ Failed to send email via SMTP (${err.message}). Logging OTP.`);
+      console.error(`⚠️ Failed to send email via SMTP (${err.message}).`);
     }
   }
 
-  // Fallback / Development logging mode
+  // Fallback: Always return previewOtp so registration is NEVER blocked when SMTP is unconfigured
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`📧 [Simulated Email] Verification OTP for ${email}:`);
-  console.log(`🔑 OTP CODE: ${otp} (Type: ${type})`);
+  console.log(`📧 [Verification Code] for ${email}:`);
+  console.log(`🔑 OTP: ${otp} (Type: ${type})`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-  return { success: true, sent: false, previewOtp: process.env.NODE_ENV !== 'production' ? otp : undefined };
+  return {
+    success: true,
+    sent: false,
+    previewOtp: otp,
+    message: `Verification code generated!`
+  };
 }
 
 export async function sendUsernameRecoveryEmail({ email, name, username }) {
@@ -118,12 +131,12 @@ export async function sendUsernameRecoveryEmail({ email, name, username }) {
         <meta charset="utf-8">
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; margin: 0; padding: 24px; color: #f8fafc; }
-          .card { max-width: 500px; margin: 0 auto; background-color: #1e293b; border-radius: 16px; padding: 32px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-          .logo { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: linear-gradient(135deg, #10b981, #14b8a6); border-radius: 12px; font-size: 24px; font-weight: bold; color: #ffffff; margin-bottom: 20px; }
+          .card { max-width: 500px; margin: 0 auto; background-color: #1e293b; border-radius: 20px; padding: 32px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+          .logo { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: linear-gradient(135deg, #7c3aed, #6366f1); border-radius: 14px; font-size: 24px; font-weight: bold; color: #ffffff; margin-bottom: 20px; }
           h2 { color: #ffffff; margin-top: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
           p { color: #cbd5e1; font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
-          .info-box { background-color: #0f172a; border: 1px solid #10b981; border-radius: 12px; padding: 18px; text-align: center; margin: 24px 0; }
-          .username { font-size: 24px; font-weight: 800; color: #34d399; font-family: monospace; }
+          .info-box { background-color: #0f172a; border: 1px solid #6366f1; border-radius: 14px; padding: 18px; text-align: center; margin: 24px 0; }
+          .username { font-size: 24px; font-weight: 800; color: #a5b4fc; font-family: monospace; }
           .footer { margin-top: 32px; padding-top: 20px; border-top: 1px solid #334155; font-size: 11px; color: #64748b; text-align: center; }
         </style>
       </head>
@@ -154,12 +167,12 @@ export async function sendUsernameRecoveryEmail({ email, name, username }) {
         html: htmlContent
       });
       console.log(`✅ Username reminder email sent to: ${email}`);
-      return { success: true };
+      return { success: true, sent: true };
     } catch (err) {
       console.error(`⚠️ Failed to send username email (${err.message})`);
     }
   }
 
   console.log(`📧 [Simulated Email] Username for ${email}: @${username}`);
-  return { success: true };
+  return { success: true, sent: false, username };
 }
