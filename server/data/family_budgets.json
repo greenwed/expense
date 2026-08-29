@@ -48,5 +48,25 @@
     "updatedBy": "doc_1787917108295_2nsne01wj",
     "updatedAt": "2026-08-28T14:07:00.111Z",
     "createdAt": "2026-08-28T14:07:00.111Z"
+  },
+  {
+    "_id": "doc_1787975135845_7u1yshaeb",
+    "id": "doc_1787975135845_7u1yshaeb",
+    "groupId": "grp_68b369536e7042dd",
+    "month": "2026-08",
+    "amount": 30000,
+    "updatedBy": "doc_1787917108295_2nsne01wj",
+    "updatedAt": "2026-08-29T03:45:35.845Z",
+    "createdAt": "2026-08-29T03:45:35.845Z"
+  },
+  {
+    "_id": "doc_1787976492185_3wm4yntey",
+    "id": "doc_1787976492185_3wm4yntey",
+    "groupId": "grp_26441e8994b946e8",
+    "month": "2026-08",
+    "amount": 30000,
+    "updatedBy": "doc_1787917108295_2nsne01wj",
+    "updatedAt": "2026-08-29T04:08:12.185Z",
+    "createdAt": "2026-08-29T04:08:12.185Z"
   }
 ]

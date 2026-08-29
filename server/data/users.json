@@ -43,5 +43,25 @@
     "password": "$2a$10$ED/0u3bMitkvbcjdGBWSmOwu2ACPmIwcuaRrs9k.oVWQeGYrQrXHa",
     "createdAt": "2026-08-28T11:49:00.145Z",
     "updatedAt": "2026-08-28T11:49:00.145Z"
+  },
+  {
+    "_id": "usr_78b3436a3ea34b8a",
+    "id": "usr_78b3436a3ea34b8a",
+    "name": "Test Explorer",
+    "username": "user_1787975131286",
+    "email": "user_1787975131286@example.com",
+    "password": "$2a$10$IY0unp/VRASFtvTzIizXKunfSQtxEmEcdj8e7Sg3Vm32iNrXP/mna",
+    "createdAt": "2026-08-29T03:45:31.380Z",
+    "updatedAt": "2026-08-29T03:45:31.538Z"
+  },
+  {
+    "_id": "usr_77a0ce5dfd9243a3",
+    "id": "usr_77a0ce5dfd9243a3",
+    "name": "Test Explorer",
+    "username": "user_1787976491666",
+    "email": "user_1787976491666@example.com",
+    "password": "$2a$10$X3fIJmDElx8kAvMIcVak7.ocfXVkTkp8Kxxo39JWJTHhSNeoi43aO",
+    "createdAt": "2026-08-29T04:08:11.749Z",
+    "updatedAt": "2026-08-29T04:08:11.906Z"
   }
 ]

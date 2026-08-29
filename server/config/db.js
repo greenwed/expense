@@ -16,7 +16,7 @@ if (!fs.existsSync(DATA_DIR)) {
   try {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   } catch (e) {
-    // Ignore directory creation error if /tmp already exists
+    // Ignore if directory already exists
   }
 }
 
@@ -86,9 +86,31 @@ async function initPostgresSchema(pool) {
       id VARCHAR(100) PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
       username VARCHAR(100) UNIQUE NOT NULL,
+      email VARCHAR(255),
       password VARCHAR(255) NOT NULL,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
+
+    -- Auto-migrate email column if users table was created earlier without it
+    DO $$ 
+    BEGIN 
+      IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='email') THEN
+        ALTER TABLE users ADD COLUMN email VARCHAR(255);
+      END IF;
+    END $$;
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_unique ON users(LOWER(email)) WHERE email IS NOT NULL;
+
+    CREATE TABLE IF NOT EXISTS otp_verifications (
+      id VARCHAR(100) PRIMARY KEY,
+      email VARCHAR(255) NOT NULL,
+      otp VARCHAR(10) NOT NULL,
+      type VARCHAR(50) NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_otp_email_type ON otp_verifications(email, type);
 
     CREATE TABLE IF NOT EXISTS personal_budgets (
       id VARCHAR(100) PRIMARY KEY,
@@ -145,7 +167,7 @@ async function initPostgresSchema(pool) {
     );
   `;
   await pool.query(schemaSql);
-  console.log('⚡ Neon PostgreSQL tables initialized and ready.');
+  console.log('⚡ Neon PostgreSQL tables and schema migrations initialized.');
 }
 
 export function getPgPool() {

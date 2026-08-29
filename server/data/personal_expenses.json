@@ -206,5 +206,49 @@
     "date": "2026-08-15T15:30:00.000Z",
     "createdAt": "2026-08-28T14:07:00.054Z",
     "updatedAt": "2026-08-28T14:07:00.054Z"
+  },
+  {
+    "_id": "pex_836467000d1f4ed0",
+    "id": "pex_836467000d1f4ed0",
+    "userId": "doc_1787917108295_2nsne01wj",
+    "amount": 500,
+    "category": "Food",
+    "description": "Quick grocery snack",
+    "date": "2026-08-10T12:00:00.000Z",
+    "createdAt": "2026-08-29T03:45:35.774Z",
+    "updatedAt": "2026-08-29T03:45:35.780Z"
+  },
+  {
+    "_id": "pex_09f9c9b99aaf4765",
+    "id": "pex_09f9c9b99aaf4765",
+    "userId": "doc_1787917108295_2nsne01wj",
+    "amount": 7000,
+    "category": "Shopping",
+    "description": "New shoes & clothes",
+    "date": "2026-08-15T15:30:00.000Z",
+    "createdAt": "2026-08-29T03:45:35.776Z",
+    "updatedAt": "2026-08-29T03:45:35.776Z"
+  },
+  {
+    "_id": "pex_7447594f67eb45e8",
+    "id": "pex_7447594f67eb45e8",
+    "userId": "doc_1787917108295_2nsne01wj",
+    "amount": 500,
+    "category": "Food",
+    "description": "Quick grocery snack",
+    "date": "2026-08-10T12:00:00.000Z",
+    "createdAt": "2026-08-29T04:08:12.127Z",
+    "updatedAt": "2026-08-29T04:08:12.131Z"
+  },
+  {
+    "_id": "pex_9023d0f153574a2e",
+    "id": "pex_9023d0f153574a2e",
+    "userId": "doc_1787917108295_2nsne01wj",
+    "amount": 7000,
+    "category": "Shopping",
+    "description": "New shoes & clothes",
+    "date": "2026-08-15T15:30:00.000Z",
+    "createdAt": "2026-08-29T04:08:12.128Z",
+    "updatedAt": "2026-08-29T04:08:12.128Z"
   }
 ]

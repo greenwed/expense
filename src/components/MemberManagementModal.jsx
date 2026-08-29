@@ -1,22 +1,29 @@
 import React, { useState } from 'react';
-import { X, Shield, ShieldCheck, User, Trash2, Crown, Users } from 'lucide-react';
-import { formatDateOnly } from '../utils/formatters';
+import { X, Crown, Shield, User, Trash2, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 
-export default function MemberManagementModal({ isOpen, onClose, group, currentUserId, onUpdateRole, onRemoveMember, isAdmin }) {
-  const [loadingAction, setLoadingAction] = useState(null);
+export default function MemberManagementModal({
+  isOpen,
+  onClose,
+  group,
+  currentUser,
+  onUpdateRole,
+  onRemoveMember
+}) {
+  const [loadingId, setLoadingId] = useState(null);
 
   if (!isOpen || !group) return null;
 
   const members = group.members || [];
+  const currentUserId = String(currentUser?._id || currentUser?.id);
 
   const handleRoleChange = async (targetUserId, newRole) => {
     try {
-      setLoadingAction(`role-${targetUserId}`);
+      setLoadingId(targetUserId);
       await onUpdateRole(targetUserId, newRole);
     } catch (err) {
-      alert('Failed to update role: ' + err.message);
+      console.error(err);
     } finally {
-      setLoadingAction(null);
+      setLoadingId(null);
     }
   };
 
@@ -25,127 +32,120 @@ export default function MemberManagementModal({ isOpen, onClose, group, currentU
       return;
     }
     try {
-      setLoadingAction(`remove-${targetUserId}`);
+      setLoadingId(targetUserId);
       await onRemoveMember(targetUserId);
     } catch (err) {
-      alert('Failed to remove member: ' + err.message);
+      console.error(err);
     } finally {
-      setLoadingAction(null);
+      setLoadingId(null);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fadeIn">
+      <div className="bg-white border border-slate-200/80 rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden">
         
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/50">
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-emerald-400" />
-            <div>
-              <h3 className="text-base font-bold text-white">Group Members</h3>
-              <p className="text-xs text-slate-400">{group.name} ({members.length} {members.length === 1 ? 'member' : 'members'})</p>
-            </div>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+          <div>
+            <h3 className="text-base font-extrabold text-slate-900">Manage Members & Roles</h3>
+            <span className="text-xs text-slate-400">{group.name} ({members.length} members)</span>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Member List */}
-        <div className="p-6 max-h-[60vh] overflow-y-auto space-y-3">
-          {members.map((member) => {
-            const isSelf = String(member.userId) === String(currentUserId);
-            const isMemberAdmin = member.role === 'admin';
+        <div className="p-6 space-y-3 max-h-[60vh] overflow-y-auto">
+          {members.map((m) => {
+            const isSelf = String(m.userId) === currentUserId;
+            const isTargetAdmin = m.role === 'admin';
+            const isTargetMod = m.role === 'moderator';
+            const isBusy = loadingId === m.userId;
 
             return (
               <div
-                key={member.userId}
-                className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between gap-3 hover:border-slate-700/80 transition-colors"
+                key={m.userId}
+                className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between gap-3"
               >
-                <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs ${
-                    member.role === 'admin'
-                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                      : member.role === 'moderator'
-                      ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
-                      : 'bg-slate-800 text-slate-300 border border-slate-700'
-                  }`}>
-                    {member.role === 'admin' ? (
-                      <Crown className="w-4 h-4" />
-                    ) : member.role === 'moderator' ? (
-                      <ShieldCheck className="w-4 h-4" />
-                    ) : (
-                      <User className="w-4 h-4" />
-                    )}
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-black text-indigo-600 shadow-sm shrink-0">
+                    {m.name ? m.name[0].toUpperCase() : 'M'}
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-white">{member.name}</span>
-                      {isSelf && (
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                          You
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-slate-400 flex items-center gap-2">
-                      <span className="text-emerald-400 font-mono">@{member.username}</span>
-                      <span>•</span>
-                      <span>Joined {formatDateOnly(member.joinedAt)}</span>
-                    </div>
+                  <div className="min-w-0">
+                    <span className="text-xs sm:text-sm font-bold text-slate-900 block truncate">
+                      {m.name} {isSelf && <span className="text-indigo-600 text-xs">(You)</span>}
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-mono block truncate">
+                      @{m.username}
+                    </span>
                   </div>
                 </div>
 
-                {/* Role Controls */}
-                <div className="flex items-center gap-2">
-                  {isAdmin && !isSelf && !isMemberAdmin ? (
-                    <>
-                      <select
-                        value={member.role}
-                        disabled={loadingAction === `role-${member.userId}`}
-                        onChange={(e) => handleRoleChange(member.userId, e.target.value)}
-                        className="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:border-emerald-500 cursor-pointer"
-                      >
-                        <option value="member">Member</option>
-                        <option value="moderator">Moderator</option>
-                      </select>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1 border ${
+                    isTargetAdmin
+                      ? 'bg-amber-50 text-amber-700 border-amber-200'
+                      : isTargetMod
+                      ? 'bg-purple-50 text-purple-700 border-purple-200'
+                      : 'bg-slate-200/70 text-slate-600 border-slate-300'
+                  }`}>
+                    {isTargetAdmin && <Crown className="w-3 h-3" />}
+                    {isTargetMod && <Shield className="w-3 h-3" />}
+                    <span>{m.role}</span>
+                  </span>
+
+                  {!isSelf && !isTargetAdmin && (
+                    <div className="flex items-center gap-1">
+                      {isTargetMod ? (
+                        <button
+                          type="button"
+                          onClick={() => handleRoleChange(m.userId, 'member')}
+                          disabled={isBusy}
+                          title="Demote to Member"
+                          className="p-1.5 rounded-lg bg-slate-200/70 text-slate-600 hover:bg-slate-300 transition-colors"
+                        >
+                          <ArrowDownCircle className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleRoleChange(m.userId, 'moderator')}
+                          disabled={isBusy}
+                          title="Promote to Moderator"
+                          className="p-1.5 rounded-lg bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
+                        >
+                          <ArrowUpCircle className="w-4 h-4" />
+                        </button>
+                      )}
 
                       <button
-                        onClick={() => handleRemove(member.userId, member.name)}
-                        disabled={loadingAction === `remove-${member.userId}`}
-                        title="Remove member"
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                        type="button"
+                        onClick={() => handleRemove(m.userId, m.name)}
+                        disabled={isBusy}
+                        title="Remove from group"
+                        className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
-                    </>
-                  ) : (
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
-                      member.role === 'admin'
-                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                        : member.role === 'moderator'
-                        ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                        : 'bg-slate-800 text-slate-400 border border-slate-700'
-                    }`}>
-                      {member.role}
-                    </span>
+                    </div>
                   )}
                 </div>
+
               </div>
             );
           })}
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-3 bg-slate-950/60 border-t border-slate-800 flex justify-end">
+        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 text-right">
           <button
+            type="button"
             onClick={onClose}
-            className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors"
+            className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition-colors"
           >
-            Close
+            Done
           </button>
         </div>
 

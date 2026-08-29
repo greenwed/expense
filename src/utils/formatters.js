@@ -33,12 +33,31 @@ export function formatDateOnly(dateStr) {
   }).format(d);
 }
 
+export function formatDayHeader(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat('en-IN', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  }).format(d);
+}
+
 export function getMonthName(monthStr) {
   // monthStr: YYYY-MM
   if (!monthStr) return '';
   const [year, month] = monthStr.split('-').map(Number);
   const d = new Date(Date.UTC(year, month - 1, 1));
   return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+}
+
+export function getMonthShort(monthStr) {
+  if (!monthStr) return '';
+  const [year, month] = monthStr.split('-').map(Number);
+  const d = new Date(Date.UTC(year, month - 1, 1));
+  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
 
 export function getCurrentMonthStr() {
@@ -49,56 +68,44 @@ export function getCurrentMonthStr() {
 export const CATEGORY_CONFIG = {
   Food: {
     name: 'Food',
-    color: '#10b981', // emerald-500
-    bgLight: 'bg-emerald-500/10',
-    border: 'border-emerald-500/30',
-    text: 'text-emerald-400',
-    badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+    color: '#0EA5E9', // Sky Blue (matching Groceries in mockup)
+    bgColor: 'bg-sky-50 text-sky-600 border-sky-100',
+    barColor: 'bg-sky-500',
     icon: 'Utensils'
   },
   Shopping: {
     name: 'Shopping',
-    color: '#6366f1', // indigo-500
-    bgLight: 'bg-indigo-500/10',
-    border: 'border-indigo-500/30',
-    text: 'text-indigo-400',
-    badge: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40',
+    color: '#F97316', // Vibrant Orange (matching Clothing in mockup)
+    bgColor: 'bg-orange-50 text-orange-600 border-orange-100',
+    barColor: 'bg-orange-500',
     icon: 'ShoppingBag'
   },
   Entertainment: {
     name: 'Entertainment',
-    color: '#f59e0b', // amber-500
-    bgLight: 'bg-amber-500/10',
-    border: 'border-amber-500/30',
-    text: 'text-amber-400',
-    badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+    color: '#8B5CF6', // Purple/Violet
+    bgColor: 'bg-purple-50 text-purple-600 border-purple-100',
+    barColor: 'bg-purple-500',
     icon: 'Film'
   },
   Medical: {
     name: 'Medical',
-    color: '#f43f5e', // rose-500
-    bgLight: 'bg-rose-500/10',
-    border: 'border-rose-500/30',
-    text: 'text-rose-400',
-    badge: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
+    color: '#10B981', // Mint Emerald
+    bgColor: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    barColor: 'bg-emerald-500',
     icon: 'HeartPulse'
   },
   Transport: {
     name: 'Transport',
-    color: '#0ea5e9', // sky-500
-    bgLight: 'bg-sky-500/10',
-    border: 'border-sky-500/30',
-    text: 'text-sky-400',
-    badge: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
+    color: '#6366F1', // Deep Indigo
+    bgColor: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+    barColor: 'bg-indigo-500',
     icon: 'Car'
   },
   Others: {
     name: 'Others',
-    color: '#8b5cf6', // purple-500
-    bgLight: 'bg-purple-500/10',
-    border: 'border-purple-500/30',
-    text: 'text-purple-400',
-    badge: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
+    color: '#F43F5E', // Rose / Coral
+    bgColor: 'bg-rose-50 text-rose-600 border-rose-100',
+    barColor: 'bg-rose-500',
     icon: 'MoreHorizontal'
   }
 };

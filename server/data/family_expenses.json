@@ -165,5 +165,33 @@
     "date": "2026-08-18T10:00:00.000Z",
     "createdAt": "2026-08-28T14:07:00.112Z",
     "updatedAt": "2026-08-28T14:07:00.116Z"
+  },
+  {
+    "_id": "fex_997aa80e3b684ab0",
+    "id": "fex_997aa80e3b684ab0",
+    "groupId": "grp_68b369536e7042dd",
+    "userId": "doc_1787917108413_qq38laizu",
+    "userName": "Bob Smith",
+    "userUsername": "bob",
+    "amount": 4300,
+    "category": "Medical",
+    "description": "Pharmacy medicines (discounted)",
+    "date": "2026-08-18T10:00:00.000Z",
+    "createdAt": "2026-08-29T03:45:35.846Z",
+    "updatedAt": "2026-08-29T03:45:35.851Z"
+  },
+  {
+    "_id": "fex_d9982ad369cd4d25",
+    "id": "fex_d9982ad369cd4d25",
+    "groupId": "grp_26441e8994b946e8",
+    "userId": "doc_1787917108413_qq38laizu",
+    "userName": "Bob Smith",
+    "userUsername": "bob",
+    "amount": 4300,
+    "category": "Medical",
+    "description": "Pharmacy medicines (discounted)",
+    "date": "2026-08-18T10:00:00.000Z",
+    "createdAt": "2026-08-29T04:08:12.186Z",
+    "updatedAt": "2026-08-29T04:08:12.190Z"
   }
 ]

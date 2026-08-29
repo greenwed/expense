@@ -1,80 +1,149 @@
 import React from 'react';
+import {
+  IndianRupee,
+  Home,
+  PieChart,
+  Users,
+  Settings,
+  Plus,
+  Calendar,
+  LogOut,
+  ChevronDown,
+  Sparkles
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { IndianRupee, User, Users, LogOut, Sparkles } from 'lucide-react';
+import { getMonthName } from '../utils/formatters';
 
-export default function Navbar({ activeWorkspace, setActiveWorkspace, groupCount = 0 }) {
+export default function Navbar({
+  activeTab = 'home',
+  onChangeTab,
+  activeWorkspace = 'personal',
+  onSwitchWorkspace,
+  month,
+  onOpenMonthSelector,
+  onOpenAddExpense
+}) {
   const { user, logout } = useAuth();
 
+  const tabs = [
+    { id: 'home', label: 'Home', icon: Home },
+    { id: 'report', label: 'Report', icon: PieChart },
+    { id: 'plan', label: 'Plan', icon: Users },
+    { id: 'settings', label: 'Settings', icon: Settings }
+  ];
+
   return (
-    <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-md border-b border-slate-800">
+    <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-16 sm:h-18">
           
-          {/* Logo & Brand */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-400/30">
-              <IndianRupee className="w-5 h-5 text-white stroke-[2.5]" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-lg text-white tracking-tight">RupeeTrack</span>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  ₹ INR
+          {/* Left: Brand Logo */}
+          <div className="flex items-center gap-6">
+            <div 
+              onClick={() => onChangeTab('home')}
+              className="flex items-center gap-2.5 cursor-pointer group"
+            >
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+                <IndianRupee className="w-5 h-5 stroke-[2.5]" />
+              </div>
+              <div>
+                <span className="text-lg font-extrabold text-slate-900 tracking-tight block leading-tight">
+                  RupeeTrack
+                </span>
+                <span className="text-[10px] font-semibold text-slate-400 block -mt-0.5">
+                  Fintech Budgeting
                 </span>
               </div>
-              <p className="text-xs text-slate-400 hidden sm:block">Smart Personal & Family Expense Hub</p>
             </div>
+
+            {/* Desktop Navigation Tabs */}
+            <nav className="hidden lg:flex items-center gap-1 bg-slate-100/80 p-1 rounded-2xl border border-slate-200/60">
+              {tabs.map((t) => {
+                const Icon = t.icon;
+                const isActive = activeTab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => onChangeTab(t.id)}
+                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      isActive
+                        ? 'bg-white text-indigo-600 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{t.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
           </div>
 
-          {/* Workspace Switcher Tabs */}
-          <div className="flex items-center bg-slate-950/60 p-1 rounded-xl border border-slate-800">
-            <button
-              onClick={() => setActiveWorkspace('personal')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                activeWorkspace === 'personal'
-                  ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20 font-semibold'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
-            >
-              <User className="w-4 h-4" />
-              <span>Personal</span>
-            </button>
-
-            <button
-              onClick={() => setActiveWorkspace('family')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                activeWorkspace === 'family'
-                  ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20 font-semibold'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              <span>Family</span>
-              {groupCount > 0 && (
-                <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold ${
-                  activeWorkspace === 'family' ? 'bg-slate-950 text-emerald-400' : 'bg-slate-800 text-slate-300'
-                }`}>
-                  {groupCount}
-                </span>
-              )}
-            </button>
-          </div>
-
-          {/* User Profile & Logout */}
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex flex-col items-end">
-              <span className="text-sm font-medium text-slate-200">{user?.name}</span>
-              <span className="text-xs text-emerald-400 font-mono">@{user?.username}</span>
-            </div>
+          {/* Right Actions */}
+          <div className="flex items-center gap-2 sm:gap-3">
             
+            {/* Workspace Switcher (Desktop) */}
+            <div className="hidden sm:flex bg-slate-100 p-1 rounded-2xl border border-slate-200/60">
+              <button
+                type="button"
+                onClick={() => onSwitchWorkspace('personal')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  activeWorkspace === 'personal'
+                    ? 'bg-white text-indigo-600 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                Personal
+              </button>
+              <button
+                type="button"
+                onClick={() => onSwitchWorkspace('family')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  activeWorkspace === 'family'
+                    ? 'bg-white text-indigo-600 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                Family
+              </button>
+            </div>
+
+            {/* Month Selector Chip */}
             <button
-              onClick={logout}
-              title="Logout"
-              className="p-2 rounded-lg bg-slate-800/80 hover:bg-rose-500/20 hover:text-rose-400 text-slate-400 border border-slate-700/60 hover:border-rose-500/40 transition-all flex items-center gap-1.5 text-xs font-medium"
+              type="button"
+              onClick={onOpenMonthSelector}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 transition-colors shadow-sm"
             >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden md:inline">Logout</span>
+              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+              <span className="hidden sm:inline">{getMonthName(month)}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </button>
+
+            {/* Desktop + Add Expense CTA */}
+            <button
+              type="button"
+              onClick={onOpenAddExpense}
+              className="hidden sm:flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs rounded-2xl shadow-md shadow-indigo-500/25 active:scale-95 transition-all"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>Add Expense</span>
+            </button>
+
+            {/* User Pill / Settings Trigger */}
+            <button
+              type="button"
+              onClick={() => onChangeTab('settings')}
+              className="flex items-center gap-2 p-1.5 pr-2.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all"
+            >
+              <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-sm">
+                {user?.name ? user.name[0].toUpperCase() : 'U'}
+              </div>
+              <span className="hidden md:inline text-xs font-bold text-slate-800 max-w-[90px] truncate">
+                {user?.name || 'User'}
+              </span>
+            </button>
+
           </div>
 
         </div>

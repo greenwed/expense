@@ -155,5 +155,55 @@
     "inviteToken": "8ae35273-e8b0-40c2-aee1-3149e28a34b3",
     "createdAt": "2026-08-28T14:07:00.109Z",
     "updatedAt": "2026-08-28T14:07:00.115Z"
+  },
+  {
+    "_id": "grp_68b369536e7042dd",
+    "id": "grp_68b369536e7042dd",
+    "name": "Smith Family",
+    "createdBy": "doc_1787917108295_2nsne01wj",
+    "members": [
+      {
+        "userId": "doc_1787917108295_2nsne01wj",
+        "name": "Alice Smith",
+        "username": "alice",
+        "role": "admin",
+        "joinedAt": "2026-08-29T03:45:35.836Z"
+      },
+      {
+        "userId": "doc_1787917108413_qq38laizu",
+        "name": "Bob Smith",
+        "username": "bob",
+        "role": "moderator",
+        "joinedAt": "2026-08-29T03:45:35.843Z"
+      }
+    ],
+    "inviteToken": "1af272ab-82a0-447f-9416-8700ab154d71",
+    "createdAt": "2026-08-29T03:45:35.840Z",
+    "updatedAt": "2026-08-29T03:45:35.850Z"
+  },
+  {
+    "_id": "grp_26441e8994b946e8",
+    "id": "grp_26441e8994b946e8",
+    "name": "Smith Family",
+    "createdBy": "doc_1787917108295_2nsne01wj",
+    "members": [
+      {
+        "userId": "doc_1787917108295_2nsne01wj",
+        "name": "Alice Smith",
+        "username": "alice",
+        "role": "admin",
+        "joinedAt": "2026-08-29T04:08:12.183Z"
+      },
+      {
+        "userId": "doc_1787917108413_qq38laizu",
+        "name": "Bob Smith",
+        "username": "bob",
+        "role": "moderator",
+        "joinedAt": "2026-08-29T04:08:12.184Z"
+      }
+    ],
+    "inviteToken": "36415dcc-a956-4baa-9d27-355a361188fd",
+    "createdAt": "2026-08-29T04:08:12.183Z",
+    "updatedAt": "2026-08-29T04:08:12.189Z"
   }
 ]
