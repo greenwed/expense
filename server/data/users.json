@@ -73,5 +73,65 @@
     "password": "$2a$10$MmfSF7UYMzaP2NY3MZ/kbe.sEW.tFOnlwFpZMqRKGHmkwu2KuH4Ou",
     "createdAt": "2026-08-29T04:25:07.422Z",
     "updatedAt": "2026-08-29T04:25:07.577Z"
+  },
+  {
+    "_id": "usr_85133841ce1e49f5",
+    "id": "usr_85133841ce1e49f5",
+    "name": "Income Master",
+    "username": "incometester_1788003234857",
+    "email": "incometester_1788003234857@example.com",
+    "password": "$2a$10$4X7zHqgM8LorhPcobf347OJ9hOiUI1JCwlg//m5zoWMKRDcYVSVVi",
+    "createdAt": "2026-08-29T11:33:54.920Z",
+    "updatedAt": "2026-08-29T11:33:54.920Z"
+  },
+  {
+    "_id": "usr_69e046d5d1b44e9d",
+    "id": "usr_69e046d5d1b44e9d",
+    "name": "Income Master",
+    "username": "incometester_1788003241051",
+    "email": "incometester_1788003241051@example.com",
+    "password": "$2a$10$MwSk/JpJj/k4Rfs0DJONmO1J1HXzwwvqPzcURtrlh./HkBEWWs5Wa",
+    "createdAt": "2026-08-29T11:34:01.110Z",
+    "updatedAt": "2026-08-29T11:34:01.110Z"
+  },
+  {
+    "_id": "usr_35110a03c8d34aea",
+    "id": "usr_35110a03c8d34aea",
+    "name": "Income Master",
+    "username": "incometester_1788003261008",
+    "email": "incometester_1788003261008@example.com",
+    "password": "$2a$10$Rvx6GNoNqOEW9ewVu0phe.ncFVq1sn6OVpW7ymZGQflEdBFTnBIs2",
+    "createdAt": "2026-08-29T11:34:21.076Z",
+    "updatedAt": "2026-08-29T11:34:21.076Z"
+  },
+  {
+    "_id": "usr_94f63f0480aa42fe",
+    "id": "usr_94f63f0480aa42fe",
+    "name": "Test Explorer",
+    "username": "user_1788003261132",
+    "email": "user_1788003261132@example.com",
+    "password": "$2a$10$CcTGdkdaxleQ6EdTeyEq3.Zoim7Ah2gtSAjpgC5IXgvJTWbbSHBZa",
+    "createdAt": "2026-08-29T11:34:21.207Z",
+    "updatedAt": "2026-08-29T11:34:21.363Z"
+  },
+  {
+    "_id": "usr_474520475a854733",
+    "id": "usr_474520475a854733",
+    "name": "Income Master",
+    "username": "incometester_1788003462777",
+    "email": "incometester_1788003462777@example.com",
+    "password": "$2a$10$eKQq08oom0lo98U6osMfpuojqwB1EXn1UYY5E1IzLVTR2a36bR2Ey",
+    "createdAt": "2026-08-29T11:37:42.850Z",
+    "updatedAt": "2026-08-29T11:37:42.850Z"
+  },
+  {
+    "_id": "usr_d219b5c038e34d1a",
+    "id": "usr_d219b5c038e34d1a",
+    "name": "Test Explorer",
+    "username": "user_1788003462906",
+    "email": "user_1788003462906@example.com",
+    "password": "$2a$10$KL46N0yiXauO0uIblQUuNu.NcJ9os9DrpNaL5yp2q8jare.P6w4O2",
+    "createdAt": "2026-08-29T11:37:42.980Z",
+    "updatedAt": "2026-08-29T11:37:43.132Z"
   }
 ]

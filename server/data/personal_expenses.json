@@ -272,5 +272,49 @@
     "date": "2026-08-15T15:30:00.000Z",
     "createdAt": "2026-08-29T04:25:07.797Z",
     "updatedAt": "2026-08-29T04:25:07.797Z"
+  },
+  {
+    "_id": "pex_a83758ad378a4c00",
+    "id": "pex_a83758ad378a4c00",
+    "userId": "usr_35110a03c8d34aea",
+    "amount": 14000,
+    "category": "Food",
+    "description": "Monthly Groceries & Dining",
+    "date": "2026-08-12T10:00:00.000Z",
+    "createdAt": "2026-08-29T11:34:21.086Z",
+    "updatedAt": "2026-08-29T11:34:21.086Z"
+  },
+  {
+    "_id": "pex_c148d11f01ae41f7",
+    "id": "pex_c148d11f01ae41f7",
+    "userId": "usr_35110a03c8d34aea",
+    "amount": 6000,
+    "category": "Shopping",
+    "description": "Clothing & Gadgets",
+    "date": "2026-08-15T16:00:00.000Z",
+    "createdAt": "2026-08-29T11:34:21.087Z",
+    "updatedAt": "2026-08-29T11:34:21.087Z"
+  },
+  {
+    "_id": "pex_e213a3c1ec264f4d",
+    "id": "pex_e213a3c1ec264f4d",
+    "userId": "usr_474520475a854733",
+    "amount": 14000,
+    "category": "Food",
+    "description": "Monthly Groceries & Dining",
+    "date": "2026-08-12T10:00:00.000Z",
+    "createdAt": "2026-08-29T11:37:42.856Z",
+    "updatedAt": "2026-08-29T11:37:42.856Z"
+  },
+  {
+    "_id": "pex_46cbf7f85f094d1e",
+    "id": "pex_46cbf7f85f094d1e",
+    "userId": "usr_474520475a854733",
+    "amount": 6000,
+    "category": "Shopping",
+    "description": "Clothing & Gadgets",
+    "date": "2026-08-15T16:00:00.000Z",
+    "createdAt": "2026-08-29T11:37:42.857Z",
+    "updatedAt": "2026-08-29T11:37:42.857Z"
   }
 ]

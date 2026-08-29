@@ -2,6 +2,7 @@ import express from 'express';
 import { authenticateToken, requireGroupMember, requireRoles } from '../middleware/auth.js';
 import FamilyGroupModel from '../models/FamilyGroup.js';
 import FamilyBudgetModel from '../models/FamilyBudget.js';
+import FamilyIncomeModel from '../models/FamilyIncome.js';
 import FamilyExpenseModel from '../models/FamilyExpense.js';
 import { VALID_CATEGORIES } from '../models/PersonalExpense.js';
 
@@ -20,7 +21,6 @@ router.get('/groups', async (req, res) => {
     const userId = req.user._id || req.user.id;
     const groups = await FamilyGroupModel.findUserGroups(userId);
     
-    // Map with current user's role in each group
     const mapped = groups.map(g => {
       const myMember = (g.members || []).find(m => String(m.userId) === String(userId));
       return {
@@ -36,7 +36,7 @@ router.get('/groups', async (req, res) => {
   }
 });
 
-// 2. Create new group (Creator becomes Admin)
+// 2. Create new group
 router.post('/groups', async (req, res) => {
   try {
     const { name } = req.body;
@@ -62,7 +62,7 @@ router.post('/groups', async (req, res) => {
   }
 });
 
-// 3. Get group info by invite token (for joining preview)
+// 3. Get group info by invite token
 router.get('/invite-info/:inviteToken', async (req, res) => {
   try {
     const { inviteToken } = req.params;
@@ -121,7 +121,7 @@ router.get('/groups/:groupId', requireGroupMember, async (req, res) => {
   }
 });
 
-// 6. Rename Group (Admin only)
+// 6. Rename Group
 router.put('/groups/:groupId/rename', requireGroupMember, requireRoles(['admin']), async (req, res) => {
   try {
     const { name } = req.body;
@@ -140,7 +140,7 @@ router.put('/groups/:groupId/rename', requireGroupMember, requireRoles(['admin']
   }
 });
 
-// 7. Regenerate / Get Invite Link (Admin only)
+// 7. Regenerate / Get Invite Link
 router.post('/groups/:groupId/invite', requireGroupMember, requireRoles(['admin']), async (req, res) => {
   try {
     const updated = await FamilyGroupModel.regenerateInviteToken(req.params.groupId);
@@ -154,20 +154,45 @@ router.post('/groups/:groupId/invite', requireGroupMember, requireRoles(['admin'
   }
 });
 
-// 8. Group Dashboard Data (Monthly Summary, Metrics, Breakdown, Expenses)
+// 8. Group Dashboard Data (supports month OR custom startDate & endDate)
 router.get('/groups/:groupId/dashboard', requireGroupMember, async (req, res) => {
   try {
     const { groupId } = req.params;
-    const month = req.query.month || getCurrentMonth();
+    const { month, startDate, endDate } = req.query;
 
-    // 1. Get Group Budget
-    const budgetDoc = await FamilyBudgetModel.getBudget(groupId, month);
-    const budget = budgetDoc ? Number(budgetDoc.amount) : 0;
+    let incomes = [];
+    let expenses = [];
+    let queryPeriod = '';
 
-    // 2. Get Group Expenses for Month
-    const expenses = await FamilyExpenseModel.findByMonth(groupId, month);
+    if (startDate && endDate) {
+      const s = new Date(startDate);
+      s.setUTCHours(0, 0, 0, 0);
+      const e = new Date(endDate);
+      e.setUTCHours(23, 59, 59, 999);
 
-    // 3. Compute Metrics & Breakdown
+      incomes = await FamilyIncomeModel.findByDateRange(groupId, s.toISOString(), e.toISOString());
+      expenses = await FamilyExpenseModel.findByDateRange(groupId, s.toISOString(), e.toISOString());
+      queryPeriod = `${startDate} to ${endDate}`;
+    } else {
+      const targetMonth = month || getCurrentMonth();
+      incomes = await FamilyIncomeModel.findByMonth(groupId, targetMonth);
+      expenses = await FamilyExpenseModel.findByMonth(groupId, targetMonth);
+      queryPeriod = targetMonth;
+    }
+
+    // 1. Compute Incomes
+    let totalIncome = incomes.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0);
+
+    // Fallback to legacy budget if monthly query and no explicit incomes
+    if (totalIncome === 0 && !startDate && !endDate) {
+      const targetMonth = month || getCurrentMonth();
+      const budgetDoc = await FamilyBudgetModel.getBudget(groupId, targetMonth);
+      if (budgetDoc && Number(budgetDoc.amount) > 0) {
+        totalIncome = Number(budgetDoc.amount);
+      }
+    }
+
+    // 2. Compute Expenses & Breakdown
     let totalSpent = 0;
     const categoryTotals = {};
     VALID_CATEGORIES.forEach(cat => {
@@ -181,10 +206,10 @@ router.get('/groups/:groupId/dashboard', requireGroupMember, async (req, res) =>
       categoryTotals[cat] = (categoryTotals[cat] || 0) + amt;
     });
 
-    const remainingBalance = budget - totalSpent;
-    const percentSpent = budget > 0 ? Number(((totalSpent / budget) * 100).toFixed(1)) : 0;
-    const isExceeding80 = budget > 0 && totalSpent >= 0.8 * budget;
-    const isExceeding100 = budget > 0 && totalSpent > budget;
+    const remainingBalance = totalIncome - totalSpent;
+    const percentSpent = totalIncome > 0 ? Number(((totalSpent / totalIncome) * 100).toFixed(1)) : 0;
+    const isExceeding80 = totalIncome > 0 && totalSpent >= 0.8 * totalIncome;
+    const isExceeding100 = totalIncome > 0 && totalSpent > totalIncome;
 
     const categoryBreakdown = VALID_CATEGORIES.map(cat => {
       const amt = categoryTotals[cat] || 0;
@@ -199,8 +224,12 @@ router.get('/groups/:groupId/dashboard', requireGroupMember, async (req, res) =>
     return res.json({
       group: req.group,
       currentUserRole: req.userRole,
-      month,
-      budget,
+      period: queryPeriod,
+      month: month || getCurrentMonth(),
+      startDate: startDate || null,
+      endDate: endDate || null,
+      totalIncome,
+      budget: totalIncome,
       totalSpent,
       remainingBalance,
       percentSpent,
@@ -208,7 +237,8 @@ router.get('/groups/:groupId/dashboard', requireGroupMember, async (req, res) =>
       isExceeding100,
       categories: categoryBreakdown,
       categoryBreakdown,
-      expenses
+      expenses,
+      incomes
     });
   } catch (err) {
     console.error('Family dashboard error:', err);
@@ -216,34 +246,137 @@ router.get('/groups/:groupId/dashboard', requireGroupMember, async (req, res) =>
   }
 });
 
-// 9. Set / Update Group Monthly Budget (Admin & Moderator)
-router.post('/groups/:groupId/budget', requireGroupMember, requireRoles(['admin', 'moderator']), async (req, res) => {
+// 9. Get Group Incomes
+router.get('/groups/:groupId/incomes', requireGroupMember, async (req, res) => {
   try {
     const { groupId } = req.params;
-    const { month, amount } = req.body;
-    const userId = req.user._id || req.user.id;
+    const { month, startDate, endDate } = req.query;
 
-    const targetMonth = month || getCurrentMonth();
-    if (!/^\d{4}-\d{2}$/.test(targetMonth)) {
-      return res.status(400).json({ error: 'Month must be in YYYY-MM format.' });
+    let incomes = [];
+    if (startDate && endDate) {
+      incomes = await FamilyIncomeModel.findByDateRange(groupId, startDate, endDate);
+    } else {
+      const targetMonth = month || getCurrentMonth();
+      incomes = await FamilyIncomeModel.findByMonth(groupId, targetMonth);
     }
 
-    if (amount === undefined || isNaN(Number(amount)) || Number(amount) < 0) {
-      return res.status(400).json({ error: 'Budget amount must be a non-negative number.' });
-    }
-
-    const updatedBudget = await FamilyBudgetModel.setBudget(groupId, targetMonth, Number(amount), userId);
-    return res.json({
-      message: 'Group monthly budget updated successfully!',
-      budget: updatedBudget
-    });
+    return res.json({ incomes });
   } catch (err) {
-    console.error('Set family budget error:', err);
-    return res.status(500).json({ error: 'Failed to update family budget.' });
+    console.error('Get family incomes error:', err);
+    return res.status(500).json({ error: 'Failed to fetch family incomes.' });
   }
 });
 
-// 10. Add Group Expense (All Members: Admin, Moderator, Member)
+// 10. Add Group Income entry
+router.post('/groups/:groupId/incomes', requireGroupMember, async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { amount, description, date } = req.body;
+
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+      return res.status(400).json({ error: 'Income amount must be greater than 0.' });
+    }
+
+    if (!description || typeof description !== 'string' || description.trim().length === 0) {
+      return res.status(400).json({ error: 'Income description is mandatory (e.g. Salary, Shares, Gift).' });
+    }
+
+    const income = await FamilyIncomeModel.create({
+      groupId,
+      user: req.user,
+      amount: Number(amount),
+      description: description.trim(),
+      date: date ? new Date(date) : new Date()
+    });
+
+    return res.status(201).json({
+      message: 'Family income added successfully!',
+      income
+    });
+  } catch (err) {
+    console.error('Add family income error:', err);
+    return res.status(500).json({ error: 'Failed to add family income.' });
+  }
+});
+
+// 11. Edit Group Income entry
+router.put('/groups/:groupId/incomes/:incomeId', requireGroupMember, async (req, res) => {
+  try {
+    const { groupId, incomeId } = req.params;
+    const { amount, description, date } = req.body;
+    const userId = String(req.user._id || req.user.id);
+
+    const existing = await FamilyIncomeModel.findById(incomeId);
+    if (!existing) {
+      return res.status(404).json({ error: 'Income entry not found.' });
+    }
+
+    if (String(existing.groupId) !== String(groupId)) {
+      return res.status(400).json({ error: 'Income entry does not belong to this group.' });
+    }
+
+    const isCreator = String(existing.userId) === userId;
+    const isModOrAdmin = ['admin', 'moderator'].includes(req.userRole);
+
+    if (!isCreator && !isModOrAdmin) {
+      return res.status(403).json({ error: 'Permission denied to edit this income entry.' });
+    }
+
+    if (amount !== undefined && (isNaN(Number(amount)) || Number(amount) <= 0)) {
+      return res.status(400).json({ error: 'Income amount must be greater than 0.' });
+    }
+
+    if (description !== undefined && (!description || description.trim().length === 0)) {
+      return res.status(400).json({ error: 'Income description cannot be empty.' });
+    }
+
+    const updated = await FamilyIncomeModel.update(incomeId, groupId, {
+      amount,
+      description: description ? description.trim() : undefined,
+      date
+    });
+
+    return res.json({
+      message: 'Family income updated successfully!',
+      income: updated
+    });
+  } catch (err) {
+    console.error('Edit family income error:', err);
+    return res.status(500).json({ error: 'Failed to update family income.' });
+  }
+});
+
+// 12. Delete Group Income entry
+router.delete('/groups/:groupId/incomes/:incomeId', requireGroupMember, async (req, res) => {
+  try {
+    const { groupId, incomeId } = req.params;
+    const userId = String(req.user._id || req.user.id);
+
+    const existing = await FamilyIncomeModel.findById(incomeId);
+    if (!existing) {
+      return res.status(404).json({ error: 'Income entry not found.' });
+    }
+
+    if (String(existing.groupId) !== String(groupId)) {
+      return res.status(400).json({ error: 'Income entry does not belong to this group.' });
+    }
+
+    const isCreator = String(existing.userId) === userId;
+    const isModOrAdmin = ['admin', 'moderator'].includes(req.userRole);
+
+    if (!isCreator && !isModOrAdmin) {
+      return res.status(403).json({ error: 'Permission denied to delete this income entry.' });
+    }
+
+    await FamilyIncomeModel.delete(incomeId, groupId);
+    return res.json({ message: 'Family income entry deleted successfully!' });
+  } catch (err) {
+    console.error('Delete family income error:', err);
+    return res.status(500).json({ error: 'Failed to delete family income.' });
+  }
+});
+
+// 13. Add Group Expense
 router.post('/groups/:groupId/expenses', requireGroupMember, async (req, res) => {
   try {
     const { groupId } = req.params;
@@ -282,7 +415,7 @@ router.post('/groups/:groupId/expenses', requireGroupMember, async (req, res) =>
   }
 });
 
-// 11. Edit Group Expense (Admin & Moderator only)
+// 14. Edit Group Expense
 router.put('/groups/:groupId/expenses/:expenseId', requireGroupMember, requireRoles(['admin', 'moderator']), async (req, res) => {
   try {
     const { groupId, expenseId } = req.params;
@@ -328,7 +461,7 @@ router.put('/groups/:groupId/expenses/:expenseId', requireGroupMember, requireRo
   }
 });
 
-// 12. Delete Group Expense (Admin & Moderator only)
+// 15. Delete Group Expense
 router.delete('/groups/:groupId/expenses/:expenseId', requireGroupMember, requireRoles(['admin', 'moderator']), async (req, res) => {
   try {
     const { groupId, expenseId } = req.params;
@@ -350,7 +483,7 @@ router.delete('/groups/:groupId/expenses/:expenseId', requireGroupMember, requir
   }
 });
 
-// 13. Update Member Role (Admin only)
+// 16. Update Member Role
 router.put('/groups/:groupId/members/:targetUserId', requireGroupMember, requireRoles(['admin']), async (req, res) => {
   try {
     const { groupId, targetUserId } = req.params;
@@ -371,14 +504,13 @@ router.put('/groups/:groupId/members/:targetUserId', requireGroupMember, require
   }
 });
 
-// 14. Remove Member or Leave Group
+// 17. Remove Member or Leave Group
 router.delete('/groups/:groupId/members/:targetUserId', requireGroupMember, async (req, res) => {
   try {
     const { groupId, targetUserId } = req.params;
     const currentUserId = String(req.user._id || req.user.id);
     const isSelfLeaving = currentUserId === String(targetUserId);
 
-    // Only Admin can remove other members; any member can leave themselves
     if (!isSelfLeaving && req.userRole !== 'admin') {
       return res.status(403).json({ error: 'Only admins can remove other members from the group.' });
     }

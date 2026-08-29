@@ -10,7 +10,7 @@ export default function BottomNav({
     { id: 'home', label: 'Home', icon: Home },
     { id: 'report', label: 'Report', icon: PieChart },
     { id: 'fab', isFab: true },
-    { id: 'plan', label: 'Plan', icon: Users },
+    { id: 'family', label: 'Family', icon: Users },
     { id: 'settings', label: 'Settings', icon: Settings }
   ];
 
@@ -19,7 +19,7 @@ export default function BottomNav({
       <div className="max-w-md mx-auto px-4 pb-4 pointer-events-auto">
         <div className="relative bg-white/95 backdrop-blur-xl border border-slate-200/80 rounded-[28px] px-3 py-2 shadow-2xl shadow-slate-900/10 flex items-center justify-between">
           
-          {navItems.map((item, idx) => {
+          {navItems.map((item) => {
             if (item.isFab) {
               return (
                 <div key="fab-btn" className="relative -top-6 flex items-center justify-center">

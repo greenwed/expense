@@ -112,13 +112,14 @@ async function initPostgresSchema(pool) {
 
     CREATE INDEX IF NOT EXISTS idx_otp_email_type ON otp_verifications(email, type);
 
-    CREATE TABLE IF NOT EXISTS personal_budgets (
+    CREATE TABLE IF NOT EXISTS personal_incomes (
       id VARCHAR(100) PRIMARY KEY,
       user_id VARCHAR(100) NOT NULL,
-      month VARCHAR(20) NOT NULL,
-      amount NUMERIC NOT NULL DEFAULT 0,
-      updated_at TIMESTAMPTZ DEFAULT NOW(),
-      UNIQUE(user_id, month)
+      amount NUMERIC NOT NULL,
+      description TEXT NOT NULL,
+      date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS personal_expenses (
@@ -132,6 +133,15 @@ async function initPostgresSchema(pool) {
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
 
+    CREATE TABLE IF NOT EXISTS personal_budgets (
+      id VARCHAR(100) PRIMARY KEY,
+      user_id VARCHAR(100) NOT NULL,
+      month VARCHAR(20) NOT NULL,
+      amount NUMERIC NOT NULL DEFAULT 0,
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(user_id, month)
+    );
+
     CREATE TABLE IF NOT EXISTS family_groups (
       id VARCHAR(100) PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
@@ -142,14 +152,17 @@ async function initPostgresSchema(pool) {
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
 
-    CREATE TABLE IF NOT EXISTS family_budgets (
+    CREATE TABLE IF NOT EXISTS family_incomes (
       id VARCHAR(100) PRIMARY KEY,
       group_id VARCHAR(100) NOT NULL,
-      month VARCHAR(20) NOT NULL,
-      amount NUMERIC NOT NULL DEFAULT 0,
-      updated_by VARCHAR(100),
-      updated_at TIMESTAMPTZ DEFAULT NOW(),
-      UNIQUE(group_id, month)
+      user_id VARCHAR(100) NOT NULL,
+      user_name VARCHAR(255) NOT NULL,
+      user_username VARCHAR(100) NOT NULL,
+      amount NUMERIC NOT NULL,
+      description TEXT NOT NULL,
+      date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS family_expenses (
@@ -165,9 +178,19 @@ async function initPostgresSchema(pool) {
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS family_budgets (
+      id VARCHAR(100) PRIMARY KEY,
+      group_id VARCHAR(100) NOT NULL,
+      month VARCHAR(20) NOT NULL,
+      amount NUMERIC NOT NULL DEFAULT 0,
+      updated_by VARCHAR(100),
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(group_id, month)
+    );
   `;
   await pool.query(schemaSql);
-  console.log('⚡ Neon PostgreSQL tables and schema migrations initialized.');
+  console.log('⚡ Neon PostgreSQL tables (including personal_incomes & family_incomes) initialized.');
 }
 
 export function getPgPool() {

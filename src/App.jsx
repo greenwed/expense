@@ -10,8 +10,9 @@ import AuthPage from './pages/AuthPage';
 import JoinGroup from './pages/JoinGroup';
 
 import MonthSelector from './components/MonthSelector';
-import BudgetModal from './components/BudgetModal';
 import ExpenseModal from './components/ExpenseModal';
+import IncomeModal from './components/IncomeModal';
+import IncomeListModal from './components/IncomeListModal';
 import CreateGroupModal from './components/CreateGroupModal';
 import RenameGroupModal from './components/RenameGroupModal';
 import InviteModal from './components/InviteModal';
@@ -22,7 +23,7 @@ export default function App() {
   const { user, loading, apiFetch } = useAuth();
 
   // Navigation & Workspace State
-  const [activeTab, setActiveTab] = useState('home'); // 'home' | 'report' | 'plan' | 'settings'
+  const [activeTab, setActiveTab] = useState('home'); // 'home' | 'report' | 'family' | 'settings'
   const [activeWorkspace, setActiveWorkspace] = useState('personal'); // 'personal' | 'family'
   const [month, setMonth] = useState(getCurrentMonthStr());
 
@@ -36,9 +37,15 @@ export default function App() {
 
   // Modal States
   const [isMonthOpen, setIsMonthOpen] = useState(false);
-  const [isBudgetOpen, setIsBudgetOpen] = useState(false);
   const [isExpenseOpen, setIsExpenseOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
+
+  // Income Modal States
+  const [isIncomeOpen, setIsIncomeOpen] = useState(false);
+  const [editingIncome, setEditingIncome] = useState(null);
+  const [isIncomeListOpen, setIsIncomeListOpen] = useState(false);
+
+  // Group Modals
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const [isRenameGroupOpen, setIsRenameGroupOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -108,10 +115,9 @@ export default function App() {
     }
   }, [user, selectedGroupId, month, fetchFamilyData]);
 
-  // If Tab is 'plan', switch to family workspace
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
-    if (tabId === 'plan') {
+    if (tabId === 'family') {
       setActiveWorkspace('family');
     }
   };
@@ -119,18 +125,17 @@ export default function App() {
   const handleSwitchWorkspace = (ws) => {
     setActiveWorkspace(ws);
     if (ws === 'family' && activeTab !== 'report' && activeTab !== 'settings') {
-      setActiveTab('plan');
-    } else if (ws === 'personal' && activeTab === 'plan') {
+      setActiveTab('family');
+    } else if (ws === 'personal' && activeTab === 'family') {
       setActiveTab('home');
     }
   };
 
   // Expense Handlers
   const handleSaveExpense = async (expensePayload) => {
-    const isFamilyTarget = activeTab === 'plan' || activeWorkspace === 'family';
+    const isFamilyTarget = activeTab === 'family' || activeWorkspace === 'family';
 
     if (editingExpense) {
-      // Edit
       if (isFamilyTarget) {
         await apiFetch(`/api/family/groups/${selectedGroupId}/expenses/${editingExpense.id || editingExpense._id}`, {
           method: 'PUT',
@@ -145,7 +150,6 @@ export default function App() {
         await fetchPersonalData();
       }
     } else {
-      // Create
       if (isFamilyTarget) {
         if (!selectedGroupId) throw new Error('Please select or create a family group first.');
         await apiFetch(`/api/family/groups/${selectedGroupId}/expenses`, {
@@ -165,7 +169,7 @@ export default function App() {
 
   const handleDeleteExpense = async (expenseId) => {
     if (!window.confirm('Are you sure you want to delete this expense entry?')) return;
-    const isFamilyTarget = activeTab === 'plan' || activeWorkspace === 'family';
+    const isFamilyTarget = activeTab === 'family' || activeWorkspace === 'family';
 
     try {
       if (isFamilyTarget) {
@@ -184,23 +188,60 @@ export default function App() {
     }
   };
 
-  // Budget Handlers
-  const handleSaveBudget = async (amount) => {
-    const isFamilyTarget = activeTab === 'plan' || activeWorkspace === 'family';
+  // Income Handlers
+  const handleSaveIncome = async (incomePayload) => {
+    const isFamilyTarget = activeTab === 'family' || activeWorkspace === 'family';
 
-    if (isFamilyTarget) {
-      if (!selectedGroupId) throw new Error('No family group selected.');
-      await apiFetch(`/api/family/groups/${selectedGroupId}/budget`, {
-        method: 'POST',
-        body: { month, amount }
-      });
-      await fetchFamilyData();
+    if (editingIncome) {
+      if (isFamilyTarget) {
+        await apiFetch(`/api/family/groups/${selectedGroupId}/incomes/${editingIncome.id || editingIncome._id}`, {
+          method: 'PUT',
+          body: incomePayload
+        });
+        await fetchFamilyData();
+      } else {
+        await apiFetch(`/api/personal/incomes/${editingIncome.id || editingIncome._id}`, {
+          method: 'PUT',
+          body: incomePayload
+        });
+        await fetchPersonalData();
+      }
     } else {
-      await apiFetch('/api/personal/budget', {
-        method: 'POST',
-        body: { month, amount }
-      });
-      await fetchPersonalData();
+      if (isFamilyTarget) {
+        if (!selectedGroupId) throw new Error('Please select or create a family group first.');
+        await apiFetch(`/api/family/groups/${selectedGroupId}/incomes`, {
+          method: 'POST',
+          body: incomePayload
+        });
+        await fetchFamilyData();
+      } else {
+        await apiFetch('/api/personal/incomes', {
+          method: 'POST',
+          body: incomePayload
+        });
+        await fetchPersonalData();
+      }
+    }
+  };
+
+  const handleDeleteIncome = async (incomeId) => {
+    if (!window.confirm('Are you sure you want to delete this income entry?')) return;
+    const isFamilyTarget = activeTab === 'family' || activeWorkspace === 'family';
+
+    try {
+      if (isFamilyTarget) {
+        await apiFetch(`/api/family/groups/${selectedGroupId}/incomes/${incomeId}`, {
+          method: 'DELETE'
+        });
+        await fetchFamilyData();
+      } else {
+        await apiFetch(`/api/personal/incomes/${incomeId}`, {
+          method: 'DELETE'
+        });
+        await fetchPersonalData();
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to delete income entry.');
     }
   };
 
@@ -214,13 +255,13 @@ export default function App() {
     if (res.group) {
       setSelectedGroupId(res.group.id || res.group._id);
       setActiveWorkspace('family');
-      setActiveTab('plan');
+      setActiveTab('family');
     }
   };
 
   const handleRenameGroup = async (newName) => {
     await apiFetch(`/api/family/groups/${selectedGroupId}/rename`, {
-      method: 'PATCH',
+      method: 'PUT',
       body: { name: newName }
     });
     await fetchGroups();
@@ -228,7 +269,7 @@ export default function App() {
   };
 
   const handleRegenerateToken = async () => {
-    const res = await apiFetch(`/api/family/groups/${selectedGroupId}/regenerate-token`, {
+    const res = await apiFetch(`/api/family/groups/${selectedGroupId}/invite`, {
       method: 'POST'
     });
     await fetchGroups();
@@ -236,8 +277,8 @@ export default function App() {
   };
 
   const handleUpdateRole = async (targetUserId, newRole) => {
-    await apiFetch(`/api/family/groups/${selectedGroupId}/members/${targetUserId}/role`, {
-      method: 'PATCH',
+    await apiFetch(`/api/family/groups/${selectedGroupId}/members/${targetUserId}`, {
+      method: 'PUT',
       body: { role: newRole }
     });
     await fetchGroups();
@@ -271,7 +312,7 @@ export default function App() {
           window.history.pushState({}, '', '/');
           setActiveWorkspace('family');
           setSelectedGroupId(groupId);
-          setActiveTab('plan');
+          setActiveTab('family');
           fetchGroups();
         }}
       />
@@ -283,6 +324,8 @@ export default function App() {
   }
 
   const currentGroup = groups.find((g) => (g.id || g._id) === selectedGroupId);
+  const isFamilyContext = activeTab === 'family' || activeWorkspace === 'family';
+  const currentIncomes = isFamilyContext ? familyData?.incomes || [] : personalData?.incomes || [];
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900 selection:bg-indigo-500 selection:text-white">
@@ -299,6 +342,10 @@ export default function App() {
           setEditingExpense(null);
           setIsExpenseOpen(true);
         }}
+        onOpenAddIncome={() => {
+          setEditingIncome(null);
+          setIsIncomeOpen(true);
+        }}
       />
 
       {/* Main Content Area */}
@@ -312,7 +359,11 @@ export default function App() {
             data={personalData}
             loading={dataLoading}
             onOpenMonthSelector={() => setIsMonthOpen(true)}
-            onOpenBudgetModal={() => setIsBudgetOpen(true)}
+            onOpenAddIncome={() => {
+              setEditingIncome(null);
+              setIsIncomeOpen(true);
+            }}
+            onOpenManageIncome={() => setIsIncomeListOpen(true)}
             onOpenAddExpense={() => {
               setEditingExpense(null);
               setIsExpenseOpen(true);
@@ -338,8 +389,8 @@ export default function App() {
           />
         )}
 
-        {/* TAB 3: PLAN / FAMILY */}
-        {activeTab === 'plan' && (
+        {/* TAB 3: FAMILY */}
+        {activeTab === 'family' && (
           <FamilyWorkspace
             user={user}
             month={month}
@@ -351,7 +402,11 @@ export default function App() {
             onOpenRenameGroup={() => setIsRenameGroupOpen(true)}
             onOpenInviteModal={() => setIsInviteOpen(true)}
             onOpenMemberManagement={() => setIsMemberMgmtOpen(true)}
-            onOpenBudgetModal={() => setIsBudgetOpen(true)}
+            onOpenAddIncome={() => {
+              setEditingIncome(null);
+              setIsIncomeOpen(true);
+            }}
+            onOpenManageIncome={() => setIsIncomeListOpen(true)}
             onOpenAddExpense={() => {
               setEditingExpense(null);
               setIsExpenseOpen(true);
@@ -368,7 +423,10 @@ export default function App() {
         {/* TAB 4: SETTINGS */}
         {activeTab === 'settings' && (
           <SettingsView
-            onOpenBudgetModal={() => setIsBudgetOpen(true)}
+            onOpenAddIncome={() => {
+              setEditingIncome(null);
+              setIsIncomeOpen(true);
+            }}
           />
         )}
 
@@ -392,20 +450,7 @@ export default function App() {
         onSelectMonth={setMonth}
       />
 
-      <BudgetModal
-        isOpen={isBudgetOpen}
-        onClose={() => setIsBudgetOpen(false)}
-        currentBudget={
-          activeTab === 'plan' || activeWorkspace === 'family'
-            ? familyData?.budget || 0
-            : personalData?.budget || 0
-        }
-        month={month}
-        onSave={handleSaveBudget}
-        isFamily={activeTab === 'plan' || activeWorkspace === 'family'}
-        groupName={currentGroup?.name}
-      />
-
+      {/* Expense Modal */}
       <ExpenseModal
         isOpen={isExpenseOpen}
         onClose={() => {
@@ -417,6 +462,39 @@ export default function App() {
         title={editingExpense ? 'Edit Expense Entry' : 'Add Expense Entry'}
       />
 
+      {/* Income Modal */}
+      <IncomeModal
+        isOpen={isIncomeOpen}
+        onClose={() => {
+          setIsIncomeOpen(false);
+          setEditingIncome(null);
+        }}
+        initialData={editingIncome}
+        onSave={handleSaveIncome}
+        title={editingIncome ? 'Edit Income Entry' : 'Add Income Entry'}
+        isFamily={isFamilyContext}
+      />
+
+      {/* Income List Manager Modal */}
+      <IncomeListModal
+        isOpen={isIncomeListOpen}
+        onClose={() => setIsIncomeListOpen(false)}
+        incomes={currentIncomes}
+        month={month}
+        onOpenAddIncome={() => {
+          setEditingIncome(null);
+          setIsIncomeOpen(true);
+        }}
+        onOpenEditIncome={(item) => {
+          setEditingIncome(item);
+          setIsIncomeOpen(true);
+        }}
+        onDeleteIncome={handleDeleteIncome}
+        isFamily={isFamilyContext}
+        canManage={true}
+      />
+
+      {/* Group Modals */}
       <CreateGroupModal
         isOpen={isCreateGroupOpen}
         onClose={() => setIsCreateGroupOpen(false)}

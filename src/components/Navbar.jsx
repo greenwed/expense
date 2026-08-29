@@ -6,10 +6,9 @@ import {
   Users,
   Settings,
   Plus,
+  TrendingUp,
   Calendar,
-  LogOut,
-  ChevronDown,
-  Sparkles
+  ChevronDown
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getMonthName } from '../utils/formatters';
@@ -21,14 +20,15 @@ export default function Navbar({
   onSwitchWorkspace,
   month,
   onOpenMonthSelector,
-  onOpenAddExpense
+  onOpenAddExpense,
+  onOpenAddIncome
 }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   const tabs = [
     { id: 'home', label: 'Home', icon: Home },
     { id: 'report', label: 'Report', icon: PieChart },
-    { id: 'plan', label: 'Plan', icon: Users },
+    { id: 'family', label: 'Family', icon: Users },
     { id: 'settings', label: 'Settings', icon: Settings }
   ];
 
@@ -118,6 +118,16 @@ export default function Navbar({
               <Calendar className="w-3.5 h-3.5 text-slate-400" />
               <span className="hidden sm:inline">{getMonthName(month)}</span>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            </button>
+
+            {/* Desktop + Add Income Button */}
+            <button
+              type="button"
+              onClick={onOpenAddIncome}
+              className="hidden md:flex items-center gap-1.5 px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs rounded-2xl border border-emerald-200 transition-all active:scale-95"
+            >
+              <TrendingUp className="w-4 h-4 stroke-[2.5]" />
+              <span>+ Income</span>
             </button>
 
             {/* Desktop + Add Expense CTA */}

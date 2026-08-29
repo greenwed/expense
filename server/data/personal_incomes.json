@@ -1,0 +1,42 @@
+[
+  {
+    "_id": "inc_4b191e87f488486b",
+    "id": "inc_4b191e87f488486b",
+    "userId": "usr_35110a03c8d34aea",
+    "amount": 50000,
+    "description": "Monthly Salary",
+    "date": "2026-08-01T09:00:00.000Z",
+    "createdAt": "2026-08-29T11:34:21.083Z",
+    "updatedAt": "2026-08-29T11:34:21.083Z"
+  },
+  {
+    "_id": "inc_0f9bf50ff7194de3",
+    "id": "inc_0f9bf50ff7194de3",
+    "userId": "usr_35110a03c8d34aea",
+    "amount": 8000,
+    "description": "Birthday Gift & Cash from Uncle",
+    "date": "2026-08-10T15:00:00.000Z",
+    "createdAt": "2026-08-29T11:34:21.085Z",
+    "updatedAt": "2026-08-29T11:34:21.089Z"
+  },
+  {
+    "_id": "inc_c9721169860143f5",
+    "id": "inc_c9721169860143f5",
+    "userId": "usr_474520475a854733",
+    "amount": 50000,
+    "description": "Monthly Salary",
+    "date": "2026-08-01T09:00:00.000Z",
+    "createdAt": "2026-08-29T11:37:42.853Z",
+    "updatedAt": "2026-08-29T11:37:42.853Z"
+  },
+  {
+    "_id": "inc_0ac3c8368ee74402",
+    "id": "inc_0ac3c8368ee74402",
+    "userId": "usr_474520475a854733",
+    "amount": 8000,
+    "description": "Birthday Gift & Cash from Uncle",
+    "date": "2026-08-10T15:00:00.000Z",
+    "createdAt": "2026-08-29T11:37:42.855Z",
+    "updatedAt": "2026-08-29T11:37:42.859Z"
+  }
+]

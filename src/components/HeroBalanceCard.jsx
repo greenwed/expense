@@ -1,104 +1,115 @@
 import React from 'react';
-import { IndianRupee, Bell, ChevronDown, TrendingUp, AlertTriangle } from 'lucide-react';
+import { ChevronDown, Bell, ArrowUpRight, ArrowDownRight, TrendingUp } from 'lucide-react';
 import { formatINR, getMonthName } from '../utils/formatters';
 
 export default function HeroBalanceCard({
   user,
   month,
-  balance = 0,
-  budget = 0,
+  totalIncome = 0,
   totalSpent = 0,
-  isExceeding80 = false,
-  isExceeding100 = false,
+  remainingBalance = 0,
+  percentSpent = 0,
   onOpenMonthSelector,
-  onOpenBudgetModal,
-  isFamily = false,
-  groupName = ''
+  onOpenAddIncome,
+  isExceeding80 = false,
+  isExceeding100 = false
 }) {
-  const percentSpent = budget > 0 ? ((totalSpent / budget) * 100).toFixed(0) : 0;
+  const avatarLetter = (user?.name || user?.username || 'U')[0].toUpperCase();
+  const isPositive = remainingBalance >= 0;
 
   return (
-    <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-600 text-white p-6 sm:p-8 shadow-xl shadow-indigo-500/25">
+    <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-violet-600 via-indigo-600 to-indigo-700 text-white p-6 sm:p-7 shadow-2xl shadow-indigo-600/30 transition-all">
       
-      {/* Subtle Background Glow Rings */}
-      <div className="absolute -top-16 -right-16 w-60 h-60 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-      <div className="absolute -bottom-20 -left-20 w-60 h-60 rounded-full bg-purple-400/20 blur-3xl pointer-events-none" />
+      {/* Decorative Ambient Glass Elements */}
+      <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-56 h-56 rounded-full bg-indigo-900/30 blur-2xl pointer-events-none" />
 
-      {/* Top Header inside Card */}
+      {/* Top Bar inside Card */}
       <div className="relative z-10 flex items-center justify-between gap-3 mb-6">
         
-        {/* Left: User Avatar & Greetings */}
+        {/* User Info & Avatar */}
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center font-black text-white text-base shadow-inner border border-white/30">
-              {user?.name ? user.name[0].toUpperCase() : 'U'}
+            <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center font-black text-lg text-white shadow-inner">
+              {avatarLetter}
             </div>
-            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-purple-600 rounded-full" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-indigo-700" />
           </div>
           <div>
-            <span className="text-white/70 text-xs font-medium block">
-              {isFamily ? 'Family Group' : 'Welcome back,'}
+            <span className="text-[11px] font-semibold text-indigo-200 uppercase tracking-wider block">
+              Hello,
             </span>
-            <span className="text-white font-bold text-sm sm:text-base leading-tight block truncate max-w-[140px] sm:max-w-[200px]">
-              {isFamily ? groupName || 'Family Hub' : user?.name || 'User'}
-            </span>
+            <h2 className="text-base font-extrabold text-white tracking-tight leading-tight">
+              {user?.name || user?.username || 'Explorer'}
+            </h2>
           </div>
         </div>
 
-        {/* Center/Right: Month Selector Chip */}
+        {/* Center/Right: Month Selector Chip & Notification Bell */}
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onOpenMonthSelector}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md text-xs font-semibold text-white border border-white/20 transition-all shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white/15 hover:bg-white/25 border border-white/20 backdrop-blur-md text-xs font-bold text-white transition-all active:scale-95 shadow-sm"
           >
             <span>{getMonthName(month)}</span>
-            <ChevronDown className="w-3.5 h-3.5 text-white/80" />
+            <ChevronDown className="w-3.5 h-3.5 text-indigo-200" />
           </button>
 
-          {/* Alert Status Bell */}
-          <div className="relative">
-            <div className={`p-2 rounded-full backdrop-blur-md border ${
-              isExceeding80
-                ? 'bg-rose-500/30 border-rose-300 text-rose-200 animate-pulse'
-                : 'bg-white/15 border-white/20 text-white/90'
-            }`}>
-              <Bell className="w-4 h-4" />
-            </div>
-            {isExceeding80 && (
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-400 rounded-full ring-2 ring-purple-600" />
+          <div className="relative w-9 h-9 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center text-white backdrop-blur-md">
+            <Bell className="w-4 h-4" />
+            {(isExceeding80 || isExceeding100) && (
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-400 animate-ping" />
+            )}
+            {(isExceeding80 || isExceeding100) && (
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500" />
             )}
           </div>
         </div>
 
       </div>
 
-      {/* Main Balance Display */}
-      <div className="relative z-10 text-center py-2 sm:py-4">
-        <span className="text-white/80 text-xs sm:text-sm font-semibold tracking-wider uppercase block mb-1">
-          {isFamily ? 'Group Remaining Balance' : 'Current Balance'}
-        </span>
-        <div className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white flex items-center justify-center gap-1 drop-shadow-md">
-          <span>{formatINR(balance)}</span>
+      {/* Main Balance Hero Section */}
+      <div className="relative z-10 space-y-1">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-indigo-200 uppercase tracking-wider block">
+            Current Balance
+          </span>
+          {totalIncome > 0 && (
+            <span className="text-xs font-extrabold text-indigo-100 bg-white/15 px-2.5 py-0.5 rounded-full backdrop-blur-sm border border-white/10">
+              {percentSpent}% Spent
+            </span>
+          )}
         </div>
 
-        {/* Status Subtitle */}
-        <div className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-medium text-white/90 border border-white/20">
-          {isExceeding100 ? (
+        <div className="flex items-baseline gap-2">
+          <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+            {formatINR(remainingBalance)}
+          </h1>
+        </div>
+
+        {/* Subtitle / Insight Pill */}
+        <div className="flex items-center gap-2 pt-2 text-xs font-semibold text-indigo-100 flex-wrap">
+          {totalIncome > 0 ? (
             <>
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-300" />
-              <span>Budget exceeded by {formatINR(Math.abs(balance))}</span>
-            </>
-          ) : isExceeding80 ? (
-            <>
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-300" />
-              <span>{percentSpent}% of monthly budget spent</span>
+              <span className="flex items-center gap-1">
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-300" />
+                <span>Income: {formatINR(totalIncome)}</span>
+              </span>
+              <span className="text-indigo-300">•</span>
+              <span className="flex items-center gap-1">
+                <ArrowDownRight className="w-3.5 h-3.5 text-rose-300" />
+                <span>Spent: {formatINR(totalSpent)}</span>
+              </span>
             </>
           ) : (
-            <>
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-300" />
-              <span>{budget > 0 ? `${100 - percentSpent}% remaining to spend` : 'Set a budget to track limits'}</span>
-            </>
+            <button
+              type="button"
+              onClick={onOpenAddIncome}
+              className="text-xs text-indigo-200 hover:text-white underline font-bold"
+            >
+              + Add your monthly income (Salary, shares, gifts)
+            </button>
           )}
         </div>
       </div>
