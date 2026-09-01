@@ -9,8 +9,6 @@ import {
   Trash2,
   Tag,
   Receipt,
-  RotateCcw,
-  Sparkles,
   Calendar,
   Layers
 } from 'lucide-react';
@@ -29,27 +27,20 @@ export default function PersonalWorkspace({
   loading,
   isAllTime,
   onToggleAllTime,
-  onOpenMonthSelector,
-  onOpenAddIncome,
   onOpenManageIncome,
   onOpenAddExpense,
   onOpenEditExpense,
-  onDeleteExpense,
-  onCarryForward
+  onDeleteExpense
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [carryingForward, setCarryingForward] = useState(false);
 
-  const totalIncome = Number(data?.totalIncome) || 0;
-  const totalSpent = Number(data?.totalSpent) || 0;
-  const openingBalance = Number(data?.openingBalance) || 0;
-  const remainingBalance = Number(data?.remainingBalance) || 0;
+  const totalBalance = Number(data?.totalBalance !== undefined ? data.totalBalance : data?.remainingBalance) || 0;
+  const monthlyIncome = Number(data?.monthlyIncome !== undefined ? data.monthlyIncome : data?.totalIncome) || 0;
+  const monthlySpent = Number(data?.monthlySpent !== undefined ? data.monthlySpent : data?.totalSpent) || 0;
   const percentSpent = Number(data?.percentSpent) || 0;
   const isExceeding80 = Boolean(data?.isExceeding80);
   const isExceeding100 = Boolean(data?.isExceeding100);
-  const isAutoCarriedForward = Boolean(data?.isAutoCarriedForward);
-  const carriedFromMonth = data?.carriedFromMonth;
   const expenses = useMemo(() => data?.expenses || [], [data]);
   const incomes = useMemo(() => data?.incomes || [], [data]);
 
@@ -70,50 +61,40 @@ export default function PersonalWorkspace({
     return groupExpensesByDay(filteredExpenses);
   }, [filteredExpenses]);
 
-  const handleTriggerCarryForward = async () => {
-    if (!onCarryForward) return;
-    try {
-      setCarryingForward(true);
-      await onCarryForward();
-    } finally {
-      setCarryingForward(false);
-    }
-  };
-
   return (
     <div className="space-y-6 animate-fadeIn pb-24 lg:pb-8">
       
-      {/* 1. Flagship Gradient Hero Balance Card */}
+      {/* 1. Flagship Gradient Hero Balance Card (Shows Running Total Balance Regardless of Months) */}
       <HeroBalanceCard
         user={user}
-        totalIncome={totalIncome}
-        totalSpent={totalSpent}
-        openingBalance={openingBalance}
-        remainingBalance={remainingBalance}
+        totalBalance={totalBalance}
+        monthlyIncome={monthlyIncome}
+        monthlySpent={monthlySpent}
         percentSpent={percentSpent}
         isExceeding80={isExceeding80}
         isExceeding100={isExceeding100}
       />
 
-      {/* 2. "Your Money" Dual Metric Cards (Total Income & Total Expenses) */}
+      {/* 2. "Your Money" Dual Metric Cards (Month Income & Month Expenses) */}
       <MoneySummaryCards
-        totalIncome={totalIncome}
-        totalSpent={totalSpent}
+        totalIncome={monthlyIncome}
+        totalSpent={monthlySpent}
         incomeCount={incomes.length}
         onOpenManageIncome={onOpenManageIncome}
         canManage={true}
       />
 
-      {/* 3. Budget & Income Health Insight Banner */}
-      <BudgetWarningBanner
-        isExceeding80={isExceeding80}
-        isExceeding100={isExceeding100}
-        percentSpent={percentSpent}
-        totalSpent={totalSpent}
-        totalIncome={totalIncome}
-        remainingBalance={remainingBalance}
-        onOpenAddIncome={onOpenAddIncome}
-      />
+      {/* 3. Budget & Income Health Insight Banner (if user has set monthly income) */}
+      {monthlyIncome > 0 && (
+        <BudgetWarningBanner
+          isExceeding80={isExceeding80}
+          isExceeding100={isExceeding100}
+          percentSpent={percentSpent}
+          totalSpent={monthlySpent}
+          totalIncome={monthlyIncome}
+          remainingBalance={monthlyIncome - monthlySpent}
+        />
+      )}
 
       {/* 4. Streamlined Time Scope Bar */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -144,34 +125,7 @@ export default function PersonalWorkspace({
             <span>All Time</span>
           </button>
         </div>
-
-        {/* Carry Forward Button (if not all time) */}
-        {!isAllTime && onCarryForward && (
-          <button
-            type="button"
-            onClick={handleTriggerCarryForward}
-            disabled={carryingForward}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all active:scale-95 disabled:opacity-50"
-            title="Carry forward all expenses and incomes from previous month"
-          >
-            <RotateCcw className={`w-3.5 h-3.5 text-slate-500 ${carryingForward ? 'animate-spin' : ''}`} />
-            <span>Carry Forward</span>
-          </button>
-        )}
       </div>
-
-      {/* Auto Carry Forward Informational Banner */}
-      {isAutoCarriedForward && (
-        <div className="p-3.5 rounded-2xl bg-indigo-50/80 border border-indigo-100 text-indigo-900 flex items-center gap-2.5 animate-fadeIn">
-          <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
-          <div className="text-xs">
-            <span className="font-bold">Expenses Carried Forward: </span>
-            <span className="text-indigo-700 font-medium">
-              Automatically copied {expenses.length} recurring expenses from {getMonthName(carriedFromMonth)}.
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* 5. Clean Transactions Feed */}
       <div className="space-y-4 pt-1">
@@ -257,9 +211,9 @@ export default function PersonalWorkspace({
             <p className="text-xs text-slate-400 max-w-sm mx-auto">
               {searchQuery || selectedCategory !== 'all'
                 ? 'No expenses matched your search filters.'
-                : 'Tap "+ Add Expense" to start tracking your daily expenses.'}
+                : `No expenses added for ${getMonthName(month)}. Tap "+ Add Expense" whenever you spend.`}
             </p>
-            <div className="flex items-center justify-center gap-2 pt-1">
+            <div className="flex items-center justify-center pt-1">
               <button
                 type="button"
                 onClick={onOpenAddExpense}
@@ -268,17 +222,6 @@ export default function PersonalWorkspace({
                 <Plus className="w-3.5 h-3.5 stroke-[3]" />
                 <span>Add Expense</span>
               </button>
-              {!isAllTime && onCarryForward && (
-                <button
-                  type="button"
-                  onClick={handleTriggerCarryForward}
-                  disabled={carryingForward}
-                  className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all inline-flex items-center gap-1.5"
-                >
-                  <RotateCcw className={`w-3.5 h-3.5 ${carryingForward ? 'animate-spin' : ''}`} />
-                  <span>Carry Forward</span>
-                </button>
-              )}
             </div>
           </div>
         ) : (

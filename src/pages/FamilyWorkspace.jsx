@@ -11,8 +11,6 @@ import {
   Edit2,
   Trash2,
   Receipt,
-  RotateCcw,
-  Sparkles,
   Calendar,
   Layers
 } from 'lucide-react';
@@ -37,27 +35,21 @@ export default function FamilyWorkspace({
   onOpenRenameGroup,
   onOpenInviteModal,
   onOpenMemberManagement,
-  onOpenAddIncome,
   onOpenManageIncome,
   onOpenAddExpense,
   onOpenEditExpense,
-  onDeleteExpense,
-  onCarryForward
+  onDeleteExpense
 }) {
-  const [carryingForward, setCarryingForward] = useState(false);
   const currentGroup = groups.find((g) => (g.id || g._id) === selectedGroupId);
   const userRole = currentGroup?.currentUserRole || groupData?.currentUserRole || 'member';
   const canManage = userRole === 'admin' || userRole === 'moderator';
 
-  const totalIncome = Number(groupData?.totalIncome) || 0;
-  const totalSpent = Number(groupData?.totalSpent) || 0;
-  const openingBalance = Number(groupData?.openingBalance) || 0;
-  const remainingBalance = Number(groupData?.remainingBalance) || 0;
+  const totalBalance = Number(groupData?.totalBalance !== undefined ? groupData.totalBalance : groupData?.remainingBalance) || 0;
+  const monthlyIncome = Number(groupData?.monthlyIncome !== undefined ? groupData.monthlyIncome : groupData?.totalIncome) || 0;
+  const monthlySpent = Number(groupData?.monthlySpent !== undefined ? groupData.monthlySpent : groupData?.totalSpent) || 0;
   const percentSpent = Number(groupData?.percentSpent) || 0;
   const isExceeding80 = Boolean(groupData?.isExceeding80);
   const isExceeding100 = Boolean(groupData?.isExceeding100);
-  const isAutoCarriedForward = Boolean(groupData?.isAutoCarriedForward);
-  const carriedFromMonth = groupData?.carriedFromMonth;
   const expenses = useMemo(() => groupData?.expenses || [], [groupData]);
   const incomes = useMemo(() => groupData?.incomes || [], [groupData]);
   const members = useMemo(() => currentGroup?.members || [], [currentGroup]);
@@ -65,16 +57,6 @@ export default function FamilyWorkspace({
   const groupedDays = useMemo(() => {
     return groupExpensesByDay(expenses);
   }, [expenses]);
-
-  const handleTriggerCarryForward = async () => {
-    if (!onCarryForward) return;
-    try {
-      setCarryingForward(true);
-      await onCarryForward();
-    } finally {
-      setCarryingForward(false);
-    }
-  };
 
   if (groups.length === 0) {
     return (
@@ -161,37 +143,37 @@ export default function FamilyWorkspace({
         </div>
       </div>
 
-      {/* Flagship Hero Balance Card */}
+      {/* Flagship Hero Balance Card (Shows Running Group Total Balance Regardless of Months) */}
       <HeroBalanceCard
         user={{ name: currentGroup?.name || 'Family Hub' }}
-        totalIncome={totalIncome}
-        totalSpent={totalSpent}
-        openingBalance={openingBalance}
-        remainingBalance={remainingBalance}
+        totalBalance={totalBalance}
+        monthlyIncome={monthlyIncome}
+        monthlySpent={monthlySpent}
         percentSpent={percentSpent}
         isExceeding80={isExceeding80}
         isExceeding100={isExceeding100}
       />
 
-      {/* "Your Money" Dual Metric Cards (Group Income & Group Expenses) */}
+      {/* "Your Money" Dual Metric Cards (Group Month Income & Group Month Expenses) */}
       <MoneySummaryCards
-        totalIncome={totalIncome}
-        totalSpent={totalSpent}
+        totalIncome={monthlyIncome}
+        totalSpent={monthlySpent}
         incomeCount={incomes.length}
         onOpenManageIncome={onOpenManageIncome}
         canManage={true}
       />
 
       {/* Warning / Health Pill */}
-      <BudgetWarningBanner
-        isExceeding80={isExceeding80}
-        isExceeding100={isExceeding100}
-        percentSpent={percentSpent}
-        totalSpent={totalSpent}
-        totalIncome={totalIncome}
-        remainingBalance={remainingBalance}
-        onOpenAddIncome={onOpenAddIncome}
-      />
+      {monthlyIncome > 0 && (
+        <BudgetWarningBanner
+          isExceeding80={isExceeding80}
+          isExceeding100={isExceeding100}
+          percentSpent={percentSpent}
+          totalSpent={monthlySpent}
+          totalIncome={monthlyIncome}
+          remainingBalance={monthlyIncome - monthlySpent}
+        />
+      )}
 
       {/* Scope Switcher: Month vs All Time */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -222,34 +204,7 @@ export default function FamilyWorkspace({
             <span>All Time</span>
           </button>
         </div>
-
-        {/* Manual Carry Forward Action */}
-        {!isAllTime && onCarryForward && canManage && (
-          <button
-            type="button"
-            onClick={handleTriggerCarryForward}
-            disabled={carryingForward}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all active:scale-95 disabled:opacity-50"
-            title="Carry forward group expenses from previous month"
-          >
-            <RotateCcw className={`w-3.5 h-3.5 text-slate-500 ${carryingForward ? 'animate-spin' : ''}`} />
-            <span>Carry Forward</span>
-          </button>
-        )}
       </div>
-
-      {/* Auto Carry Forward Banner */}
-      {isAutoCarriedForward && (
-        <div className="p-3.5 rounded-2xl bg-indigo-50/80 border border-indigo-100 text-indigo-900 flex items-center gap-2.5 animate-fadeIn">
-          <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
-          <div className="text-xs">
-            <span className="font-bold">Group Expenses Carried Forward: </span>
-            <span className="text-indigo-700 font-medium">
-              Automatically copied {expenses.length} shared expenses from {getMonthName(carriedFromMonth)}.
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* Shared Household Transaction Feed */}
       <div className="space-y-4 pt-1">
@@ -273,7 +228,7 @@ export default function FamilyWorkspace({
             <p className="text-xs text-slate-400 max-w-sm mx-auto">
               Any member can add shared household expenses for groceries, utilities, and dining.
             </p>
-            <div className="flex items-center justify-center gap-2 pt-1">
+            <div className="flex items-center justify-center pt-1">
               <button
                 type="button"
                 onClick={onOpenAddExpense}
@@ -282,17 +237,6 @@ export default function FamilyWorkspace({
                 <Plus className="w-3.5 h-3.5 stroke-[3]" />
                 <span>Add Expense</span>
               </button>
-              {!isAllTime && onCarryForward && canManage && (
-                <button
-                  type="button"
-                  onClick={handleTriggerCarryForward}
-                  disabled={carryingForward}
-                  className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all inline-flex items-center gap-1.5"
-                >
-                  <RotateCcw className={`w-3.5 h-3.5 ${carryingForward ? 'animate-spin' : ''}`} />
-                  <span>Carry Forward</span>
-                </button>
-              )}
             </div>
           </div>
         ) : (

@@ -138,5 +138,15 @@
     "date": "2026-08-10T15:00:00.000Z",
     "createdAt": "2026-09-01T06:12:21.651Z",
     "updatedAt": "2026-09-01T06:12:21.654Z"
+  },
+  {
+    "_id": "inc_6fd5bfc0789b4c51",
+    "id": "inc_6fd5bfc0789b4c51",
+    "userId": "usr_d5a1b3a3a9e148ea",
+    "amount": 50000,
+    "description": "August Salary",
+    "date": "2026-08-01T10:00:00.000Z",
+    "createdAt": "2026-09-01T06:22:11.797Z",
+    "updatedAt": "2026-09-01T06:22:11.797Z"
   }
 ]

@@ -2,45 +2,68 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   ArrowLeft,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Calendar,
   TrendingUp,
   Award,
   PiggyBank,
   ArrowDownRight,
   Filter,
-  Check,
-  RefreshCw
+  RefreshCw,
+  Users,
+  User
 } from 'lucide-react';
 import CategoryPieChart from '../components/CategoryPieChart';
 import { useAuth } from '../context/AuthContext';
 import { formatINR, getMonthName, CATEGORY_CONFIG, formatDateOnly } from '../utils/formatters';
 
 export default function ReportView({
-  personalData: initialPersonalData,
-  familyData: initialFamilyData,
-  month: initialMonth,
+  personalData,
+  familyData,
+  month,
+  onSelectMonth,
   onOpenMonthSelector,
   onBackToHome,
-  activeWorkspace = 'personal',
-  onSwitchWorkspace
+  groups = [],
+  selectedGroupId
 }) {
   const { apiFetch } = useAuth();
-  const isPersonal = activeWorkspace === 'personal';
+
+  // Report Scope: 'personal' | 'family' (Keeps user on the Report page!)
+  const [reportType, setReportType] = useState('personal');
+  const [activeGroupId, setActiveGroupId] = useState(selectedGroupId || (groups[0]?.id || groups[0]?._id));
 
   // Date Filter Mode: 'monthly' | 'custom'
   const [filterMode, setFilterMode] = useState('monthly');
-  const [activeMonth, setActiveMonth] = useState(initialMonth);
 
-  // Custom Date Range State (defaults to current month start & today)
+  // Custom Date Range State
   const todayStr = new Date().toISOString().slice(0, 10);
-  const firstDayOfMonthStr = `${initialMonth}-01`;
+  const firstDayOfMonthStr = `${month}-01`;
   const [startDate, setStartDate] = useState(firstDayOfMonthStr);
   const [endDate, setEndDate] = useState(todayStr);
   const [activePreset, setActivePreset] = useState('this_month');
 
   // Fetched Report Data state
-  const [reportData, setReportData] = useState(isPersonal ? initialPersonalData : initialFamilyData);
-  const [loading, setLoading] = useState(false);
+  const [reportData, setReportData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Month navigation helpers
+  const handlePrevMonth = () => {
+    const [y, m] = month.split('-').map(Number);
+    const prevY = m === 1 ? y - 1 : y;
+    const prevM = m === 1 ? 12 : m - 1;
+    const newMonth = `${prevY}-${String(prevM).padStart(2, '0')}`;
+    onSelectMonth && onSelectMonth(newMonth);
+  };
+
+  const handleNextMonth = () => {
+    const [y, m] = month.split('-').map(Number);
+    const nextY = m === 12 ? y + 1 : y;
+    const nextM = m === 12 ? 1 : m + 1;
+    const newMonth = `${nextY}-${String(nextM).padStart(2, '0')}`;
+    onSelectMonth && onSelectMonth(newMonth);
+  };
 
   // Quick Range Presets
   const handleApplyPreset = (preset) => {
@@ -74,24 +97,29 @@ export default function ReportView({
     }
   };
 
-  // Fetch Report Data
+  // Fetch Report Data from API
   const fetchReportData = useCallback(async () => {
     try {
       setLoading(true);
       let url = '';
-      if (isPersonal) {
+
+      if (reportType === 'personal') {
         if (filterMode === 'custom') {
           url = `/api/personal/dashboard?startDate=${startDate}&endDate=${endDate}`;
         } else {
-          url = `/api/personal/dashboard?month=${activeMonth}`;
+          url = `/api/personal/dashboard?month=${month}`;
         }
       } else {
-        const groupId = initialFamilyData?.group?.id || initialFamilyData?.group?._id;
-        if (!groupId) return;
+        const targetGroup = activeGroupId || selectedGroupId || (groups[0]?.id || groups[0]?._id);
+        if (!targetGroup) {
+          setReportData(null);
+          setLoading(false);
+          return;
+        }
         if (filterMode === 'custom') {
-          url = `/api/family/groups/${groupId}/dashboard?startDate=${startDate}&endDate=${endDate}`;
+          url = `/api/family/groups/${targetGroup}/dashboard?startDate=${startDate}&endDate=${endDate}`;
         } else {
-          url = `/api/family/groups/${groupId}/dashboard?month=${activeMonth}`;
+          url = `/api/family/groups/${targetGroup}/dashboard?month=${month}`;
         }
       }
 
@@ -104,13 +132,13 @@ export default function ReportView({
     } finally {
       setLoading(false);
     }
-  }, [isPersonal, filterMode, startDate, endDate, activeMonth, initialFamilyData, apiFetch]);
+  }, [reportType, filterMode, startDate, endDate, month, activeGroupId, selectedGroupId, groups, apiFetch]);
 
   useEffect(() => {
     fetchReportData();
   }, [fetchReportData]);
 
-  // Resilient category breakdown extraction
+  // Robust category breakdown extraction
   const categories = useMemo(() => {
     if (reportData?.categories && Array.isArray(reportData.categories) && reportData.categories.length > 0) {
       return reportData.categories;
@@ -137,9 +165,9 @@ export default function ReportView({
     return Object.keys(CATEGORY_CONFIG).map((cat) => ({ category: cat, amount: 0, percentage: 0 }));
   }, [reportData]);
 
-  const totalSpent = Number(reportData?.totalSpent) || 0;
-  const totalIncome = Number(reportData?.totalIncome || reportData?.budget) || 0;
-  const remainingBalance = Number(reportData?.remainingBalance) || (totalIncome - totalSpent);
+  const totalSpent = Number(reportData?.totalSpent !== undefined ? reportData.totalSpent : reportData?.monthlySpent) || 0;
+  const totalIncome = Number(reportData?.totalIncome !== undefined ? reportData.totalIncome : reportData?.monthlyIncome) || 0;
+  const totalBalance = Number(reportData?.totalBalance !== undefined ? reportData.totalBalance : reportData?.remainingBalance) || 0;
 
   // Find top category with highest spending
   const topCategory = useMemo(() => {
@@ -152,36 +180,69 @@ export default function ReportView({
     <div className="space-y-6 animate-fadeIn pb-24 lg:pb-8">
       
       {/* Top Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onBackToHome}
-            className="w-10 h-10 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center justify-center text-slate-700 hover:text-indigo-600 hover:border-indigo-200 transition-all active:scale-95 shrink-0"
-            aria-label="Back to Home"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-              Report & Analytics
-            </h2>
-            <span className="text-xs text-slate-400 font-medium">
-              {filterMode === 'monthly'
-                ? `Monthly report for ${getMonthName(activeMonth)}`
-                : `Custom range: ${formatDateOnly(startDate)} - ${formatDateOnly(endDate)}`}
-            </span>
+      <div className="flex flex-col gap-4">
+        
+        {/* Title Row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onBackToHome}
+              className="w-10 h-10 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center justify-center text-slate-700 hover:text-indigo-600 hover:border-indigo-200 transition-all active:scale-95 shrink-0"
+              aria-label="Back to Home"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                Report & Analytics
+              </h2>
+              <span className="text-xs text-slate-400 font-medium">
+                {filterMode === 'monthly'
+                  ? `Report for ${getMonthName(month)}`
+                  : `Custom range: ${formatDateOnly(startDate)} - ${formatDateOnly(endDate)}`}
+              </span>
+            </div>
           </div>
-        </div>
 
-        {/* Mode & Date Filters */}
-        <div className="flex items-center gap-2">
-          {/* Monthly vs Custom Range Switcher */}
+          {/* Personal vs Family Scope Switcher */}
           <div className="flex bg-slate-200/70 p-1 rounded-2xl">
             <button
               type="button"
+              onClick={() => setReportType('personal')}
+              className={`flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                reportType === 'personal'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>Personal</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setReportType('family')}
+              className={`flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                reportType === 'family'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Family</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Date Filter & Month Navigation Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 sm:p-4 rounded-3xl border border-slate-200/80 shadow-sm">
+          
+          {/* Mode Switcher: Monthly vs Custom Range */}
+          <div className="flex bg-slate-100 p-1 rounded-2xl shrink-0">
+            <button
+              type="button"
               onClick={() => setFilterMode('monthly')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+              className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
                 filterMode === 'monthly'
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-500 hover:text-slate-800'
@@ -192,7 +253,7 @@ export default function ReportView({
             <button
               type="button"
               onClick={() => setFilterMode('custom')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+              className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
                 filterMode === 'custom'
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-500 hover:text-slate-800'
@@ -202,18 +263,60 @@ export default function ReportView({
             </button>
           </div>
 
+          {/* When in Monthly Mode: Interactive Month Navigation (< Month >) */}
           {filterMode === 'monthly' && (
-            <button
-              type="button"
-              onClick={onOpenMonthSelector}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-white border border-slate-200/80 shadow-sm text-xs font-bold text-slate-700 hover:border-indigo-200 hover:text-indigo-600 transition-all shrink-0"
-            >
-              <Calendar className="w-3.5 h-3.5 text-slate-400" />
-              <span>{getMonthName(activeMonth)}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-            </button>
+            <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={handlePrevMonth}
+                className="w-8 h-8 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 transition-colors active:scale-95"
+                title="Previous Month"
+                aria-label="Previous Month"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={onOpenMonthSelector}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-xs font-extrabold text-slate-800 hover:text-indigo-600 transition-all shadow-sm active:scale-95"
+              >
+                <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{getMonthName(month)}</span>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              </button>
+
+              <button
+                type="button"
+                onClick={handleNextMonth}
+                className="w-8 h-8 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 transition-colors active:scale-95"
+                title="Next Month"
+                aria-label="Next Month"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           )}
+
+          {/* Family Group Selector if viewing family report */}
+          {reportType === 'family' && groups.length > 1 && (
+            <div className="flex items-center gap-2">
+              <select
+                value={activeGroupId || selectedGroupId || ''}
+                onChange={(e) => setActiveGroupId(e.target.value)}
+                className="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none"
+              >
+                {groups.map((g) => (
+                  <option key={g.id || g._id} value={g.id || g._id}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
         </div>
+
       </div>
 
       {/* Custom Date Range Controls Panel */}
@@ -290,59 +393,33 @@ export default function ReportView({
         </div>
       )}
 
-      {/* Mode Switcher (Personal vs Family) */}
-      <div className="flex bg-slate-200/70 p-1 rounded-2xl max-w-sm">
-        <button
-          type="button"
-          onClick={() => onSwitchWorkspace('personal')}
-          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
-            isPersonal
-              ? 'bg-white text-slate-900 shadow-sm'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          Personal Report
-        </button>
-        <button
-          type="button"
-          onClick={() => onSwitchWorkspace('family')}
-          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
-            !isPersonal
-              ? 'bg-white text-slate-900 shadow-sm'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          Family Report
-        </button>
-      </div>
-
       {/* Cashflow Metric Cards Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         
-        <div className="fintech-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0">
-            <TrendingUp className="w-5 h-5 stroke-[2.5]" />
-          </div>
-          <div className="min-w-0">
-            <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-              Total Income
-            </span>
-            <span className="text-sm sm:text-base font-extrabold text-emerald-600 block truncate">
-              {formatINR(totalIncome)}
-            </span>
-          </div>
-        </div>
-
         <div className="fintech-card p-4 flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center shrink-0">
             <ArrowDownRight className="w-5 h-5" />
           </div>
           <div className="min-w-0">
             <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-              Total Spent
+              {filterMode === 'monthly' ? 'Month Spent' : 'Range Spent'}
             </span>
             <span className="text-sm sm:text-base font-extrabold text-slate-900 block truncate">
               {formatINR(totalSpent)}
+            </span>
+          </div>
+        </div>
+
+        <div className="fintech-card p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0">
+            <TrendingUp className="w-5 h-5 stroke-[2.5]" />
+          </div>
+          <div className="min-w-0">
+            <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+              {filterMode === 'monthly' ? 'Month Income' : 'Range Income'}
+            </span>
+            <span className="text-sm sm:text-base font-extrabold text-emerald-600 block truncate">
+              {formatINR(totalIncome)}
             </span>
           </div>
         </div>
@@ -353,10 +430,10 @@ export default function ReportView({
           </div>
           <div className="min-w-0">
             <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-              Net Balance
+              Total Balance
             </span>
-            <span className={`text-sm sm:text-base font-extrabold block truncate ${remainingBalance >= 0 ? 'text-indigo-600' : 'text-rose-600'}`}>
-              {formatINR(remainingBalance)}
+            <span className="text-sm sm:text-base font-extrabold text-indigo-600 block truncate">
+              {formatINR(totalBalance)}
             </span>
           </div>
         </div>
@@ -378,15 +455,22 @@ export default function ReportView({
       </div>
 
       {/* Main Donut Chart & Category Progress List */}
-      <CategoryPieChart
-        categories={categories}
-        totalSpent={totalSpent}
-        title={
-          isPersonal
-            ? `Personal Breakdown (${filterMode === 'monthly' ? getMonthName(activeMonth) : `${formatDateOnly(startDate)} - ${formatDateOnly(endDate)}`})`
-            : `Family Breakdown (${filterMode === 'monthly' ? getMonthName(activeMonth) : `${formatDateOnly(startDate)} - ${formatDateOnly(endDate)}`})`
-        }
-      />
+      {loading ? (
+        <div className="fintech-card p-12 text-center text-slate-400 space-y-2">
+          <div className="w-8 h-8 border-2 border-indigo-500/20 border-t-indigo-600 rounded-full animate-spin mx-auto mb-2" />
+          <span className="text-xs font-bold text-slate-600">Loading {filterMode === 'monthly' ? getMonthName(month) : 'selected range'} analytics...</span>
+        </div>
+      ) : (
+        <CategoryPieChart
+          categories={categories}
+          totalSpent={totalSpent}
+          title={
+            reportType === 'personal'
+              ? `Personal Expenses (${filterMode === 'monthly' ? getMonthName(month) : `${formatDateOnly(startDate)} - ${formatDateOnly(endDate)}`})`
+              : `Family Expenses (${filterMode === 'monthly' ? getMonthName(month) : `${formatDateOnly(startDate)} - ${formatDateOnly(endDate)}`})`
+          }
+        />
+      )}
 
     </div>
   );

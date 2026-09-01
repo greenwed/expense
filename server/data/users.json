@@ -193,5 +193,25 @@
     "password": "$2a$10$H7I4muC8VL0poMMUjR8Y8u0IkdMhDsaKFScMltli1Zkln0qme0.N2",
     "createdAt": "2026-09-01T06:12:21.767Z",
     "updatedAt": "2026-09-01T06:12:21.924Z"
+  },
+  {
+    "_id": "usr_d5a1b3a3a9e148ea",
+    "id": "usr_d5a1b3a3a9e148ea",
+    "name": "Behavior Tester",
+    "username": "behavior_1788243731718",
+    "email": "behavior_1788243731718@example.com",
+    "password": "$2a$10$.WJRv9QxXR9CTfxObVTEKeBukSxmmB7Vvei7nDQnNwJeJwle2aBvu",
+    "createdAt": "2026-09-01T06:22:11.793Z",
+    "updatedAt": "2026-09-01T06:22:11.794Z"
+  },
+  {
+    "_id": "usr_94374ace34e74e73",
+    "id": "usr_94374ace34e74e73",
+    "name": "Test Explorer",
+    "username": "user_1788243731849",
+    "email": "user_1788243731849@example.com",
+    "password": "$2a$10$vhv3IdH3TOMHm7lsnoKkUOPUYMMOGrUmvjP1kRYW9zWJic4nxgOM2",
+    "createdAt": "2026-09-01T06:22:11.923Z",
+    "updatedAt": "2026-09-01T06:22:12.078Z"
   }
 ]

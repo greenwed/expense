@@ -127,35 +127,7 @@ export default function App() {
     setActiveTab(tabId);
   };
 
-  // Carry Forward Handlers
-  const handleCarryForwardPersonal = async () => {
-    try {
-      const res = await apiFetch('/api/personal/carry-forward', {
-        method: 'POST',
-        body: { toMonth: month }
-      });
-      alert(res.message || 'Expenses and incomes carried forward successfully!');
-      await fetchPersonalData();
-    } catch (err) {
-      alert(err.message || 'Failed to carry forward expenses.');
-    }
-  };
-
-  const handleCarryForwardFamily = async () => {
-    if (!selectedGroupId) return;
-    try {
-      const res = await apiFetch(`/api/family/groups/${selectedGroupId}/carry-forward`, {
-        method: 'POST',
-        body: { toMonth: month }
-      });
-      alert(res.message || 'Group expenses and incomes carried forward successfully!');
-      await fetchFamilyData();
-    } catch (err) {
-      alert(err.message || 'Failed to carry forward family expenses.');
-    }
-  };
-
-  // Expense Handlers
+  // Expense Handlers (User explicit action only)
   const handleSaveExpense = async (expensePayload) => {
     const isFamilyTarget = activeTab === 'family';
 
@@ -212,7 +184,7 @@ export default function App() {
     }
   };
 
-  // Income Handlers
+  // Income Handlers (User explicit action only)
   const handleSaveIncome = async (incomePayload) => {
     const isFamilyTarget = activeTab === 'family';
 
@@ -351,7 +323,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900 selection:bg-indigo-500 selection:text-white">
       
-      {/* Clean Desktop Header (Without redundant personal/family switcher) */}
+      {/* Clean Desktop Header */}
       <Navbar
         activeTab={activeTab}
         onChangeTab={handleTabChange}
@@ -379,11 +351,6 @@ export default function App() {
             loading={dataLoading}
             isAllTime={isAllTime}
             onToggleAllTime={setIsAllTime}
-            onOpenMonthSelector={() => setIsMonthOpen(true)}
-            onOpenAddIncome={() => {
-              setEditingIncome(null);
-              setIsIncomeOpen(true);
-            }}
             onOpenManageIncome={() => setIsIncomeListOpen(true)}
             onOpenAddExpense={() => {
               setEditingExpense(null);
@@ -394,7 +361,6 @@ export default function App() {
               setIsExpenseOpen(true);
             }}
             onDeleteExpense={handleDeleteExpense}
-            onCarryForward={handleCarryForwardPersonal}
           />
         )}
 
@@ -404,10 +370,14 @@ export default function App() {
             personalData={personalData}
             familyData={familyData}
             month={month}
+            onSelectMonth={(m) => {
+              setMonth(m);
+              setIsAllTime(false);
+            }}
             onOpenMonthSelector={() => setIsMonthOpen(true)}
             onBackToHome={() => setActiveTab('home')}
-            activeWorkspace={isFamilyContext ? 'family' : 'personal'}
-            onSwitchWorkspace={(ws) => setActiveTab(ws === 'family' ? 'family' : 'home')}
+            groups={groups}
+            selectedGroupId={selectedGroupId}
           />
         )}
 
@@ -426,10 +396,6 @@ export default function App() {
             onOpenRenameGroup={() => setIsRenameGroupOpen(true)}
             onOpenInviteModal={() => setIsInviteOpen(true)}
             onOpenMemberManagement={() => setIsMemberMgmtOpen(true)}
-            onOpenAddIncome={() => {
-              setEditingIncome(null);
-              setIsIncomeOpen(true);
-            }}
             onOpenManageIncome={() => setIsIncomeListOpen(true)}
             onOpenAddExpense={() => {
               setEditingExpense(null);
@@ -440,7 +406,6 @@ export default function App() {
               setIsExpenseOpen(true);
             }}
             onDeleteExpense={handleDeleteExpense}
-            onCarryForward={handleCarryForwardFamily}
           />
         )}
 

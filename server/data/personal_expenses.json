@@ -32,17 +32,6 @@
     "updatedAt": "2026-08-28T11:38:44.715Z"
   },
   {
-    "_id": "doc_1787917124712_l4owfe3mj",
-    "id": "doc_1787917124712_l4owfe3mj",
-    "userId": "doc_1787917108295_2nsne01wj",
-    "amount": 7000,
-    "category": "Shopping",
-    "description": "New shoes & clothes",
-    "date": "2026-08-15T15:30:00.000Z",
-    "createdAt": "2026-08-28T11:38:44.712Z",
-    "updatedAt": "2026-08-28T11:38:44.712Z"
-  },
-  {
     "_id": "doc_1787917740198_bbmw1rjfk",
     "id": "doc_1787917740198_bbmw1rjfk",
     "userId": "doc_1787917739937_iz3rigfkl",
@@ -118,160 +107,6 @@
     "date": "2026-08-28T12:18:00.000Z",
     "createdAt": "2026-08-28T12:19:15.634Z",
     "updatedAt": "2026-08-28T12:19:15.634Z"
-  },
-  {
-    "_id": "doc_1787924686739_wg3wpwfwh",
-    "id": "doc_1787924686739_wg3wpwfwh",
-    "userId": "doc_1787917739937_iz3rigfkl",
-    "amount": 3500,
-    "category": "Food",
-    "description": "Weekly groceries from Nature Basket",
-    "date": "2026-08-02T10:30:00.000Z",
-    "createdAt": "2026-08-28T13:44:46.739Z",
-    "updatedAt": "2026-08-28T13:44:46.739Z"
-  },
-  {
-    "_id": "doc_1787924686741_2huf4h3p8",
-    "id": "doc_1787924686741_2huf4h3p8",
-    "userId": "doc_1787917739937_iz3rigfkl",
-    "amount": 4200,
-    "category": "Shopping",
-    "description": "Zara summer shirts & accessories",
-    "date": "2026-08-08T18:15:00.000Z",
-    "createdAt": "2026-08-28T13:44:46.741Z",
-    "updatedAt": "2026-08-28T13:44:46.741Z"
-  },
-  {
-    "_id": "doc_1787924686742_6qxpwv4zq",
-    "id": "doc_1787924686742_6qxpwv4zq",
-    "userId": "doc_1787917739937_iz3rigfkl",
-    "amount": 1800,
-    "category": "Entertainment",
-    "description": "IMAX movie tickets & snacks",
-    "date": "2026-08-14T20:00:00.000Z",
-    "createdAt": "2026-08-28T13:44:46.742Z",
-    "updatedAt": "2026-08-28T13:44:46.742Z"
-  },
-  {
-    "_id": "doc_1787924686743_gwi3snb2z",
-    "id": "doc_1787924686743_gwi3snb2z",
-    "userId": "doc_1787917739937_iz3rigfkl",
-    "amount": 2500,
-    "category": "Medical",
-    "description": "Annual health checkup & supplements",
-    "date": "2026-08-19T09:00:00.000Z",
-    "createdAt": "2026-08-28T13:44:46.743Z",
-    "updatedAt": "2026-08-28T13:44:46.743Z"
-  },
-  {
-    "_id": "doc_1787924686744_792gtrtz2",
-    "id": "doc_1787924686744_792gtrtz2",
-    "userId": "doc_1787917739937_iz3rigfkl",
-    "amount": 3000,
-    "category": "Transport",
-    "description": "Monthly metro pass + Uber rides",
-    "date": "2026-08-22T14:45:00.000Z",
-    "createdAt": "2026-08-28T13:44:46.744Z",
-    "updatedAt": "2026-08-28T13:44:46.744Z"
-  },
-  {
-    "_id": "doc_1787924686746_pwryv1ry7",
-    "id": "doc_1787924686746_pwryv1ry7",
-    "userId": "doc_1787917739937_iz3rigfkl",
-    "amount": 2000,
-    "category": "Others",
-    "description": "High-speed broadband recharge",
-    "date": "2026-08-25T11:20:00.000Z",
-    "createdAt": "2026-08-28T13:44:46.746Z",
-    "updatedAt": "2026-08-28T13:44:46.746Z"
-  },
-  {
-    "_id": "doc_1787926020053_i8oxvla5t",
-    "id": "doc_1787926020053_i8oxvla5t",
-    "userId": "doc_1787917108295_2nsne01wj",
-    "amount": 500,
-    "category": "Food",
-    "description": "Quick grocery snack",
-    "date": "2026-08-10T12:00:00.000Z",
-    "createdAt": "2026-08-28T14:07:00.053Z",
-    "updatedAt": "2026-08-28T14:07:00.057Z"
-  },
-  {
-    "_id": "doc_1787926020054_2m9vs6oah",
-    "id": "doc_1787926020054_2m9vs6oah",
-    "userId": "doc_1787917108295_2nsne01wj",
-    "amount": 7000,
-    "category": "Shopping",
-    "description": "New shoes & clothes",
-    "date": "2026-08-15T15:30:00.000Z",
-    "createdAt": "2026-08-28T14:07:00.054Z",
-    "updatedAt": "2026-08-28T14:07:00.054Z"
-  },
-  {
-    "_id": "pex_836467000d1f4ed0",
-    "id": "pex_836467000d1f4ed0",
-    "userId": "doc_1787917108295_2nsne01wj",
-    "amount": 500,
-    "category": "Food",
-    "description": "Quick grocery snack",
-    "date": "2026-08-10T12:00:00.000Z",
-    "createdAt": "2026-08-29T03:45:35.774Z",
-    "updatedAt": "2026-08-29T03:45:35.780Z"
-  },
-  {
-    "_id": "pex_09f9c9b99aaf4765",
-    "id": "pex_09f9c9b99aaf4765",
-    "userId": "doc_1787917108295_2nsne01wj",
-    "amount": 7000,
-    "category": "Shopping",
-    "description": "New shoes & clothes",
-    "date": "2026-08-15T15:30:00.000Z",
-    "createdAt": "2026-08-29T03:45:35.776Z",
-    "updatedAt": "2026-08-29T03:45:35.776Z"
-  },
-  {
-    "_id": "pex_7447594f67eb45e8",
-    "id": "pex_7447594f67eb45e8",
-    "userId": "doc_1787917108295_2nsne01wj",
-    "amount": 500,
-    "category": "Food",
-    "description": "Quick grocery snack",
-    "date": "2026-08-10T12:00:00.000Z",
-    "createdAt": "2026-08-29T04:08:12.127Z",
-    "updatedAt": "2026-08-29T04:08:12.131Z"
-  },
-  {
-    "_id": "pex_9023d0f153574a2e",
-    "id": "pex_9023d0f153574a2e",
-    "userId": "doc_1787917108295_2nsne01wj",
-    "amount": 7000,
-    "category": "Shopping",
-    "description": "New shoes & clothes",
-    "date": "2026-08-15T15:30:00.000Z",
-    "createdAt": "2026-08-29T04:08:12.128Z",
-    "updatedAt": "2026-08-29T04:08:12.128Z"
-  },
-  {
-    "_id": "pex_0fed7f81e0ff4ef2",
-    "id": "pex_0fed7f81e0ff4ef2",
-    "userId": "doc_1787917108295_2nsne01wj",
-    "amount": 500,
-    "category": "Food",
-    "description": "Quick grocery snack",
-    "date": "2026-08-10T12:00:00.000Z",
-    "createdAt": "2026-08-29T04:25:07.796Z",
-    "updatedAt": "2026-08-29T04:25:07.799Z"
-  },
-  {
-    "_id": "pex_5631e01a2fa14709",
-    "id": "pex_5631e01a2fa14709",
-    "userId": "doc_1787917108295_2nsne01wj",
-    "amount": 7000,
-    "category": "Shopping",
-    "description": "New shoes & clothes",
-    "date": "2026-08-15T15:30:00.000Z",
-    "createdAt": "2026-08-29T04:25:07.797Z",
-    "updatedAt": "2026-08-29T04:25:07.797Z"
   },
   {
     "_id": "pex_a83758ad378a4c00",
@@ -558,5 +393,16 @@
     "date": "2026-08-15T16:00:00.000Z",
     "createdAt": "2026-09-01T06:12:21.652Z",
     "updatedAt": "2026-09-01T06:12:21.652Z"
+  },
+  {
+    "_id": "pex_b465effcf9c542b6",
+    "id": "pex_b465effcf9c542b6",
+    "userId": "usr_d5a1b3a3a9e148ea",
+    "amount": 15000,
+    "category": "Others",
+    "description": "House Rent August",
+    "date": "2026-08-05T10:00:00.000Z",
+    "createdAt": "2026-09-01T06:22:11.798Z",
+    "updatedAt": "2026-09-01T06:22:11.798Z"
   }
 ]

@@ -1,18 +1,23 @@
 import React from 'react';
-import { Bell, ArrowDownRight, TrendingUp, PiggyBank } from 'lucide-react';
+import { Bell, ArrowDownRight, TrendingUp, IndianRupee } from 'lucide-react';
 import { formatINR } from '../utils/formatters';
 
 export default function HeroBalanceCard({
   user,
-  totalIncome = 0,
-  totalSpent = 0,
+  totalBalance,
   remainingBalance = 0,
+  monthlyIncome,
+  totalIncome = 0,
+  monthlySpent,
+  totalSpent = 0,
   percentSpent = 0,
-  openingBalance = 0,
   isExceeding80 = false,
   isExceeding100 = false
 }) {
   const avatarLetter = (user?.name || user?.username || 'U')[0].toUpperCase();
+  const displayBalance = totalBalance !== undefined ? totalBalance : remainingBalance;
+  const displayIncome = monthlyIncome !== undefined ? monthlyIncome : totalIncome;
+  const displaySpent = monthlySpent !== undefined ? monthlySpent : totalSpent;
 
   return (
     <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-violet-600 via-indigo-600 to-indigo-700 text-white p-6 sm:p-7 shadow-2xl shadow-indigo-600/30 transition-all">
@@ -42,9 +47,9 @@ export default function HeroBalanceCard({
           </div>
         </div>
 
-        {/* Right Status Badge */}
+        {/* Right Spend Indicator */}
         <div className="flex items-center gap-2">
-          {totalIncome > 0 && (
+          {displayIncome > 0 && (
             <span className="text-xs font-extrabold text-indigo-100 bg-white/15 px-3 py-1 rounded-full backdrop-blur-md border border-white/15 shadow-sm">
               {percentSpent}% Spent
             </span>
@@ -63,15 +68,15 @@ export default function HeroBalanceCard({
 
       </div>
 
-      {/* Main Balance Hero Section */}
+      {/* Main Total Balance Hero Section (Running Balance Regardless of Months) */}
       <div className="relative z-10 space-y-1">
         <span className="text-xs font-bold text-indigo-200 uppercase tracking-wider block">
-          Current Balance
+          Total Balance
         </span>
 
         <div className="flex items-baseline gap-2">
           <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-            {formatINR(remainingBalance)}
+            {formatINR(displayBalance)}
           </h1>
         </div>
 
@@ -79,22 +84,13 @@ export default function HeroBalanceCard({
         <div className="flex items-center gap-2 pt-2 text-xs font-semibold text-indigo-100 flex-wrap">
           <span className="flex items-center gap-1">
             <TrendingUp className="w-3.5 h-3.5 text-emerald-300" />
-            <span>Income: {formatINR(totalIncome)}</span>
+            <span>Month Income: {formatINR(displayIncome)}</span>
           </span>
           <span className="text-indigo-300">•</span>
           <span className="flex items-center gap-1">
             <ArrowDownRight className="w-3.5 h-3.5 text-rose-300" />
-            <span>Spent: {formatINR(totalSpent)}</span>
+            <span>Month Spent: {formatINR(displaySpent)}</span>
           </span>
-          {openingBalance > 0 && (
-            <>
-              <span className="text-indigo-300">•</span>
-              <span className="flex items-center gap-1 text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-lg border border-emerald-400/30">
-                <PiggyBank className="w-3.5 h-3.5" />
-                <span>Carried Over: +{formatINR(openingBalance)}</span>
-              </span>
-            </>
-          )}
         </div>
       </div>
 

@@ -1,7 +1,6 @@
 import express from 'express';
 import { authenticateToken, requireGroupMember, requireRoles } from '../middleware/auth.js';
 import FamilyGroupModel from '../models/FamilyGroup.js';
-import FamilyBudgetModel from '../models/FamilyBudget.js';
 import FamilyIncomeModel from '../models/FamilyIncome.js';
 import FamilyExpenseModel from '../models/FamilyExpense.js';
 import { VALID_CATEGORIES } from '../models/PersonalExpense.js';
@@ -11,13 +10,6 @@ const router = express.Router();
 function getCurrentMonth() {
   const d = new Date();
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
-}
-
-function getPreviousMonth(monthStr) {
-  const [year, month] = monthStr.split('-').map(Number);
-  const prevYear = month === 1 ? year - 1 : year;
-  const prevMonth = month === 1 ? 12 : month - 1;
-  return `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
 }
 
 router.use(authenticateToken);
@@ -161,22 +153,28 @@ router.post('/groups/:groupId/invite', requireGroupMember, requireRoles(['admin'
   }
 });
 
-// 8. Group Dashboard Data (supports month, custom date range, and allTime)
+// 8. Group Dashboard Data
+// ONLY USER CAN ADD OR DELETE. TOTAL BALANCE SHOWN REGARDLESS OF MONTHS.
 router.get('/groups/:groupId/dashboard', requireGroupMember, async (req, res) => {
   try {
     const { groupId } = req.params;
     const { month, startDate, endDate, allTime } = req.query;
 
-    let incomes = [];
-    let expenses = [];
+    // 1. All time running balance for group
+    const allIncomes = await FamilyIncomeModel.findAll(groupId);
+    const allExpenses = await FamilyExpenseModel.findAll(groupId);
+    const allTimeTotalIncome = allIncomes.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0);
+    const allTimeTotalSpent = allExpenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
+    const totalBalance = allTimeTotalIncome - allTimeTotalSpent;
+
+    // 2. Period specific records
+    let periodIncomes = [];
+    let periodExpenses = [];
     let queryPeriod = '';
-    let isAutoCarriedForward = false;
-    let carriedFromMonth = null;
-    let openingBalance = 0;
 
     if (allTime === 'true') {
-      incomes = await FamilyIncomeModel.findAll(groupId);
-      expenses = await FamilyExpenseModel.findAll(groupId);
+      periodIncomes = allIncomes;
+      periodExpenses = allExpenses;
       queryPeriod = 'All Time';
     } else if (startDate && endDate) {
       const s = new Date(startDate);
@@ -184,82 +182,44 @@ router.get('/groups/:groupId/dashboard', requireGroupMember, async (req, res) =>
       const e = new Date(endDate);
       e.setUTCHours(23, 59, 59, 999);
 
-      incomes = await FamilyIncomeModel.findByDateRange(groupId, s.toISOString(), e.toISOString());
-      expenses = await FamilyExpenseModel.findByDateRange(groupId, s.toISOString(), e.toISOString());
+      periodIncomes = await FamilyIncomeModel.findByDateRange(groupId, s.toISOString(), e.toISOString());
+      periodExpenses = await FamilyExpenseModel.findByDateRange(groupId, s.toISOString(), e.toISOString());
       queryPeriod = `${startDate} to ${endDate}`;
     } else {
       const targetMonth = month || getCurrentMonth();
       queryPeriod = targetMonth;
-
-      incomes = await FamilyIncomeModel.findByMonth(groupId, targetMonth);
-      expenses = await FamilyExpenseModel.findByMonth(groupId, targetMonth);
-
-      // Auto carry forward from previous month if 0 expenses
-      if (expenses.length === 0) {
-        const prevMonth = getPreviousMonth(targetMonth);
-        const prevExpenses = await FamilyExpenseModel.findByMonth(groupId, prevMonth);
-
-        if (prevExpenses && prevExpenses.length > 0) {
-          expenses = await FamilyExpenseModel.carryForward(groupId, prevMonth, targetMonth, req.user);
-          isAutoCarriedForward = true;
-          carriedFromMonth = prevMonth;
-
-          if (incomes.length === 0) {
-            incomes = await FamilyIncomeModel.carryForward(groupId, prevMonth, targetMonth, req.user);
-          }
-        }
-      }
-
-      // Opening balance from previous month
-      const prevMonth = getPreviousMonth(targetMonth);
-      const prevIncomes = await FamilyIncomeModel.findByMonth(groupId, prevMonth);
-      const prevExps = await FamilyExpenseModel.findByMonth(groupId, prevMonth);
-      const prevIncTotal = prevIncomes.reduce((acc, i) => acc + (Number(i.amount) || 0), 0);
-      const prevExpTotal = prevExps.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
-      openingBalance = Math.max(0, prevIncTotal - prevExpTotal);
+      periodIncomes = await FamilyIncomeModel.findByMonth(groupId, targetMonth);
+      periodExpenses = await FamilyExpenseModel.findByMonth(groupId, targetMonth);
     }
 
-    // 1. Compute Incomes
-    let totalIncome = incomes.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0);
-
-    if (totalIncome === 0 && !startDate && !endDate && allTime !== 'true') {
-      const targetMonth = month || getCurrentMonth();
-      const budgetDoc = await FamilyBudgetModel.getBudget(groupId, targetMonth);
-      if (budgetDoc && Number(budgetDoc.amount) > 0) {
-        totalIncome = Number(budgetDoc.amount);
-      }
-    }
-
-    // 2. Compute Expenses & Breakdown
-    let totalSpent = 0;
+    // 3. Compute period metrics
+    const monthlyIncome = periodIncomes.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0);
+    let monthlySpent = 0;
     const categoryTotals = {};
     VALID_CATEGORIES.forEach(cat => {
       categoryTotals[cat] = 0;
     });
 
-    expenses.forEach(exp => {
+    periodExpenses.forEach(exp => {
       const amt = Number(exp.amount) || 0;
-      totalSpent += amt;
+      monthlySpent += amt;
       const cat = VALID_CATEGORIES.includes(exp.category) ? exp.category : 'Others';
       categoryTotals[cat] = (categoryTotals[cat] || 0) + amt;
     });
 
-    const totalAvailable = totalIncome + openingBalance;
-    const remainingBalance = totalAvailable - totalSpent;
-    const effectiveDenominator = totalAvailable > 0 ? totalAvailable : totalIncome;
-    const percentSpent = effectiveDenominator > 0 ? Number(((totalSpent / effectiveDenominator) * 100).toFixed(1)) : 0;
-    const isExceeding80 = effectiveDenominator > 0 && totalSpent >= 0.8 * effectiveDenominator;
-    const isExceeding100 = effectiveDenominator > 0 && totalSpent > effectiveDenominator;
-
     const categoryBreakdown = VALID_CATEGORIES.map(cat => {
       const amt = categoryTotals[cat] || 0;
-      const pct = totalSpent > 0 ? Number(((amt / totalSpent) * 100).toFixed(1)) : 0;
+      const pct = monthlySpent > 0 ? Number(((amt / monthlySpent) * 100).toFixed(1)) : 0;
       return {
         category: cat,
         amount: amt,
         percentage: pct
       };
     });
+
+    const percentSpent = monthlyIncome > 0 ? Number(((monthlySpent / monthlyIncome) * 100).toFixed(1)) : 0;
+    const isExceeding80 = monthlyIncome > 0 && monthlySpent >= 0.8 * monthlyIncome;
+    const isExceeding100 = monthlyIncome > 0 && monthlySpent > monthlyIncome;
 
     return res.json({
       group: req.group,
@@ -269,49 +229,27 @@ router.get('/groups/:groupId/dashboard', requireGroupMember, async (req, res) =>
       startDate: startDate || null,
       endDate: endDate || null,
       allTime: allTime === 'true',
-      isAutoCarriedForward,
-      carriedFromMonth,
-      openingBalance,
-      totalIncome,
-      budget: totalIncome,
-      totalSpent,
-      remainingBalance,
+      // True Total Running Balance:
+      totalBalance,
+      remainingBalance: totalBalance,
+      allTimeTotalIncome,
+      allTimeTotalSpent,
+      // Period/Monthly specific:
+      totalIncome: monthlyIncome,
+      monthlyIncome,
+      totalSpent: monthlySpent,
+      monthlySpent,
       percentSpent,
       isExceeding80,
       isExceeding100,
       categories: categoryBreakdown,
       categoryBreakdown,
-      expenses,
-      incomes
+      expenses: periodExpenses,
+      incomes: periodIncomes
     });
   } catch (err) {
     console.error('Family dashboard error:', err);
     return res.status(500).json({ error: 'Failed to fetch family dashboard data.' });
-  }
-});
-
-// Explicit Carry Forward Trigger for Family Group
-router.post('/groups/:groupId/carry-forward', requireGroupMember, async (req, res) => {
-  try {
-    const { groupId } = req.params;
-    const { fromMonth, toMonth } = req.body;
-
-    const targetToMonth = toMonth || getCurrentMonth();
-    const targetFromMonth = fromMonth || getPreviousMonth(targetToMonth);
-
-    const carriedExpenses = await FamilyExpenseModel.carryForward(groupId, targetFromMonth, targetToMonth, req.user);
-    const carriedIncomes = await FamilyIncomeModel.carryForward(groupId, targetFromMonth, targetToMonth, req.user);
-
-    return res.json({
-      message: `Successfully carried forward ${carriedExpenses.length} group expenses and ${carriedIncomes.length} incomes from ${targetFromMonth} to ${targetToMonth}!`,
-      fromMonth: targetFromMonth,
-      toMonth: targetToMonth,
-      expensesCount: carriedExpenses.length,
-      incomesCount: carriedIncomes.length
-    });
-  } catch (err) {
-    console.error('Family carry forward error:', err);
-    return res.status(500).json({ error: 'Failed to carry forward family expenses.' });
   }
 });
 
@@ -338,7 +276,7 @@ router.get('/groups/:groupId/incomes', requireGroupMember, async (req, res) => {
   }
 });
 
-// 10. Add Group Income entry
+// 10. Add Group Income entry (User explicit action only)
 router.post('/groups/:groupId/incomes', requireGroupMember, async (req, res) => {
   try {
     const { groupId } = req.params;
@@ -417,7 +355,7 @@ router.put('/groups/:groupId/incomes/:incomeId', requireGroupMember, async (req,
   }
 });
 
-// 12. Delete Group Income entry
+// 12. Delete Group Income entry (User explicit action only)
 router.delete('/groups/:groupId/incomes/:incomeId', requireGroupMember, async (req, res) => {
   try {
     const { groupId, incomeId } = req.params;
@@ -447,7 +385,7 @@ router.delete('/groups/:groupId/incomes/:incomeId', requireGroupMember, async (r
   }
 });
 
-// 13. Add Group Expense
+// 13. Add Group Expense (User explicit action only)
 router.post('/groups/:groupId/expenses', requireGroupMember, async (req, res) => {
   try {
     const { groupId } = req.params;
@@ -532,7 +470,7 @@ router.put('/groups/:groupId/expenses/:expenseId', requireGroupMember, requireRo
   }
 });
 
-// 15. Delete Group Expense
+// 15. Delete Group Expense (User explicit action only)
 router.delete('/groups/:groupId/expenses/:expenseId', requireGroupMember, requireRoles(['admin', 'moderator']), async (req, res) => {
   try {
     const { groupId, expenseId } = req.params;

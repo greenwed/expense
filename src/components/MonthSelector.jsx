@@ -21,6 +21,12 @@ export default function MonthSelector({ isOpen, onClose, selectedMonth, onSelect
   const currentYear = selectedMonth ? parseInt(selectedMonth.split('-')[0]) : new Date().getFullYear();
   const [viewYear, setViewYear] = useState(currentYear);
 
+  React.useEffect(() => {
+    if (selectedMonth) {
+      setViewYear(parseInt(selectedMonth.split('-')[0]));
+    }
+  }, [selectedMonth, isOpen]);
+
   if (!isOpen) return null;
 
   const currentMonthStr = getCurrentMonthStr();

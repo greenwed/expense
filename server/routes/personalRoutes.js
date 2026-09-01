@@ -1,6 +1,5 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
-import PersonalBudgetModel from '../models/PersonalBudget.js';
 import PersonalIncomeModel from '../models/PersonalIncome.js';
 import PersonalExpenseModel, { VALID_CATEGORIES } from '../models/PersonalExpense.js';
 
@@ -11,31 +10,31 @@ function getCurrentMonth() {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
-function getPreviousMonth(monthStr) {
-  const [year, month] = monthStr.split('-').map(Number);
-  const prevYear = month === 1 ? year - 1 : year;
-  const prevMonth = month === 1 ? 12 : month - 1;
-  return `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
-}
-
 router.use(authenticateToken);
 
 // Dashboard / Report summary
+// ONLY USER CAN ADD OR DELETE INCOME AND EXPENSE. NO AUTOMATIC INSERTION.
+// TOTAL BALANCE IS SHOWN REGARDLESS OF MONTHS.
 router.get('/dashboard', async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
     const { month, startDate, endDate, allTime } = req.query;
 
-    let incomes = [];
-    let expenses = [];
+    // 1. Calculate All-Time running totals for Total Balance regardless of months
+    const allIncomes = await PersonalIncomeModel.findAll(userId);
+    const allExpenses = await PersonalExpenseModel.findAll(userId);
+    const allTimeTotalIncome = allIncomes.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0);
+    const allTimeTotalSpent = allExpenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
+    const totalBalance = allTimeTotalIncome - allTimeTotalSpent;
+
+    // 2. Fetch period-specific records
+    let periodIncomes = [];
+    let periodExpenses = [];
     let queryPeriod = '';
-    let isAutoCarriedForward = false;
-    let carriedFromMonth = null;
-    let openingBalance = 0;
 
     if (allTime === 'true') {
-      incomes = await PersonalIncomeModel.findAll(userId);
-      expenses = await PersonalExpenseModel.findAll(userId);
+      periodIncomes = allIncomes;
+      periodExpenses = allExpenses;
       queryPeriod = 'All Time';
     } else if (startDate && endDate) {
       const s = new Date(startDate);
@@ -43,79 +42,34 @@ router.get('/dashboard', async (req, res) => {
       const e = new Date(endDate);
       e.setUTCHours(23, 59, 59, 999);
 
-      incomes = await PersonalIncomeModel.findByDateRange(userId, s.toISOString(), e.toISOString());
-      expenses = await PersonalExpenseModel.findByDateRange(userId, s.toISOString(), e.toISOString());
+      periodIncomes = await PersonalIncomeModel.findByDateRange(userId, s.toISOString(), e.toISOString());
+      periodExpenses = await PersonalExpenseModel.findByDateRange(userId, s.toISOString(), e.toISOString());
       queryPeriod = `${startDate} to ${endDate}`;
     } else {
       const targetMonth = month || getCurrentMonth();
       queryPeriod = targetMonth;
-
-      incomes = await PersonalIncomeModel.findByMonth(userId, targetMonth);
-      expenses = await PersonalExpenseModel.findByMonth(userId, targetMonth);
-
-      // Auto-carry forward from previous month if new month has 0 expenses
-      if (expenses.length === 0) {
-        const prevMonth = getPreviousMonth(targetMonth);
-        const prevExpenses = await PersonalExpenseModel.findByMonth(userId, prevMonth);
-
-        if (prevExpenses && prevExpenses.length > 0) {
-          // Auto-carry forward expenses
-          expenses = await PersonalExpenseModel.carryForward(userId, prevMonth, targetMonth);
-          isAutoCarriedForward = true;
-          carriedFromMonth = prevMonth;
-
-          // Also auto-carry forward incomes if 0
-          if (incomes.length === 0) {
-            incomes = await PersonalIncomeModel.carryForward(userId, prevMonth, targetMonth);
-          }
-        }
-      }
-
-      // Calculate Opening Balance carried forward from previous months
-      const prevMonth = getPreviousMonth(targetMonth);
-      const prevIncomes = await PersonalIncomeModel.findByMonth(userId, prevMonth);
-      const prevExps = await PersonalExpenseModel.findByMonth(userId, prevMonth);
-      const prevIncTotal = prevIncomes.reduce((acc, i) => acc + (Number(i.amount) || 0), 0);
-      const prevExpTotal = prevExps.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
-      openingBalance = Math.max(0, prevIncTotal - prevExpTotal);
+      periodIncomes = await PersonalIncomeModel.findByMonth(userId, targetMonth);
+      periodExpenses = await PersonalExpenseModel.findByMonth(userId, targetMonth);
     }
 
-    // 1. Compute Incomes
-    let totalIncome = incomes.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0);
-
-    // Fallback to legacy budget if monthly query and no explicit incomes
-    if (totalIncome === 0 && !startDate && !endDate && allTime !== 'true') {
-      const targetMonth = month || getCurrentMonth();
-      const budgetDoc = await PersonalBudgetModel.getBudget(userId, targetMonth);
-      if (budgetDoc && Number(budgetDoc.amount) > 0) {
-        totalIncome = Number(budgetDoc.amount);
-      }
-    }
-
-    // 2. Compute Expenses & Category Breakdown
-    let totalSpent = 0;
+    // 3. Compute period metrics (strictly what user added, 0 if nothing added)
+    const monthlyIncome = periodIncomes.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0);
+    let monthlySpent = 0;
     const categoryTotals = {};
     VALID_CATEGORIES.forEach(cat => {
       categoryTotals[cat] = 0;
     });
 
-    expenses.forEach(exp => {
+    periodExpenses.forEach(exp => {
       const amt = Number(exp.amount) || 0;
-      totalSpent += amt;
+      monthlySpent += amt;
       const cat = VALID_CATEGORIES.includes(exp.category) ? exp.category : 'Others';
       categoryTotals[cat] = (categoryTotals[cat] || 0) + amt;
     });
 
-    const totalAvailable = totalIncome + openingBalance;
-    const remainingBalance = totalAvailable - totalSpent;
-    const effectiveDenominator = totalAvailable > 0 ? totalAvailable : totalIncome;
-    const percentSpent = effectiveDenominator > 0 ? Number(((totalSpent / effectiveDenominator) * 100).toFixed(1)) : 0;
-    const isExceeding80 = effectiveDenominator > 0 && totalSpent >= 0.8 * effectiveDenominator;
-    const isExceeding100 = effectiveDenominator > 0 && totalSpent > effectiveDenominator;
-
     const categoryBreakdown = VALID_CATEGORIES.map(cat => {
       const amt = categoryTotals[cat] || 0;
-      const pct = totalSpent > 0 ? Number(((amt / totalSpent) * 100).toFixed(1)) : 0;
+      const pct = monthlySpent > 0 ? Number(((amt / monthlySpent) * 100).toFixed(1)) : 0;
       return {
         category: cat,
         amount: amt,
@@ -123,55 +77,37 @@ router.get('/dashboard', async (req, res) => {
       };
     });
 
+    const percentSpent = monthlyIncome > 0 ? Number(((monthlySpent / monthlyIncome) * 100).toFixed(1)) : 0;
+    const isExceeding80 = monthlyIncome > 0 && monthlySpent >= 0.8 * monthlyIncome;
+    const isExceeding100 = monthlyIncome > 0 && monthlySpent > monthlyIncome;
+
     return res.json({
       period: queryPeriod,
       month: month || getCurrentMonth(),
       startDate: startDate || null,
       endDate: endDate || null,
       allTime: allTime === 'true',
-      isAutoCarriedForward,
-      carriedFromMonth,
-      openingBalance,
-      totalIncome,
-      budget: totalIncome,
-      totalSpent,
-      remainingBalance,
+      // True Total Balance across all months:
+      totalBalance,
+      remainingBalance: totalBalance,
+      allTimeTotalIncome,
+      allTimeTotalSpent,
+      // Period/Monthly specific:
+      totalIncome: monthlyIncome,
+      monthlyIncome,
+      totalSpent: monthlySpent,
+      monthlySpent,
       percentSpent,
       isExceeding80,
       isExceeding100,
       categories: categoryBreakdown,
       categoryBreakdown,
-      expenses,
-      incomes
+      expenses: periodExpenses,
+      incomes: periodIncomes
     });
   } catch (err) {
     console.error('Personal dashboard error:', err);
     return res.status(500).json({ error: 'Failed to fetch personal dashboard data.' });
-  }
-});
-
-// Explicit Carry Forward Trigger Endpoint
-router.post('/carry-forward', async (req, res) => {
-  try {
-    const userId = req.user._id || req.user.id;
-    const { fromMonth, toMonth } = req.body;
-
-    const targetToMonth = toMonth || getCurrentMonth();
-    const targetFromMonth = fromMonth || getPreviousMonth(targetToMonth);
-
-    const carriedExpenses = await PersonalExpenseModel.carryForward(userId, targetFromMonth, targetToMonth);
-    const carriedIncomes = await PersonalIncomeModel.carryForward(userId, targetFromMonth, targetToMonth);
-
-    return res.json({
-      message: `Successfully carried forward ${carriedExpenses.length} expenses and ${carriedIncomes.length} incomes from ${targetFromMonth} to ${targetToMonth}!`,
-      fromMonth: targetFromMonth,
-      toMonth: targetToMonth,
-      expensesCount: carriedExpenses.length,
-      incomesCount: carriedIncomes.length
-    });
-  } catch (err) {
-    console.error('Carry forward error:', err);
-    return res.status(500).json({ error: 'Failed to carry forward expenses and incomes.' });
   }
 });
 
@@ -198,7 +134,7 @@ router.get('/incomes', async (req, res) => {
   }
 });
 
-// Add new Income entry
+// Add new Income entry (User explicit action only)
 router.post('/incomes', async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
@@ -269,7 +205,7 @@ router.put('/incomes/:id', async (req, res) => {
   }
 });
 
-// Delete Income entry
+// Delete Income entry (User explicit action only)
 router.delete('/incomes/:id', async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
@@ -315,7 +251,7 @@ router.get('/expenses', async (req, res) => {
   }
 });
 
-// Add new expense
+// Add new expense (User explicit action only)
 router.post('/expenses', async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
@@ -400,7 +336,7 @@ router.put('/expenses/:id', async (req, res) => {
   }
 });
 
-// Delete expense
+// Delete expense (User explicit action only)
 router.delete('/expenses/:id', async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
