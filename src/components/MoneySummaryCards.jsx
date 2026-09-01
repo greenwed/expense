@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, ArrowDownRight, ChevronRight, Info } from 'lucide-react';
+import { TrendingUp, ArrowDownRight, ChevronRight, Info, Plus } from 'lucide-react';
 import { formatINR } from '../utils/formatters';
 
 export default function MoneySummaryCards({
@@ -7,6 +7,7 @@ export default function MoneySummaryCards({
   totalSpent = 0,
   incomeCount = 0,
   onOpenManageIncome,
+  onOpenAddExpense,
   canManage = true
 }) {
   return (
@@ -23,7 +24,7 @@ export default function MoneySummaryCards({
             onClick={onOpenManageIncome}
             className="text-xs font-bold text-slate-500 hover:text-indigo-600 flex items-center gap-1 transition-colors"
           >
-            <span>{incomeCount} Source{incomeCount !== 1 ? 's' : ''}</span>
+            <span>{incomeCount} Income Source{incomeCount !== 1 ? 's' : ''}</span>
             <ChevronRight className="w-3 h-3" />
           </button>
         )}
@@ -32,17 +33,19 @@ export default function MoneySummaryCards({
       {/* Dual Cards Grid */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         
-        {/* Card 1: Total Income */}
+        {/* Card 1: Total Income (Clickable -> Opens Income Manager) */}
         <div 
           onClick={canManage ? onOpenManageIncome : undefined}
-          className={`fintech-card fintech-card-hover p-4 sm:p-5 flex flex-col justify-between ${canManage ? 'cursor-pointer' : ''}`}
+          className={`fintech-card fintech-card-hover p-4 sm:p-5 flex flex-col justify-between ${canManage ? 'cursor-pointer active:scale-[0.98]' : ''}`}
+          role={canManage ? 'button' : undefined}
+          title="Manage Incomes"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm">
               <TrendingUp className="w-5 h-5 stroke-[2.5]" />
             </div>
             {canManage && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center gap-0.5">
                 Manage
               </span>
             )}
@@ -57,15 +60,28 @@ export default function MoneySummaryCards({
           </div>
         </div>
 
-        {/* Card 2: Total Expenses */}
-        <div className="fintech-card fintech-card-hover p-4 sm:p-5 flex flex-col justify-between">
+        {/* Card 2: Total Expenses (Clickable -> Opens Add Expense Modal) */}
+        <div 
+          onClick={onOpenAddExpense}
+          className="fintech-card fintech-card-hover p-4 sm:p-5 flex flex-col justify-between cursor-pointer active:scale-[0.98]"
+          role="button"
+          title="Add Expense"
+        >
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shadow-sm">
               <ArrowDownRight className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 border border-rose-100">
-              Expenses
-            </span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenAddExpense && onOpenAddExpense();
+              }}
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 flex items-center gap-0.5 transition-colors"
+            >
+              <Plus className="w-2.5 h-2.5 stroke-[3]" />
+              <span>Add</span>
+            </button>
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block mb-1">

@@ -160,6 +160,7 @@ export default function FamilyWorkspace({
         totalSpent={monthlySpent}
         incomeCount={incomes.length}
         onOpenManageIncome={onOpenManageIncome}
+        onOpenAddExpense={onOpenAddExpense}
         canManage={true}
       />
 

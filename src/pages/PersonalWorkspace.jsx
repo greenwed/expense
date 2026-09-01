@@ -81,6 +81,7 @@ export default function PersonalWorkspace({
         totalSpent={monthlySpent}
         incomeCount={incomes.length}
         onOpenManageIncome={onOpenManageIncome}
+        onOpenAddExpense={onOpenAddExpense}
         canManage={true}
       />
 
