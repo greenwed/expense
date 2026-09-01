@@ -17,31 +17,23 @@ func createIcon(size: CGFloat, isRound: Bool, isForegroundOnly: Bool) -> NSImage
         ctx.saveGState()
         let path: CGPath
         if isRound {
-            path = CGPath(ellipseIn: rect.insetBy(dx: size * 0.02, dy: size * 0.02), transform: nil)
+            path = CGPath(ellipseIn: rect.insetBy(dx: size * 0.04, dy: size * 0.04), transform: nil)
         } else {
-            let cornerRadius = size * 0.22
-            path = CGPath(roundedRect: rect.insetBy(dx: size * 0.02, dy: size * 0.02), cornerWidth: cornerRadius, cornerHeight: cornerRadius, transform: nil)
+            let cornerRadius = size * 0.28 // Smooth organic squircle corner
+            path = CGPath(roundedRect: rect.insetBy(dx: size * 0.04, dy: size * 0.04), cornerWidth: cornerRadius, cornerHeight: cornerRadius, transform: nil)
         }
         ctx.addPath(path)
         ctx.clip()
 
-        // Gradient
+        // Vibrant Violet-Indigo Gradient matching image 2
         let colors = [
             NSColor(red: 124/255, green: 58/255, blue: 237/255, alpha: 1.0).cgColor,
-            NSColor(red: 99/255, green: 102/255, blue: 241/255, alpha: 1.0).cgColor,
+            NSColor(red: 91/255, green: 80/255, blue: 230/255, alpha: 1.0).cgColor,
             NSColor(red: 79/255, green: 70/255, blue: 229/255, alpha: 1.0).cgColor
         ] as CFArray
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let gradient = CGGradient(colorsSpace: colorSpace, colors: colors, locations: [0.0, 0.5, 1.0])!
         ctx.drawLinearGradient(gradient, start: CGPoint(x: 0, y: size), end: CGPoint(x: size, y: 0), options: [])
-        ctx.restoreGState()
-
-        // Subtle Inner Border
-        ctx.saveGState()
-        ctx.addPath(path)
-        ctx.setStrokeColor(NSColor(white: 1.0, alpha: 0.25).cgColor)
-        ctx.setLineWidth(size * 0.02)
-        ctx.strokePath()
         ctx.restoreGState()
     }
 
@@ -52,43 +44,42 @@ func createIcon(size: CGFloat, isRound: Bool, isForegroundOnly: Bool) -> NSImage
     ctx.setLineCap(.round)
     ctx.setLineJoin(.round)
 
-    let scale = isForegroundOnly ? (size / 512.0) * 0.65 : (size / 512.0) * 0.85
-    let offsetX = (size - (512.0 * scale)) / 2.0
-    let offsetY = (size - (512.0 * scale)) / 2.0
+    let scale = (size / 108.0) * (isForegroundOnly ? 0.9 : 0.82)
+    let offsetX = (size - (108.0 * scale)) / 2.0
+    let offsetY = (size - (108.0 * scale)) / 2.0
 
     ctx.translateBy(x: offsetX, y: offsetY)
     ctx.scaleBy(x: scale, y: scale)
 
-    // Thickness
-    ctx.setLineWidth(42.0)
+    // Stroke width
+    ctx.setLineWidth(6.0)
 
-    // Upper line
-    ctx.move(to: CGPoint(x: 145, y: 512 - 145))
-    ctx.addLine(to: CGPoint(x: 367, y: 512 - 145))
+    // 1. Top bar: (34, 73) -> (74, 73) in standard Cocoa coords
+    ctx.move(to: CGPoint(x: 34, y: 108 - 35))
+    ctx.addLine(to: CGPoint(x: 74, y: 108 - 35))
     ctx.strokePath()
 
-    // Second line
-    ctx.move(to: CGPoint(x: 145, y: 512 - 225))
-    ctx.addLine(to: CGPoint(x: 310, y: 512 - 225))
+    // 2. Second bar: (34, 61) -> (66, 61)
+    ctx.move(to: CGPoint(x: 34, y: 108 - 47))
+    ctx.addLine(to: CGPoint(x: 66, y: 108 - 47))
     ctx.strokePath()
 
-    // Curved loop
+    // 3. Upper loop arc
     let loopPath = CGMutablePath()
-    loopPath.move(to: CGPoint(x: 225, y: 512 - 145))
-    loopPath.addLine(to: CGPoint(x: 225, y: 512 - 305))
-    // arc/bezier for the rupee top half
-    loopPath.addCurve(to: CGPoint(x: 320, y: 512 - 225),
-                      control1: CGPoint(x: 300, y: 512 - 305),
-                      control2: CGPoint(x: 320, y: 512 - 270))
-    loopPath.addCurve(to: CGPoint(x: 225, y: 512 - 145),
-                      control1: CGPoint(x: 320, y: 512 - 180),
-                      control2: CGPoint(x: 300, y: 512 - 145))
+    loopPath.move(to: CGPoint(x: 47, y: 108 - 35))
+    loopPath.addLine(to: CGPoint(x: 47, y: 108 - 59))
+    loopPath.addCurve(to: CGPoint(x: 67, y: 108 - 47),
+                      control1: CGPoint(x: 62, y: 108 - 59),
+                      control2: CGPoint(x: 67, y: 108 - 54))
+    loopPath.addCurve(to: CGPoint(x: 47, y: 108 - 35),
+                      control1: CGPoint(x: 67, y: 108 - 40),
+                      control2: CGPoint(x: 62, y: 108 - 35))
     ctx.addPath(loopPath)
     ctx.strokePath()
 
-    // Diagonal stroke
-    ctx.move(to: CGPoint(x: 205, y: 512 - 305))
-    ctx.addLine(to: CGPoint(x: 340, y: 512 - 415))
+    // 4. Downward diagonal leg
+    ctx.move(to: CGPoint(x: 45, y: 108 - 59))
+    ctx.addLine(to: CGPoint(x: 71, y: 108 - 77))
     ctx.strokePath()
 
     ctx.restoreGState()
@@ -131,7 +122,7 @@ for (folder, size) in densities {
     let iconRound = createIcon(size: size, isRound: true, isForegroundOnly: false)
     savePNG(image: iconRound, path: "\(dir)/ic_launcher_round.png")
     
-    // Adaptive Foreground (Rupee symbol on transparent background, size: 432 for adaptive)
+    // Adaptive Foreground Icon (scaled for 108dp canvas)
     let iconFg = createIcon(size: size * 2.25, isRound: false, isForegroundOnly: true)
     savePNG(image: iconFg, path: "\(dir)/ic_launcher_foreground.png")
 }
@@ -150,4 +141,4 @@ savePNG(image: fav192, path: "\(basePath)/ExpenseApp/public/favicon.png")
 let splash = createIcon(size: 384, isRound: false, isForegroundOnly: false)
 savePNG(image: splash, path: "\(resPath)/drawable/splash.png")
 
-print("All clean RupeeTrack icons generated successfully!")
+print("Generated clean Rupee icons!")
