@@ -65,6 +65,44 @@ export const PersonalIncomeModel = {
     return incomes.sort((a, b) => new Date(b.date) - new Date(a.date));
   },
 
+  async findAll(userId) {
+    const uIdStr = String(userId);
+    const pool = getPgPool();
+
+    if (pool) {
+      const res = await pool.query(
+        `SELECT * FROM personal_incomes
+         WHERE user_id = $1
+         ORDER BY date DESC`,
+        [uIdStr]
+      );
+      return res.rows.map(formatIncome);
+    }
+
+    const incomes = incomeStore.find(e => String(e.userId) === uIdStr);
+    return incomes.sort((a, b) => new Date(b.date) - new Date(a.date));
+  },
+
+  async carryForward(userId, fromMonth, toMonth) {
+    const prevIncomes = await this.findByMonth(userId, fromMonth);
+    if (!prevIncomes || prevIncomes.length === 0) return [];
+
+    const targetDate = new Date(`${toMonth}-01T09:00:00.000Z`);
+    const created = [];
+
+    for (const inc of prevIncomes) {
+      const newInc = await this.create({
+        userId,
+        amount: inc.amount,
+        description: inc.description,
+        date: targetDate
+      });
+      created.push(newInc);
+    }
+
+    return created;
+  },
+
   async findById(id) {
     const pool = getPgPool();
     if (pool) {

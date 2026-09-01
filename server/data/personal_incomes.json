@@ -38,5 +38,105 @@
     "date": "2026-08-10T15:00:00.000Z",
     "createdAt": "2026-08-29T11:37:42.855Z",
     "updatedAt": "2026-08-29T11:37:42.859Z"
+  },
+  {
+    "_id": "inc_f7ca838cbc4440cc",
+    "id": "inc_f7ca838cbc4440cc",
+    "userId": "usr_655cbbdbc77e4e51",
+    "amount": 60000,
+    "description": "August Primary Salary",
+    "date": "2026-08-01T10:00:00.000Z",
+    "createdAt": "2026-09-01T05:59:08.467Z",
+    "updatedAt": "2026-09-01T05:59:08.467Z"
+  },
+  {
+    "_id": "inc_071087e15bd54063",
+    "id": "inc_071087e15bd54063",
+    "userId": "usr_655cbbdbc77e4e51",
+    "amount": 60000,
+    "description": "August Primary Salary",
+    "date": "2026-09-01T09:00:00.000Z",
+    "createdAt": "2026-09-01T05:59:08.472Z",
+    "updatedAt": "2026-09-01T05:59:08.472Z"
+  },
+  {
+    "_id": "inc_14e332c918b1409a",
+    "id": "inc_14e332c918b1409a",
+    "userId": "usr_655cbbdbc77e4e51",
+    "amount": 60000,
+    "description": "August Primary Salary",
+    "date": "2026-10-01T09:00:00.000Z",
+    "createdAt": "2026-09-01T05:59:08.477Z",
+    "updatedAt": "2026-09-01T05:59:08.477Z"
+  },
+  {
+    "_id": "inc_0136f3f95f244ee6",
+    "id": "inc_0136f3f95f244ee6",
+    "userId": "usr_573e772335ee4d77",
+    "amount": 50000,
+    "description": "Monthly Salary",
+    "date": "2026-08-01T09:00:00.000Z",
+    "createdAt": "2026-09-01T05:59:08.591Z",
+    "updatedAt": "2026-09-01T05:59:08.591Z"
+  },
+  {
+    "_id": "inc_c63189f1ea454181",
+    "id": "inc_c63189f1ea454181",
+    "userId": "usr_573e772335ee4d77",
+    "amount": 8000,
+    "description": "Birthday Gift & Cash from Uncle",
+    "date": "2026-08-10T15:00:00.000Z",
+    "createdAt": "2026-09-01T05:59:08.593Z",
+    "updatedAt": "2026-09-01T05:59:08.596Z"
+  },
+  {
+    "_id": "inc_14cb58a7f6dd44f0",
+    "id": "inc_14cb58a7f6dd44f0",
+    "userId": "usr_632cd2d4ba924792",
+    "amount": 60000,
+    "description": "August Primary Salary",
+    "date": "2026-08-01T10:00:00.000Z",
+    "createdAt": "2026-09-01T06:12:21.523Z",
+    "updatedAt": "2026-09-01T06:12:21.523Z"
+  },
+  {
+    "_id": "inc_a74530b6d727424c",
+    "id": "inc_a74530b6d727424c",
+    "userId": "usr_632cd2d4ba924792",
+    "amount": 60000,
+    "description": "August Primary Salary",
+    "date": "2026-09-01T09:00:00.000Z",
+    "createdAt": "2026-09-01T06:12:21.529Z",
+    "updatedAt": "2026-09-01T06:12:21.529Z"
+  },
+  {
+    "_id": "inc_9f502a463a0f43d3",
+    "id": "inc_9f502a463a0f43d3",
+    "userId": "usr_632cd2d4ba924792",
+    "amount": 60000,
+    "description": "August Primary Salary",
+    "date": "2026-10-01T09:00:00.000Z",
+    "createdAt": "2026-09-01T06:12:21.531Z",
+    "updatedAt": "2026-09-01T06:12:21.531Z"
+  },
+  {
+    "_id": "inc_925bc2196660459a",
+    "id": "inc_925bc2196660459a",
+    "userId": "usr_4e54033ac8c54692",
+    "amount": 50000,
+    "description": "Monthly Salary",
+    "date": "2026-08-01T09:00:00.000Z",
+    "createdAt": "2026-09-01T06:12:21.649Z",
+    "updatedAt": "2026-09-01T06:12:21.649Z"
+  },
+  {
+    "_id": "inc_92c7286cf94948e4",
+    "id": "inc_92c7286cf94948e4",
+    "userId": "usr_4e54033ac8c54692",
+    "amount": 8000,
+    "description": "Birthday Gift & Cash from Uncle",
+    "date": "2026-08-10T15:00:00.000Z",
+    "createdAt": "2026-09-01T06:12:21.651Z",
+    "updatedAt": "2026-09-01T06:12:21.654Z"
   }
 ]

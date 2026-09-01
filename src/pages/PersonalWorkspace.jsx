@@ -5,18 +5,21 @@ import BudgetWarningBanner from '../components/BudgetWarningBanner';
 import {
   Search,
   Plus,
-  TrendingUp,
   Edit2,
   Trash2,
   Tag,
   Receipt,
-  Check
+  RotateCcw,
+  Sparkles,
+  Calendar,
+  Layers
 } from 'lucide-react';
 import {
   formatINR,
   formatDateTime,
   CATEGORY_CONFIG,
-  groupExpensesByDay
+  groupExpensesByDay,
+  getMonthName
 } from '../utils/formatters';
 
 export default function PersonalWorkspace({
@@ -24,22 +27,29 @@ export default function PersonalWorkspace({
   month,
   data,
   loading,
+  isAllTime,
+  onToggleAllTime,
   onOpenMonthSelector,
   onOpenAddIncome,
   onOpenManageIncome,
   onOpenAddExpense,
   onOpenEditExpense,
-  onDeleteExpense
+  onDeleteExpense,
+  onCarryForward
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [carryingForward, setCarryingForward] = useState(false);
 
   const totalIncome = Number(data?.totalIncome) || 0;
   const totalSpent = Number(data?.totalSpent) || 0;
+  const openingBalance = Number(data?.openingBalance) || 0;
   const remainingBalance = Number(data?.remainingBalance) || 0;
   const percentSpent = Number(data?.percentSpent) || 0;
   const isExceeding80 = Boolean(data?.isExceeding80);
   const isExceeding100 = Boolean(data?.isExceeding100);
+  const isAutoCarriedForward = Boolean(data?.isAutoCarriedForward);
+  const carriedFromMonth = data?.carriedFromMonth;
   const expenses = useMemo(() => data?.expenses || [], [data]);
   const incomes = useMemo(() => data?.incomes || [], [data]);
 
@@ -60,19 +70,27 @@ export default function PersonalWorkspace({
     return groupExpensesByDay(filteredExpenses);
   }, [filteredExpenses]);
 
+  const handleTriggerCarryForward = async () => {
+    if (!onCarryForward) return;
+    try {
+      setCarryingForward(true);
+      await onCarryForward();
+    } finally {
+      setCarryingForward(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fadeIn pb-24 lg:pb-8">
       
       {/* 1. Flagship Gradient Hero Balance Card */}
       <HeroBalanceCard
         user={user}
-        month={month}
         totalIncome={totalIncome}
         totalSpent={totalSpent}
+        openingBalance={openingBalance}
         remainingBalance={remainingBalance}
         percentSpent={percentSpent}
-        onOpenMonthSelector={onOpenMonthSelector}
-        onOpenAddIncome={onOpenAddIncome}
         isExceeding80={isExceeding80}
         isExceeding100={isExceeding100}
       />
@@ -82,7 +100,6 @@ export default function PersonalWorkspace({
         totalIncome={totalIncome}
         totalSpent={totalSpent}
         incomeCount={incomes.length}
-        onOpenAddIncome={onOpenAddIncome}
         onOpenManageIncome={onOpenManageIncome}
         canManage={true}
       />
@@ -98,35 +115,74 @@ export default function PersonalWorkspace({
         onOpenAddIncome={onOpenAddIncome}
       />
 
-      {/* 4. Transactions Feed Section Header */}
-      <div className="space-y-4 pt-2">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* 4. Streamlined Time Scope Bar */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 bg-slate-200/70 p-1 rounded-2xl">
+          <button
+            type="button"
+            onClick={() => onToggleAllTime && onToggleAllTime(false)}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
+              !isAllTime
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+            <span>{getMonthName(month)}</span>
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => onToggleAllTime && onToggleAllTime(true)}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
+              isAllTime
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5 text-slate-400" />
+            <span>All Time</span>
+          </button>
+        </div>
+
+        {/* Carry Forward Button (if not all time) */}
+        {!isAllTime && onCarryForward && (
+          <button
+            type="button"
+            onClick={handleTriggerCarryForward}
+            disabled={carryingForward}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all active:scale-95 disabled:opacity-50"
+            title="Carry forward all expenses and incomes from previous month"
+          >
+            <RotateCcw className={`w-3.5 h-3.5 text-slate-500 ${carryingForward ? 'animate-spin' : ''}`} />
+            <span>Carry Forward</span>
+          </button>
+        )}
+      </div>
+
+      {/* Auto Carry Forward Informational Banner */}
+      {isAutoCarriedForward && (
+        <div className="p-3.5 rounded-2xl bg-indigo-50/80 border border-indigo-100 text-indigo-900 flex items-center gap-2.5 animate-fadeIn">
+          <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
+          <div className="text-xs">
+            <span className="font-bold">Expenses Carried Forward: </span>
+            <span className="text-indigo-700 font-medium">
+              Automatically copied {expenses.length} recurring expenses from {getMonthName(carriedFromMonth)}.
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Clean Transactions Feed */}
+      <div className="space-y-4 pt-1">
+        <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">
               Transactions
             </h3>
             <span className="text-xs text-slate-400 font-medium">
-              {filteredExpenses.length} entries for this month
+              {filteredExpenses.length} {isAllTime ? 'entries across all time' : `entries for ${getMonthName(month)}`}
             </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onOpenAddIncome}
-              className="px-3.5 py-2.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-extrabold text-xs flex items-center gap-1.5 border border-emerald-200/70 transition-all active:scale-95"
-            >
-              <TrendingUp className="w-4 h-4 stroke-[2.5]" />
-              <span>+ Add Income</span>
-            </button>
-            <button
-              type="button"
-              onClick={onOpenAddExpense}
-              className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-lg shadow-indigo-500/25 transition-all active:scale-95"
-            >
-              <Plus className="w-4 h-4 stroke-[3]" />
-              <span>+ Add Expense</span>
-            </button>
           </div>
         </div>
 
@@ -138,7 +194,7 @@ export default function PersonalWorkspace({
             </span>
             <input
               type="text"
-              placeholder="Search expenses by title or amount..."
+              placeholder="Search by description or amount..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200/80 rounded-2xl text-xs sm:text-sm font-medium focus:outline-none focus:border-indigo-500 shadow-sm transition-all"
@@ -146,7 +202,7 @@ export default function PersonalWorkspace({
           </div>
 
           {/* Category Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
             <button
               type="button"
               onClick={() => setSelectedCategory('all')}
@@ -156,7 +212,7 @@ export default function PersonalWorkspace({
                   : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
               }`}
             >
-              All Categories
+              All
             </button>
             {Object.keys(CATEGORY_CONFIG).map((catKey) => {
               const conf = CATEGORY_CONFIG[catKey];
@@ -176,7 +232,7 @@ export default function PersonalWorkspace({
                   }}
                 >
                   <span
-                    className="w-2 h-2 rounded-full"
+                    className="w-1.5 h-1.5 rounded-full"
                     style={{ backgroundColor: isSelected ? '#FFFFFF' : conf.color }}
                   />
                   <span>{conf.name}</span>
@@ -201,8 +257,29 @@ export default function PersonalWorkspace({
             <p className="text-xs text-slate-400 max-w-sm mx-auto">
               {searchQuery || selectedCategory !== 'all'
                 ? 'No expenses matched your search filters.'
-                : 'Click "+ Add Expense" to start tracking your daily expenses.'}
+                : 'Tap "+ Add Expense" to start tracking your daily expenses.'}
             </p>
+            <div className="flex items-center justify-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={onOpenAddExpense}
+                className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-xs rounded-xl shadow-md transition-all inline-flex items-center gap-1.5 active:scale-95"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                <span>Add Expense</span>
+              </button>
+              {!isAllTime && onCarryForward && (
+                <button
+                  type="button"
+                  onClick={handleTriggerCarryForward}
+                  disabled={carryingForward}
+                  className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all inline-flex items-center gap-1.5"
+                >
+                  <RotateCcw className={`w-3.5 h-3.5 ${carryingForward ? 'animate-spin' : ''}`} />
+                  <span>Carry Forward</span>
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="space-y-6">
@@ -226,13 +303,13 @@ export default function PersonalWorkspace({
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <div
-                            className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm"
+                            className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm"
                             style={{
                               backgroundColor: `${conf.color}15`,
                               color: conf.color
                             }}
                           >
-                            <Tag className="w-5 h-5" />
+                            <Tag className="w-4 h-4" />
                           </div>
                           <div className="min-w-0">
                             <span className="text-sm font-bold text-slate-900 block truncate">

@@ -1,12 +1,11 @@
 import React from 'react';
-import { TrendingUp, ArrowDownRight, Plus, ChevronRight, Info, Layers } from 'lucide-react';
+import { TrendingUp, ArrowDownRight, ChevronRight, Info } from 'lucide-react';
 import { formatINR } from '../utils/formatters';
 
 export default function MoneySummaryCards({
   totalIncome = 0,
   totalSpent = 0,
   incomeCount = 0,
-  onOpenAddIncome,
   onOpenManageIncome,
   canManage = true
 }) {
@@ -19,24 +18,14 @@ export default function MoneySummaryCards({
           <Info className="w-3.5 h-3.5 text-slate-400" />
         </div>
         {canManage && (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onOpenManageIncome}
-              className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors"
-            >
-              <span>{incomeCount} Incomes</span>
-              <ChevronRight className="w-3 h-3" />
-            </button>
-            <button
-              type="button"
-              onClick={onOpenAddIncome}
-              className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 transition-colors"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[3]" />
-              <span>Add Income</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onOpenManageIncome}
+            className="text-xs font-bold text-slate-500 hover:text-indigo-600 flex items-center gap-1 transition-colors"
+          >
+            <span>{incomeCount} Source{incomeCount !== 1 ? 's' : ''}</span>
+            <ChevronRight className="w-3 h-3" />
+          </button>
         )}
       </div>
 

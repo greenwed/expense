@@ -71,6 +71,51 @@ export const FamilyExpenseModel = {
     return expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
   },
 
+  async findAll(groupId) {
+    const gIdStr = String(groupId);
+    const pool = getPgPool();
+
+    if (pool) {
+      const res = await pool.query(
+        `SELECT * FROM family_expenses
+         WHERE group_id = $1
+         ORDER BY date DESC`,
+        [gIdStr]
+      );
+      return res.rows.map(formatFamilyExpense);
+    }
+
+    const expenses = familyExpenseStore.find(e => String(e.groupId) === gIdStr);
+    return expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+  },
+
+  async carryForward(groupId, fromMonth, toMonth, user) {
+    const prevExpenses = await this.findByMonth(groupId, fromMonth);
+    if (!prevExpenses || prevExpenses.length === 0) return [];
+
+    const targetDate = new Date(`${toMonth}-01T09:00:00.000Z`);
+    const created = [];
+
+    for (const exp of prevExpenses) {
+      const newExp = await this.create({
+        groupId,
+        user: {
+          id: exp.userId,
+          _id: exp.userId,
+          name: exp.userName || user.name,
+          username: exp.userUsername || user.username
+        },
+        amount: exp.amount,
+        category: exp.category,
+        description: exp.description,
+        date: targetDate
+      });
+      created.push(newExp);
+    }
+
+    return created;
+  },
+
   async findById(expenseId) {
     const eIdStr = String(expenseId);
     const pool = getPgPool();

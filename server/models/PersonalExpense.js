@@ -67,6 +67,45 @@ export const PersonalExpenseModel = {
     return expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
   },
 
+  async findAll(userId) {
+    const uIdStr = String(userId);
+    const pool = getPgPool();
+
+    if (pool) {
+      const res = await pool.query(
+        `SELECT * FROM personal_expenses
+         WHERE user_id = $1
+         ORDER BY date DESC`,
+        [uIdStr]
+      );
+      return res.rows.map(formatExpense);
+    }
+
+    const expenses = expenseStore.find(e => String(e.userId) === uIdStr);
+    return expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+  },
+
+  async carryForward(userId, fromMonth, toMonth) {
+    const prevExpenses = await this.findByMonth(userId, fromMonth);
+    if (!prevExpenses || prevExpenses.length === 0) return [];
+
+    const targetDate = new Date(`${toMonth}-01T09:00:00.000Z`);
+    const created = [];
+
+    for (const exp of prevExpenses) {
+      const newExp = await this.create({
+        userId,
+        amount: exp.amount,
+        category: exp.category,
+        description: exp.description,
+        date: targetDate
+      });
+      created.push(newExp);
+    }
+
+    return created;
+  },
+
   async findById(id) {
     const pool = getPgPool();
     if (pool) {

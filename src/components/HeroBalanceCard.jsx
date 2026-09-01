@@ -1,21 +1,18 @@
 import React from 'react';
-import { ChevronDown, Bell, ArrowUpRight, ArrowDownRight, TrendingUp } from 'lucide-react';
-import { formatINR, getMonthName } from '../utils/formatters';
+import { Bell, ArrowDownRight, TrendingUp, PiggyBank } from 'lucide-react';
+import { formatINR } from '../utils/formatters';
 
 export default function HeroBalanceCard({
   user,
-  month,
   totalIncome = 0,
   totalSpent = 0,
   remainingBalance = 0,
   percentSpent = 0,
-  onOpenMonthSelector,
-  onOpenAddIncome,
+  openingBalance = 0,
   isExceeding80 = false,
   isExceeding100 = false
 }) {
   const avatarLetter = (user?.name || user?.username || 'U')[0].toUpperCase();
-  const isPositive = remainingBalance >= 0;
 
   return (
     <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-violet-600 via-indigo-600 to-indigo-700 text-white p-6 sm:p-7 shadow-2xl shadow-indigo-600/30 transition-all">
@@ -45,16 +42,13 @@ export default function HeroBalanceCard({
           </div>
         </div>
 
-        {/* Center/Right: Month Selector Chip & Notification Bell */}
+        {/* Right Status Badge */}
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onOpenMonthSelector}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white/15 hover:bg-white/25 border border-white/20 backdrop-blur-md text-xs font-bold text-white transition-all active:scale-95 shadow-sm"
-          >
-            <span>{getMonthName(month)}</span>
-            <ChevronDown className="w-3.5 h-3.5 text-indigo-200" />
-          </button>
+          {totalIncome > 0 && (
+            <span className="text-xs font-extrabold text-indigo-100 bg-white/15 px-3 py-1 rounded-full backdrop-blur-md border border-white/15 shadow-sm">
+              {percentSpent}% Spent
+            </span>
+          )}
 
           <div className="relative w-9 h-9 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center text-white backdrop-blur-md">
             <Bell className="w-4 h-4" />
@@ -71,16 +65,9 @@ export default function HeroBalanceCard({
 
       {/* Main Balance Hero Section */}
       <div className="relative z-10 space-y-1">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-indigo-200 uppercase tracking-wider block">
-            Current Balance
-          </span>
-          {totalIncome > 0 && (
-            <span className="text-xs font-extrabold text-indigo-100 bg-white/15 px-2.5 py-0.5 rounded-full backdrop-blur-sm border border-white/10">
-              {percentSpent}% Spent
-            </span>
-          )}
-        </div>
+        <span className="text-xs font-bold text-indigo-200 uppercase tracking-wider block">
+          Current Balance
+        </span>
 
         <div className="flex items-baseline gap-2">
           <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
@@ -88,28 +75,25 @@ export default function HeroBalanceCard({
           </h1>
         </div>
 
-        {/* Subtitle / Insight Pill */}
+        {/* Breakdown Stats */}
         <div className="flex items-center gap-2 pt-2 text-xs font-semibold text-indigo-100 flex-wrap">
-          {totalIncome > 0 ? (
+          <span className="flex items-center gap-1">
+            <TrendingUp className="w-3.5 h-3.5 text-emerald-300" />
+            <span>Income: {formatINR(totalIncome)}</span>
+          </span>
+          <span className="text-indigo-300">•</span>
+          <span className="flex items-center gap-1">
+            <ArrowDownRight className="w-3.5 h-3.5 text-rose-300" />
+            <span>Spent: {formatINR(totalSpent)}</span>
+          </span>
+          {openingBalance > 0 && (
             <>
-              <span className="flex items-center gap-1">
-                <TrendingUp className="w-3.5 h-3.5 text-emerald-300" />
-                <span>Income: {formatINR(totalIncome)}</span>
-              </span>
               <span className="text-indigo-300">•</span>
-              <span className="flex items-center gap-1">
-                <ArrowDownRight className="w-3.5 h-3.5 text-rose-300" />
-                <span>Spent: {formatINR(totalSpent)}</span>
+              <span className="flex items-center gap-1 text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-lg border border-emerald-400/30">
+                <PiggyBank className="w-3.5 h-3.5" />
+                <span>Carried Over: +{formatINR(openingBalance)}</span>
               </span>
             </>
-          ) : (
-            <button
-              type="button"
-              onClick={onOpenAddIncome}
-              className="text-xs text-indigo-200 hover:text-white underline font-bold"
-            >
-              + Add your monthly income (Salary, shares, gifts)
-            </button>
           )}
         </div>
       </div>

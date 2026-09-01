@@ -4,7 +4,7 @@ import { Home, PieChart, Users, Settings, Plus } from 'lucide-react';
 export default function BottomNav({
   activeTab = 'home',
   onChangeTab,
-  onOpenAddExpense
+  onOpenQuickAdd
 }) {
   const navItems = [
     { id: 'home', label: 'Home', icon: Home },
@@ -25,9 +25,9 @@ export default function BottomNav({
                 <div key="fab-btn" className="relative -top-6 flex items-center justify-center">
                   <button
                     type="button"
-                    onClick={onOpenAddExpense}
+                    onClick={onOpenQuickAdd}
                     className="w-14 h-14 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shadow-xl shadow-indigo-500/40 border-4 border-[#F8FAFC] active:scale-95 transition-transform"
-                    aria-label="Add Expense"
+                    aria-label="Add Transaction"
                   >
                     <Plus className="w-7 h-7 stroke-[2.5]" />
                   </button>

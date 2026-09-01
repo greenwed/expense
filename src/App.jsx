@@ -10,6 +10,7 @@ import AuthPage from './pages/AuthPage';
 import JoinGroup from './pages/JoinGroup';
 
 import MonthSelector from './components/MonthSelector';
+import QuickAddModal from './components/QuickAddModal';
 import ExpenseModal from './components/ExpenseModal';
 import IncomeModal from './components/IncomeModal';
 import IncomeListModal from './components/IncomeListModal';
@@ -24,8 +25,8 @@ export default function App() {
 
   // Navigation & Workspace State
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'report' | 'family' | 'settings'
-  const [activeWorkspace, setActiveWorkspace] = useState('personal'); // 'personal' | 'family'
   const [month, setMonth] = useState(getCurrentMonthStr());
+  const [isAllTime, setIsAllTime] = useState(false);
 
   // Data States
   const [personalData, setPersonalData] = useState(null);
@@ -37,6 +38,7 @@ export default function App() {
 
   // Modal States
   const [isMonthOpen, setIsMonthOpen] = useState(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isExpenseOpen, setIsExpenseOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
 
@@ -65,14 +67,17 @@ export default function App() {
     if (!user) return;
     try {
       setDataLoading(true);
-      const res = await apiFetch(`/api/personal/dashboard?month=${month}`);
+      const url = isAllTime
+        ? '/api/personal/dashboard?allTime=true'
+        : `/api/personal/dashboard?month=${month}`;
+      const res = await apiFetch(url);
       setPersonalData(res);
     } catch (err) {
       console.error('Failed to fetch personal data:', err);
     } finally {
       setDataLoading(false);
     }
-  }, [user, month, apiFetch]);
+  }, [user, month, isAllTime, apiFetch]);
 
   // 2. Fetch Family Groups
   const fetchGroups = useCallback(async () => {
@@ -93,47 +98,66 @@ export default function App() {
     if (!user || !selectedGroupId) return;
     try {
       setDataLoading(true);
-      const res = await apiFetch(`/api/family/groups/${selectedGroupId}/dashboard?month=${month}`);
+      const url = isAllTime
+        ? `/api/family/groups/${selectedGroupId}/dashboard?allTime=true`
+        : `/api/family/groups/${selectedGroupId}/dashboard?month=${month}`;
+      const res = await apiFetch(url);
       setFamilyData(res);
     } catch (err) {
       console.error('Failed to fetch family data:', err);
     } finally {
       setDataLoading(false);
     }
-  }, [user, selectedGroupId, month, apiFetch]);
+  }, [user, selectedGroupId, month, isAllTime, apiFetch]);
 
   useEffect(() => {
     if (user) {
       fetchPersonalData();
       fetchGroups();
     }
-  }, [user, month, fetchPersonalData, fetchGroups]);
+  }, [user, month, isAllTime, fetchPersonalData, fetchGroups]);
 
   useEffect(() => {
     if (user && selectedGroupId) {
       fetchFamilyData();
     }
-  }, [user, selectedGroupId, month, fetchFamilyData]);
+  }, [user, selectedGroupId, month, isAllTime, fetchFamilyData]);
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
-    if (tabId === 'family') {
-      setActiveWorkspace('family');
+  };
+
+  // Carry Forward Handlers
+  const handleCarryForwardPersonal = async () => {
+    try {
+      const res = await apiFetch('/api/personal/carry-forward', {
+        method: 'POST',
+        body: { toMonth: month }
+      });
+      alert(res.message || 'Expenses and incomes carried forward successfully!');
+      await fetchPersonalData();
+    } catch (err) {
+      alert(err.message || 'Failed to carry forward expenses.');
     }
   };
 
-  const handleSwitchWorkspace = (ws) => {
-    setActiveWorkspace(ws);
-    if (ws === 'family' && activeTab !== 'report' && activeTab !== 'settings') {
-      setActiveTab('family');
-    } else if (ws === 'personal' && activeTab === 'family') {
-      setActiveTab('home');
+  const handleCarryForwardFamily = async () => {
+    if (!selectedGroupId) return;
+    try {
+      const res = await apiFetch(`/api/family/groups/${selectedGroupId}/carry-forward`, {
+        method: 'POST',
+        body: { toMonth: month }
+      });
+      alert(res.message || 'Group expenses and incomes carried forward successfully!');
+      await fetchFamilyData();
+    } catch (err) {
+      alert(err.message || 'Failed to carry forward family expenses.');
     }
   };
 
   // Expense Handlers
   const handleSaveExpense = async (expensePayload) => {
-    const isFamilyTarget = activeTab === 'family' || activeWorkspace === 'family';
+    const isFamilyTarget = activeTab === 'family';
 
     if (editingExpense) {
       if (isFamilyTarget) {
@@ -169,7 +193,7 @@ export default function App() {
 
   const handleDeleteExpense = async (expenseId) => {
     if (!window.confirm('Are you sure you want to delete this expense entry?')) return;
-    const isFamilyTarget = activeTab === 'family' || activeWorkspace === 'family';
+    const isFamilyTarget = activeTab === 'family';
 
     try {
       if (isFamilyTarget) {
@@ -190,7 +214,7 @@ export default function App() {
 
   // Income Handlers
   const handleSaveIncome = async (incomePayload) => {
-    const isFamilyTarget = activeTab === 'family' || activeWorkspace === 'family';
+    const isFamilyTarget = activeTab === 'family';
 
     if (editingIncome) {
       if (isFamilyTarget) {
@@ -226,7 +250,7 @@ export default function App() {
 
   const handleDeleteIncome = async (incomeId) => {
     if (!window.confirm('Are you sure you want to delete this income entry?')) return;
-    const isFamilyTarget = activeTab === 'family' || activeWorkspace === 'family';
+    const isFamilyTarget = activeTab === 'family';
 
     try {
       if (isFamilyTarget) {
@@ -254,7 +278,6 @@ export default function App() {
     await fetchGroups();
     if (res.group) {
       setSelectedGroupId(res.group.id || res.group._id);
-      setActiveWorkspace('family');
       setActiveTab('family');
     }
   };
@@ -310,7 +333,6 @@ export default function App() {
         onJoined={(groupId) => {
           setInviteToken(null);
           window.history.pushState({}, '', '/');
-          setActiveWorkspace('family');
           setSelectedGroupId(groupId);
           setActiveTab('family');
           fetchGroups();
@@ -323,19 +345,16 @@ export default function App() {
     return <AuthPage />;
   }
 
-  const currentGroup = groups.find((g) => (g.id || g._id) === selectedGroupId);
-  const isFamilyContext = activeTab === 'family' || activeWorkspace === 'family';
+  const isFamilyContext = activeTab === 'family';
   const currentIncomes = isFamilyContext ? familyData?.incomes || [] : personalData?.incomes || [];
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900 selection:bg-indigo-500 selection:text-white">
       
-      {/* Desktop & Top Header */}
+      {/* Clean Desktop Header (Without redundant personal/family switcher) */}
       <Navbar
         activeTab={activeTab}
         onChangeTab={handleTabChange}
-        activeWorkspace={activeWorkspace}
-        onSwitchWorkspace={handleSwitchWorkspace}
         month={month}
         onOpenMonthSelector={() => setIsMonthOpen(true)}
         onOpenAddExpense={() => {
@@ -351,13 +370,15 @@ export default function App() {
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         
-        {/* TAB 1: HOME */}
+        {/* TAB 1: HOME (Personal) */}
         {activeTab === 'home' && (
           <PersonalWorkspace
             user={user}
             month={month}
             data={personalData}
             loading={dataLoading}
+            isAllTime={isAllTime}
+            onToggleAllTime={setIsAllTime}
             onOpenMonthSelector={() => setIsMonthOpen(true)}
             onOpenAddIncome={() => {
               setEditingIncome(null);
@@ -373,6 +394,7 @@ export default function App() {
               setIsExpenseOpen(true);
             }}
             onDeleteExpense={handleDeleteExpense}
+            onCarryForward={handleCarryForwardPersonal}
           />
         )}
 
@@ -384,8 +406,8 @@ export default function App() {
             month={month}
             onOpenMonthSelector={() => setIsMonthOpen(true)}
             onBackToHome={() => setActiveTab('home')}
-            activeWorkspace={activeWorkspace}
-            onSwitchWorkspace={handleSwitchWorkspace}
+            activeWorkspace={isFamilyContext ? 'family' : 'personal'}
+            onSwitchWorkspace={(ws) => setActiveTab(ws === 'family' ? 'family' : 'home')}
           />
         )}
 
@@ -398,6 +420,8 @@ export default function App() {
             selectedGroupId={selectedGroupId}
             onSelectGroup={setSelectedGroupId}
             groupData={familyData}
+            isAllTime={isAllTime}
+            onToggleAllTime={setIsAllTime}
             onOpenCreateGroup={() => setIsCreateGroupOpen(true)}
             onOpenRenameGroup={() => setIsRenameGroupOpen(true)}
             onOpenInviteModal={() => setIsInviteOpen(true)}
@@ -416,7 +440,7 @@ export default function App() {
               setIsExpenseOpen(true);
             }}
             onDeleteExpense={handleDeleteExpense}
-            onOpenMonthSelector={() => setIsMonthOpen(true)}
+            onCarryForward={handleCarryForwardFamily}
           />
         )}
 
@@ -436,18 +460,34 @@ export default function App() {
       <BottomNav
         activeTab={activeTab}
         onChangeTab={handleTabChange}
-        onOpenAddExpense={() => {
-          setEditingExpense(null);
-          setIsExpenseOpen(true);
-        }}
+        onOpenQuickAdd={() => setIsQuickAddOpen(true)}
       />
 
       {/* MODALS */}
+      
+      {/* Mobile Center (+) Quick Action Modal */}
+      <QuickAddModal
+        isOpen={isQuickAddOpen}
+        onClose={() => setIsQuickAddOpen(false)}
+        onSelectAddExpense={() => {
+          setEditingExpense(null);
+          setIsExpenseOpen(true);
+        }}
+        onSelectAddIncome={() => {
+          setEditingIncome(null);
+          setIsIncomeOpen(true);
+        }}
+      />
+
+      {/* Month Selector */}
       <MonthSelector
         isOpen={isMonthOpen}
         onClose={() => setIsMonthOpen(false)}
         selectedMonth={month}
-        onSelectMonth={setMonth}
+        onSelectMonth={(m) => {
+          setMonth(m);
+          setIsAllTime(false);
+        }}
       />
 
       {/* Expense Modal */}
@@ -504,21 +544,21 @@ export default function App() {
       <RenameGroupModal
         isOpen={isRenameGroupOpen}
         onClose={() => setIsRenameGroupOpen(false)}
-        currentName={currentGroup?.name}
+        currentName={groups.find((g) => (g.id || g._id) === selectedGroupId)?.name}
         onRename={handleRenameGroup}
       />
 
       <InviteModal
         isOpen={isInviteOpen}
         onClose={() => setIsInviteOpen(false)}
-        group={currentGroup}
+        group={groups.find((g) => (g.id || g._id) === selectedGroupId)}
         onRegenerateToken={handleRegenerateToken}
       />
 
       <MemberManagementModal
         isOpen={isMemberMgmtOpen}
         onClose={() => setIsMemberMgmtOpen(false)}
-        group={currentGroup}
+        group={groups.find((g) => (g.id || g._id) === selectedGroupId)}
         currentUser={user}
         onUpdateRole={handleUpdateRole}
         onRemoveMember={handleRemoveMember}

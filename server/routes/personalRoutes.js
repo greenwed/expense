@@ -11,19 +11,33 @@ function getCurrentMonth() {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
+function getPreviousMonth(monthStr) {
+  const [year, month] = monthStr.split('-').map(Number);
+  const prevYear = month === 1 ? year - 1 : year;
+  const prevMonth = month === 1 ? 12 : month - 1;
+  return `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+}
+
 router.use(authenticateToken);
 
-// Dashboard / Report summary (supports month OR custom startDate & endDate)
+// Dashboard / Report summary
 router.get('/dashboard', async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
-    const { month, startDate, endDate } = req.query;
+    const { month, startDate, endDate, allTime } = req.query;
 
     let incomes = [];
     let expenses = [];
     let queryPeriod = '';
+    let isAutoCarriedForward = false;
+    let carriedFromMonth = null;
+    let openingBalance = 0;
 
-    if (startDate && endDate) {
+    if (allTime === 'true') {
+      incomes = await PersonalIncomeModel.findAll(userId);
+      expenses = await PersonalExpenseModel.findAll(userId);
+      queryPeriod = 'All Time';
+    } else if (startDate && endDate) {
       const s = new Date(startDate);
       s.setUTCHours(0, 0, 0, 0);
       const e = new Date(endDate);
@@ -34,16 +48,43 @@ router.get('/dashboard', async (req, res) => {
       queryPeriod = `${startDate} to ${endDate}`;
     } else {
       const targetMonth = month || getCurrentMonth();
+      queryPeriod = targetMonth;
+
       incomes = await PersonalIncomeModel.findByMonth(userId, targetMonth);
       expenses = await PersonalExpenseModel.findByMonth(userId, targetMonth);
-      queryPeriod = targetMonth;
+
+      // Auto-carry forward from previous month if new month has 0 expenses
+      if (expenses.length === 0) {
+        const prevMonth = getPreviousMonth(targetMonth);
+        const prevExpenses = await PersonalExpenseModel.findByMonth(userId, prevMonth);
+
+        if (prevExpenses && prevExpenses.length > 0) {
+          // Auto-carry forward expenses
+          expenses = await PersonalExpenseModel.carryForward(userId, prevMonth, targetMonth);
+          isAutoCarriedForward = true;
+          carriedFromMonth = prevMonth;
+
+          // Also auto-carry forward incomes if 0
+          if (incomes.length === 0) {
+            incomes = await PersonalIncomeModel.carryForward(userId, prevMonth, targetMonth);
+          }
+        }
+      }
+
+      // Calculate Opening Balance carried forward from previous months
+      const prevMonth = getPreviousMonth(targetMonth);
+      const prevIncomes = await PersonalIncomeModel.findByMonth(userId, prevMonth);
+      const prevExps = await PersonalExpenseModel.findByMonth(userId, prevMonth);
+      const prevIncTotal = prevIncomes.reduce((acc, i) => acc + (Number(i.amount) || 0), 0);
+      const prevExpTotal = prevExps.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
+      openingBalance = Math.max(0, prevIncTotal - prevExpTotal);
     }
 
     // 1. Compute Incomes
     let totalIncome = incomes.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0);
 
     // Fallback to legacy budget if monthly query and no explicit incomes
-    if (totalIncome === 0 && !startDate && !endDate) {
+    if (totalIncome === 0 && !startDate && !endDate && allTime !== 'true') {
       const targetMonth = month || getCurrentMonth();
       const budgetDoc = await PersonalBudgetModel.getBudget(userId, targetMonth);
       if (budgetDoc && Number(budgetDoc.amount) > 0) {
@@ -65,10 +106,12 @@ router.get('/dashboard', async (req, res) => {
       categoryTotals[cat] = (categoryTotals[cat] || 0) + amt;
     });
 
-    const remainingBalance = totalIncome - totalSpent;
-    const percentSpent = totalIncome > 0 ? Number(((totalSpent / totalIncome) * 100).toFixed(1)) : 0;
-    const isExceeding80 = totalIncome > 0 && totalSpent >= 0.8 * totalIncome;
-    const isExceeding100 = totalIncome > 0 && totalSpent > totalIncome;
+    const totalAvailable = totalIncome + openingBalance;
+    const remainingBalance = totalAvailable - totalSpent;
+    const effectiveDenominator = totalAvailable > 0 ? totalAvailable : totalIncome;
+    const percentSpent = effectiveDenominator > 0 ? Number(((totalSpent / effectiveDenominator) * 100).toFixed(1)) : 0;
+    const isExceeding80 = effectiveDenominator > 0 && totalSpent >= 0.8 * effectiveDenominator;
+    const isExceeding100 = effectiveDenominator > 0 && totalSpent > effectiveDenominator;
 
     const categoryBreakdown = VALID_CATEGORIES.map(cat => {
       const amt = categoryTotals[cat] || 0;
@@ -85,6 +128,10 @@ router.get('/dashboard', async (req, res) => {
       month: month || getCurrentMonth(),
       startDate: startDate || null,
       endDate: endDate || null,
+      allTime: allTime === 'true',
+      isAutoCarriedForward,
+      carriedFromMonth,
+      openingBalance,
       totalIncome,
       budget: totalIncome,
       totalSpent,
@@ -103,14 +150,41 @@ router.get('/dashboard', async (req, res) => {
   }
 });
 
+// Explicit Carry Forward Trigger Endpoint
+router.post('/carry-forward', async (req, res) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const { fromMonth, toMonth } = req.body;
+
+    const targetToMonth = toMonth || getCurrentMonth();
+    const targetFromMonth = fromMonth || getPreviousMonth(targetToMonth);
+
+    const carriedExpenses = await PersonalExpenseModel.carryForward(userId, targetFromMonth, targetToMonth);
+    const carriedIncomes = await PersonalIncomeModel.carryForward(userId, targetFromMonth, targetToMonth);
+
+    return res.json({
+      message: `Successfully carried forward ${carriedExpenses.length} expenses and ${carriedIncomes.length} incomes from ${targetFromMonth} to ${targetToMonth}!`,
+      fromMonth: targetFromMonth,
+      toMonth: targetToMonth,
+      expensesCount: carriedExpenses.length,
+      incomesCount: carriedIncomes.length
+    });
+  } catch (err) {
+    console.error('Carry forward error:', err);
+    return res.status(500).json({ error: 'Failed to carry forward expenses and incomes.' });
+  }
+});
+
 // Get Incomes
 router.get('/incomes', async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
-    const { month, startDate, endDate } = req.query;
+    const { month, startDate, endDate, allTime } = req.query;
 
     let incomes = [];
-    if (startDate && endDate) {
+    if (allTime === 'true') {
+      incomes = await PersonalIncomeModel.findAll(userId);
+    } else if (startDate && endDate) {
       incomes = await PersonalIncomeModel.findByDateRange(userId, startDate, endDate);
     } else {
       const targetMonth = month || getCurrentMonth();
@@ -222,10 +296,12 @@ router.delete('/incomes/:id', async (req, res) => {
 router.get('/expenses', async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
-    const { month, startDate, endDate } = req.query;
+    const { month, startDate, endDate, allTime } = req.query;
 
     let expenses = [];
-    if (startDate && endDate) {
+    if (allTime === 'true') {
+      expenses = await PersonalExpenseModel.findAll(userId);
+    } else if (startDate && endDate) {
       expenses = await PersonalExpenseModel.findByDateRange(userId, startDate, endDate);
     } else {
       const targetMonth = month || getCurrentMonth();

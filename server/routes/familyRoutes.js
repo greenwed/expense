@@ -13,6 +13,13 @@ function getCurrentMonth() {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
+function getPreviousMonth(monthStr) {
+  const [year, month] = monthStr.split('-').map(Number);
+  const prevYear = month === 1 ? year - 1 : year;
+  const prevMonth = month === 1 ? 12 : month - 1;
+  return `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+}
+
 router.use(authenticateToken);
 
 // 1. List user's groups
@@ -154,17 +161,24 @@ router.post('/groups/:groupId/invite', requireGroupMember, requireRoles(['admin'
   }
 });
 
-// 8. Group Dashboard Data (supports month OR custom startDate & endDate)
+// 8. Group Dashboard Data (supports month, custom date range, and allTime)
 router.get('/groups/:groupId/dashboard', requireGroupMember, async (req, res) => {
   try {
     const { groupId } = req.params;
-    const { month, startDate, endDate } = req.query;
+    const { month, startDate, endDate, allTime } = req.query;
 
     let incomes = [];
     let expenses = [];
     let queryPeriod = '';
+    let isAutoCarriedForward = false;
+    let carriedFromMonth = null;
+    let openingBalance = 0;
 
-    if (startDate && endDate) {
+    if (allTime === 'true') {
+      incomes = await FamilyIncomeModel.findAll(groupId);
+      expenses = await FamilyExpenseModel.findAll(groupId);
+      queryPeriod = 'All Time';
+    } else if (startDate && endDate) {
       const s = new Date(startDate);
       s.setUTCHours(0, 0, 0, 0);
       const e = new Date(endDate);
@@ -175,16 +189,40 @@ router.get('/groups/:groupId/dashboard', requireGroupMember, async (req, res) =>
       queryPeriod = `${startDate} to ${endDate}`;
     } else {
       const targetMonth = month || getCurrentMonth();
+      queryPeriod = targetMonth;
+
       incomes = await FamilyIncomeModel.findByMonth(groupId, targetMonth);
       expenses = await FamilyExpenseModel.findByMonth(groupId, targetMonth);
-      queryPeriod = targetMonth;
+
+      // Auto carry forward from previous month if 0 expenses
+      if (expenses.length === 0) {
+        const prevMonth = getPreviousMonth(targetMonth);
+        const prevExpenses = await FamilyExpenseModel.findByMonth(groupId, prevMonth);
+
+        if (prevExpenses && prevExpenses.length > 0) {
+          expenses = await FamilyExpenseModel.carryForward(groupId, prevMonth, targetMonth, req.user);
+          isAutoCarriedForward = true;
+          carriedFromMonth = prevMonth;
+
+          if (incomes.length === 0) {
+            incomes = await FamilyIncomeModel.carryForward(groupId, prevMonth, targetMonth, req.user);
+          }
+        }
+      }
+
+      // Opening balance from previous month
+      const prevMonth = getPreviousMonth(targetMonth);
+      const prevIncomes = await FamilyIncomeModel.findByMonth(groupId, prevMonth);
+      const prevExps = await FamilyExpenseModel.findByMonth(groupId, prevMonth);
+      const prevIncTotal = prevIncomes.reduce((acc, i) => acc + (Number(i.amount) || 0), 0);
+      const prevExpTotal = prevExps.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
+      openingBalance = Math.max(0, prevIncTotal - prevExpTotal);
     }
 
     // 1. Compute Incomes
     let totalIncome = incomes.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0);
 
-    // Fallback to legacy budget if monthly query and no explicit incomes
-    if (totalIncome === 0 && !startDate && !endDate) {
+    if (totalIncome === 0 && !startDate && !endDate && allTime !== 'true') {
       const targetMonth = month || getCurrentMonth();
       const budgetDoc = await FamilyBudgetModel.getBudget(groupId, targetMonth);
       if (budgetDoc && Number(budgetDoc.amount) > 0) {
@@ -206,10 +244,12 @@ router.get('/groups/:groupId/dashboard', requireGroupMember, async (req, res) =>
       categoryTotals[cat] = (categoryTotals[cat] || 0) + amt;
     });
 
-    const remainingBalance = totalIncome - totalSpent;
-    const percentSpent = totalIncome > 0 ? Number(((totalSpent / totalIncome) * 100).toFixed(1)) : 0;
-    const isExceeding80 = totalIncome > 0 && totalSpent >= 0.8 * totalIncome;
-    const isExceeding100 = totalIncome > 0 && totalSpent > totalIncome;
+    const totalAvailable = totalIncome + openingBalance;
+    const remainingBalance = totalAvailable - totalSpent;
+    const effectiveDenominator = totalAvailable > 0 ? totalAvailable : totalIncome;
+    const percentSpent = effectiveDenominator > 0 ? Number(((totalSpent / effectiveDenominator) * 100).toFixed(1)) : 0;
+    const isExceeding80 = effectiveDenominator > 0 && totalSpent >= 0.8 * effectiveDenominator;
+    const isExceeding100 = effectiveDenominator > 0 && totalSpent > effectiveDenominator;
 
     const categoryBreakdown = VALID_CATEGORIES.map(cat => {
       const amt = categoryTotals[cat] || 0;
@@ -228,6 +268,10 @@ router.get('/groups/:groupId/dashboard', requireGroupMember, async (req, res) =>
       month: month || getCurrentMonth(),
       startDate: startDate || null,
       endDate: endDate || null,
+      allTime: allTime === 'true',
+      isAutoCarriedForward,
+      carriedFromMonth,
+      openingBalance,
       totalIncome,
       budget: totalIncome,
       totalSpent,
@@ -246,14 +290,41 @@ router.get('/groups/:groupId/dashboard', requireGroupMember, async (req, res) =>
   }
 });
 
+// Explicit Carry Forward Trigger for Family Group
+router.post('/groups/:groupId/carry-forward', requireGroupMember, async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { fromMonth, toMonth } = req.body;
+
+    const targetToMonth = toMonth || getCurrentMonth();
+    const targetFromMonth = fromMonth || getPreviousMonth(targetToMonth);
+
+    const carriedExpenses = await FamilyExpenseModel.carryForward(groupId, targetFromMonth, targetToMonth, req.user);
+    const carriedIncomes = await FamilyIncomeModel.carryForward(groupId, targetFromMonth, targetToMonth, req.user);
+
+    return res.json({
+      message: `Successfully carried forward ${carriedExpenses.length} group expenses and ${carriedIncomes.length} incomes from ${targetFromMonth} to ${targetToMonth}!`,
+      fromMonth: targetFromMonth,
+      toMonth: targetToMonth,
+      expensesCount: carriedExpenses.length,
+      incomesCount: carriedIncomes.length
+    });
+  } catch (err) {
+    console.error('Family carry forward error:', err);
+    return res.status(500).json({ error: 'Failed to carry forward family expenses.' });
+  }
+});
+
 // 9. Get Group Incomes
 router.get('/groups/:groupId/incomes', requireGroupMember, async (req, res) => {
   try {
     const { groupId } = req.params;
-    const { month, startDate, endDate } = req.query;
+    const { month, startDate, endDate, allTime } = req.query;
 
     let incomes = [];
-    if (startDate && endDate) {
+    if (allTime === 'true') {
+      incomes = await FamilyIncomeModel.findAll(groupId);
+    } else if (startDate && endDate) {
       incomes = await FamilyIncomeModel.findByDateRange(groupId, startDate, endDate);
     } else {
       const targetMonth = month || getCurrentMonth();
