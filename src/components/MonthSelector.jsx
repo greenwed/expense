@@ -32,18 +32,18 @@ export default function MonthSelector({ isOpen, onClose, selectedMonth, onSelect
   const currentMonthStr = getCurrentMonthStr();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-backdrop-fade">
-      <div className="bg-white border border-slate-200/80 rounded-[32px] w-full max-w-sm shadow-2xl overflow-hidden animate-modal-pop">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-md animate-backdrop-fade">
+      <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-[32px] w-full max-w-sm shadow-2xl overflow-hidden animate-modal-pop">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-indigo-600" />
-            <h3 className="text-base font-extrabold text-slate-900">Select Month</h3>
+            <Calendar className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Select Month</h3>
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors"
+            className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -51,17 +51,17 @@ export default function MonthSelector({ isOpen, onClose, selectedMonth, onSelect
 
         {/* Year Navigator */}
         <div className="p-6 space-y-5">
-          <div className="flex items-center justify-between bg-slate-50 p-2 rounded-2xl border border-slate-100">
+          <div className="flex items-center justify-between bg-slate-50 dark:bg-[#1A2234] p-2 rounded-2xl border border-slate-100 dark:border-slate-700/80">
             <button
               onClick={() => setViewYear((y) => y - 1)}
-              className="p-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 shadow-sm transition-all"
+              className="p-2 rounded-xl bg-white dark:bg-[#111726] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-sm transition-all"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-base font-black text-slate-900">{viewYear}</span>
+            <span className="text-base font-black text-slate-900 dark:text-white">{viewYear}</span>
             <button
               onClick={() => setViewYear((y) => y + 1)}
-              className="p-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 shadow-sm transition-all"
+              className="p-2 rounded-xl bg-white dark:bg-[#111726] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-sm transition-all"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -84,13 +84,13 @@ export default function MonthSelector({ isOpen, onClose, selectedMonth, onSelect
                   }}
                   className={`py-3 rounded-2xl font-bold text-xs transition-all relative ${
                     isSelected
-                      ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-indigo-500/25 scale-105'
-                      : 'bg-slate-50 hover:bg-indigo-50/60 text-slate-700 hover:text-indigo-600 border border-slate-100'
+                      ? 'bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-indigo-500 dark:to-cyan-500 text-white shadow-md shadow-indigo-500/25 scale-105'
+                      : 'bg-slate-50 dark:bg-[#1A2234] hover:bg-indigo-50/60 dark:hover:bg-indigo-950/60 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-100 dark:border-slate-700/60'
                   }`}
                 >
                   <span>{m.name}</span>
                   {isCurrent && !isSelected && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 absolute bottom-1.5 left-1/2 -translate-x-1/2" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 absolute bottom-1.5 left-1/2 -translate-x-1/2" />
                   )}
                 </button>
               );
@@ -103,7 +103,7 @@ export default function MonthSelector({ isOpen, onClose, selectedMonth, onSelect
               onSelectMonth(currentMonthStr);
               onClose();
             }}
-            className="w-full py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-colors"
+            className="w-full py-2.5 rounded-2xl bg-slate-100 dark:bg-[#1A2234] hover:bg-slate-200 dark:hover:bg-[#222C42] text-slate-800 dark:text-slate-200 text-xs font-bold transition-colors border border-transparent dark:border-slate-700/60"
           >
             Jump to Current Month
           </button>

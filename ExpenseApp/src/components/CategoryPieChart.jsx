@@ -10,6 +10,7 @@ import {
   PieChart as PieIcon
 } from 'lucide-react';
 import { formatINR, CATEGORY_CONFIG } from '../utils/formatters';
+import { useTheme } from '../context/ThemeContext';
 
 const ICON_MAP = {
   Food: Utensils,
@@ -25,6 +26,8 @@ export default function CategoryPieChart({
   totalSpent = 0,
   title = 'Expenses Report'
 }) {
+  const { isDark } = useTheme();
+
   const chartData = categories
     .map((c) => ({
       ...c,
@@ -38,11 +41,11 @@ export default function CategoryPieChart({
   if (numTotalSpent === 0 && chartData.length === 0) {
     return (
       <div className="fintech-card p-6 sm:p-8 text-center flex flex-col items-center justify-center min-h-[300px]">
-        <div className="w-16 h-16 rounded-3xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 mb-3 shadow-inner">
+        <div className="w-16 h-16 rounded-3xl bg-slate-50 dark:bg-[#1A2234] border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-300 dark:text-slate-500 mb-3 shadow-inner">
           <PieIcon className="w-8 h-8 stroke-[1.5]" />
         </div>
-        <h4 className="text-base font-bold text-slate-700">No Expenses Recorded</h4>
-        <p className="text-xs text-slate-400 max-w-xs mt-1">
+        <h4 className="text-base font-bold text-slate-700 dark:text-slate-200">No Expenses Recorded</h4>
+        <p className="text-xs text-slate-400 dark:text-slate-400 max-w-xs mt-1">
           Add an expense entry to view category analytics and visual donut breakdown.
         </p>
       </div>
@@ -54,10 +57,10 @@ export default function CategoryPieChart({
       
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+        <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
           <span>{title}</span>
         </h3>
-        <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">
+        <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 rounded-full border border-indigo-100 dark:border-indigo-800/60">
           {chartData.length} Active Categories
         </span>
       </div>
@@ -71,7 +74,7 @@ export default function CategoryPieChart({
                 if (active && payload && payload.length) {
                   const data = payload[0].payload;
                   return (
-                    <div className="bg-slate-900 text-white px-3.5 py-2.5 rounded-2xl text-xs font-semibold shadow-xl border border-slate-700">
+                    <div className="bg-slate-900 dark:bg-[#1E2638] text-white px-3.5 py-2.5 rounded-2xl text-xs font-semibold shadow-xl border border-slate-700">
                       <div className="flex items-center gap-1.5 mb-1">
                         <span
                           className="w-2.5 h-2.5 rounded-full"
@@ -101,7 +104,14 @@ export default function CategoryPieChart({
             >
               {chartData.map((entry, index) => {
                 const conf = CATEGORY_CONFIG[entry.category] || CATEGORY_CONFIG.Others;
-                return <Cell key={`cell-${index}`} fill={conf.color} stroke="#FFFFFF" strokeWidth={2} />;
+                return (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={conf.color} 
+                    stroke={isDark ? "#131926" : "#FFFFFF"} 
+                    strokeWidth={2} 
+                  />
+                );
               })}
             </Pie>
           </PieChart>
@@ -109,10 +119,10 @@ export default function CategoryPieChart({
 
         {/* Centered Total Amount inside Donut */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+          <span className="text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
             Total Expenses
           </span>
-          <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-0.5">
+          <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight mt-0.5">
             {formatINR(numTotalSpent)}
           </span>
         </div>
@@ -120,7 +130,7 @@ export default function CategoryPieChart({
 
       {/* Category Progress Cards List */}
       <div className="space-y-3 pt-2">
-        <div className="flex items-center justify-between text-xs font-bold text-slate-400 px-1 uppercase tracking-wider">
+        <div className="flex items-center justify-between text-xs font-bold text-slate-400 dark:text-slate-400 px-1 uppercase tracking-wider">
           <span>All Categories</span>
           <span>{formatINR(numTotalSpent)}</span>
         </div>
@@ -137,8 +147,8 @@ export default function CategoryPieChart({
               key={item.category}
               className={`p-3.5 sm:p-4 rounded-2xl border transition-all ${
                 hasSpending
-                  ? 'bg-slate-50/80 border-slate-200/80 shadow-sm'
-                  : 'bg-transparent border-slate-100 opacity-60'
+                  ? 'bg-slate-50/80 dark:bg-[#1A2234] border-slate-200/80 dark:border-slate-700/80 shadow-sm'
+                  : 'bg-transparent border-slate-100 dark:border-slate-800/50 opacity-60'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
@@ -150,21 +160,21 @@ export default function CategoryPieChart({
                     <Icon className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="text-sm font-bold text-slate-900 block leading-tight">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white block leading-tight">
                       {conf.name}
                     </span>
-                    <span className="text-xs text-slate-400 font-medium">
+                    <span className="text-xs text-slate-400 dark:text-slate-400 font-medium">
                       {percentage}% of total
                     </span>
                   </div>
                 </div>
 
                 <div className="text-right">
-                  <span className="text-sm sm:text-base font-extrabold text-slate-900 block">
+                  <span className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white block">
                     {formatINR(amount)}
                   </span>
                   {hasSpending && (
-                    <span className="text-[10px] font-bold text-emerald-600">
+                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                       Active
                     </span>
                   )}
@@ -172,7 +182,7 @@ export default function CategoryPieChart({
               </div>
 
               {/* Horizontal Progress Bar */}
-              <div className="w-full bg-slate-200/60 rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-slate-200/60 dark:bg-slate-700/60 rounded-full h-2 overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{

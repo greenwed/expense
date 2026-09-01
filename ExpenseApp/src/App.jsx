@@ -429,7 +429,7 @@ export default function App() {
   const currentExpenses = isFamilyContext ? familyData?.expenses || [] : personalData?.expenses || [];
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900 selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 selection:bg-indigo-500 selection:text-white transition-colors duration-200">
       
       {/* Clean Desktop/Mobile Header */}
       <Navbar

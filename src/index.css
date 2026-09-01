@@ -7,6 +7,11 @@
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
+:root[data-theme="dark"],
+.dark {
+  color-scheme: dark;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -15,6 +20,13 @@ body {
   color: #0F172A;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.dark body,
+html.dark body {
+  background-color: #0B0F19;
+  color: #F1F5F9;
 }
 
 /* Touch & Button Micro-Interactions */
@@ -38,8 +50,16 @@ button, a, [role="button"] {
   border-radius: 9999px;
 }
 
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
 ::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }
 
 /* Glass & Card Utilities */
@@ -48,7 +68,14 @@ button, a, [role="button"] {
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 28px;
   box-shadow: 0 4px 20px -2px rgba(148, 163, 184, 0.12);
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.dark .fintech-card,
+html.dark .fintech-card {
+  background: #131926;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.4);
 }
 
 .fintech-card-hover {
@@ -57,6 +84,11 @@ button, a, [role="button"] {
 .fintech-card-hover:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 28px -4px rgba(99, 102, 241, 0.14);
+}
+.dark .fintech-card-hover:hover,
+html.dark .fintech-card-hover:hover {
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.6);
+  border-color: rgba(99, 102, 241, 0.35);
 }
 
 /* ================= SMOOTH POPUP & MODAL ANIMATIONS ================= */

@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -15,8 +16,8 @@ export default {
           700: '#6D28D9',
         },
         fintech: {
-          dark: '#0F172A',
-          card: '#FFFFFF',
+          dark: '#0B0F19',
+          card: '#121826',
           accent: '#6366F1',
           success: '#10B981',
           danger: '#EF4444',
@@ -24,7 +25,7 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'Inter', '-apple-system', 'sans-serif'],
       },
     },
   },

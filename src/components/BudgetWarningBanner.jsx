@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, AlertCircle, ShieldAlert, Sparkles, TrendingUp } from 'lucide-react';
+import { AlertTriangle, ShieldAlert, Sparkles, TrendingUp } from 'lucide-react';
 import { formatINR } from '../utils/formatters';
 
 export default function BudgetWarningBanner({
@@ -13,16 +13,16 @@ export default function BudgetWarningBanner({
 }) {
   if (totalIncome === 0) {
     return (
-      <div className="rounded-2xl p-4 bg-slate-900 text-white flex items-center justify-between gap-3 shadow-lg">
+      <div className="rounded-2xl p-4 bg-slate-900 dark:bg-[#131926] border border-slate-800 dark:border-slate-800 text-white flex items-center justify-between gap-3 shadow-lg">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-indigo-500/20 dark:bg-indigo-500/30 text-indigo-400 dark:text-indigo-300 flex items-center justify-center shrink-0">
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-xs font-bold text-slate-100 block">
+            <span className="text-xs font-bold text-slate-100 dark:text-slate-100 block">
               Set Your Monthly Income Stream
             </span>
-            <span className="text-[11px] text-slate-400">
+            <span className="text-[11px] text-slate-400 dark:text-slate-400">
               Add income (salary, shares, gifts) to unlock automated budget health tracking.
             </span>
           </div>
@@ -40,15 +40,15 @@ export default function BudgetWarningBanner({
 
   if (isExceeding100) {
     return (
-      <div className="rounded-2xl p-4 bg-rose-500 text-white flex items-center gap-3 shadow-lg shadow-rose-500/20 animate-pulse">
-        <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
-          <ShieldAlert className="w-5 h-5 text-white" />
+      <div className="rounded-2xl p-4 bg-rose-500 dark:bg-rose-950/70 dark:border dark:border-rose-800/80 text-white flex items-center gap-3 shadow-lg shadow-rose-500/20 dark:shadow-rose-950/40 animate-pulse">
+        <div className="w-10 h-10 rounded-2xl bg-white/20 dark:bg-rose-500/30 flex items-center justify-center shrink-0">
+          <ShieldAlert className="w-5 h-5 text-white dark:text-rose-300" />
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="text-xs sm:text-sm font-extrabold text-white">
+          <h4 className="text-xs sm:text-sm font-extrabold text-white dark:text-rose-200">
             Over Income Alert ({percentSpent}%)
           </h4>
-          <p className="text-[11px] text-rose-100 font-medium leading-tight mt-0.5">
+          <p className="text-[11px] text-rose-100 dark:text-rose-300/90 font-medium leading-tight mt-0.5">
             Total expenses ({formatINR(totalSpent)}) have exceeded your total income ({formatINR(totalIncome)}) by {formatINR(Math.abs(remainingBalance))}.
           </p>
         </div>
@@ -58,15 +58,15 @@ export default function BudgetWarningBanner({
 
   if (isExceeding80) {
     return (
-      <div className="rounded-2xl p-4 bg-amber-500 text-white flex items-center gap-3 shadow-lg shadow-amber-500/20">
-        <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
-          <AlertTriangle className="w-5 h-5 text-white" />
+      <div className="rounded-2xl p-4 bg-amber-500 dark:bg-amber-950/70 dark:border dark:border-amber-800/80 text-white flex items-center gap-3 shadow-lg shadow-amber-500/20 dark:shadow-amber-950/40">
+        <div className="w-10 h-10 rounded-2xl bg-white/20 dark:bg-amber-500/30 flex items-center justify-center shrink-0">
+          <AlertTriangle className="w-5 h-5 text-white dark:text-amber-300" />
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="text-xs sm:text-sm font-extrabold text-white">
+          <h4 className="text-xs sm:text-sm font-extrabold text-white dark:text-amber-200">
             High Spending Warning ({percentSpent}% of Income)
           </h4>
-          <p className="text-[11px] text-amber-100 font-medium leading-tight mt-0.5">
+          <p className="text-[11px] text-amber-100 dark:text-amber-300/90 font-medium leading-tight mt-0.5">
             You have spent over 80% of your income. Only {formatINR(remainingBalance)} remaining.
           </p>
         </div>
@@ -75,21 +75,21 @@ export default function BudgetWarningBanner({
   }
 
   return (
-    <div className="rounded-2xl p-3.5 sm:p-4 bg-slate-900 text-white flex items-center justify-between gap-3 shadow-md">
+    <div className="rounded-2xl p-3.5 sm:p-4 bg-slate-900 dark:bg-[#131926] border border-slate-800 dark:border-slate-800 text-white flex items-center justify-between gap-3 shadow-md">
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+        <div className="w-9 h-9 rounded-xl bg-emerald-500/20 dark:bg-emerald-500/30 text-emerald-400 dark:text-emerald-300 flex items-center justify-center shrink-0">
           <TrendingUp className="w-4 h-4" />
         </div>
         <div>
-          <span className="text-xs font-bold text-slate-200 block">
+          <span className="text-xs font-bold text-slate-200 dark:text-slate-100 block">
             Spending Well Within Income
           </span>
-          <span className="text-[11px] text-slate-400">
+          <span className="text-[11px] text-slate-400 dark:text-slate-400">
             {formatINR(remainingBalance)} ({100 - percentSpent}% of income) remaining to spend.
           </span>
         </div>
       </div>
-      <span className="text-xs font-black text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2.5 py-1 rounded-xl shrink-0">
+      <span className="text-xs font-black text-emerald-400 dark:text-emerald-300 bg-emerald-950/60 dark:bg-emerald-950/80 border border-emerald-800/40 dark:border-emerald-800/60 px-2.5 py-1 rounded-xl shrink-0">
         {percentSpent}% Used
       </span>
     </div>
