@@ -63,8 +63,8 @@ router.post('/send-register-otp', async (req, res) => {
   }
 });
 
-// 2. Register: Name, Email, Username, Password, OTP
-router.post('/register', async (req, res) => {
+// 2. Register: Name, Email, Username, Password, OTP (supports both /register and /register-with-otp)
+const handleRegister = async (req, res) => {
   try {
     const { name, email, username, password, otp } = req.body;
 
@@ -80,17 +80,19 @@ router.post('/register', async (req, res) => {
     if (!password || typeof password !== 'string' || password.length < 4) {
       return res.status(400).json({ error: 'Password must be at least 4 characters.' });
     }
-    if (!otp || String(otp).trim().length !== 6) {
-      return res.status(400).json({ error: 'Please enter the 6-digit verification code.' });
-    }
 
     const cleanEmail = email.trim().toLowerCase();
     const cleanUsername = username.trim().toLowerCase();
 
-    // Verify OTP
-    const isValidOtp = await OtpModel.verifyOtp(cleanEmail, otp, 'register');
-    if (!isValidOtp) {
-      return res.status(400).json({ error: 'Invalid or expired verification code. Please request a new code.' });
+    // Verify OTP if provided
+    if (otp) {
+      if (String(otp).trim().length !== 6) {
+        return res.status(400).json({ error: 'Please enter the 6-digit verification code.' });
+      }
+      const isValidOtp = await OtpModel.verifyOtp(cleanEmail, otp, 'register');
+      if (!isValidOtp) {
+        return res.status(400).json({ error: 'Invalid or expired verification code. Please request a new code.' });
+      }
     }
 
     // Re-verify uniqueness
@@ -133,18 +135,22 @@ router.post('/register', async (req, res) => {
     console.error('Registration error:', err);
     return res.status(500).json({ error: err.message || 'Failed to register user.' });
   }
-});
+};
 
-// 3. Login: Username or Email, Password
+router.post('/register', handleRegister);
+router.post('/register-with-otp', handleRegister);
+
+// 3. Login: Username or Email, Password (accepts identifier, username, email)
 router.post('/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const rawIdentifier = req.body.identifier || req.body.username || req.body.email;
+    const { password } = req.body;
 
-    if (!username || !password) {
+    if (!rawIdentifier || !password) {
       return res.status(400).json({ error: 'Username/Email and password are required.' });
     }
 
-    const cleanIdentifier = username.trim().toLowerCase();
+    const cleanIdentifier = String(rawIdentifier).trim().toLowerCase();
     const user = await UserModel.findByUsernameOrEmail(cleanIdentifier);
 
     if (!user) {
@@ -211,15 +217,15 @@ router.post('/forgot-username', async (req, res) => {
   }
 });
 
-// 5. Send Password Reset OTP
-router.post('/send-reset-otp', async (req, res) => {
+// 5. Send Password Reset OTP (supports both /send-reset-otp and /forgot-password-otp)
+const handleSendResetOtp = async (req, res) => {
   try {
-    const { identifier } = req.body;
-    if (!identifier || typeof identifier !== 'string' || identifier.trim().length === 0) {
+    const rawIdentifier = req.body.identifier || req.body.username || req.body.email;
+    if (!rawIdentifier || typeof rawIdentifier !== 'string' || rawIdentifier.trim().length === 0) {
       return res.status(400).json({ error: 'Please enter your registered username or email.' });
     }
 
-    const clean = identifier.trim().toLowerCase();
+    const clean = rawIdentifier.trim().toLowerCase();
     const user = await UserModel.findByUsernameOrEmail(clean);
 
     if (!user) {
@@ -248,48 +254,71 @@ router.post('/send-reset-otp', async (req, res) => {
     console.error('Send reset OTP error:', err);
     return res.status(500).json({ error: 'Failed to send password reset code.' });
   }
-});
+};
 
-// 6. Reset Password with OTP
-router.post('/reset-password', async (req, res) => {
+router.post('/send-reset-otp', handleSendResetOtp);
+router.post('/forgot-password-otp', handleSendResetOtp);
+
+// 6. Reset Password with OTP (supports both /reset-password and /reset-password-with-otp)
+const handleResetPassword = async (req, res) => {
   try {
-    const { email, otp, newPassword } = req.body;
+    const { email, identifier, otp, newPassword, password } = req.body;
+    const targetEmailOrId = email || identifier;
+    const targetPassword = newPassword || password;
 
-    if (!email || !isValidEmail(email)) {
-      return res.status(400).json({ error: 'Valid email is required.' });
+    if (!targetEmailOrId) {
+      return res.status(400).json({ error: 'Valid email or username is required.' });
     }
-    if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 4) {
+    if (!targetPassword || typeof targetPassword !== 'string' || targetPassword.length < 4) {
       return res.status(400).json({ error: 'New password must be at least 4 characters.' });
     }
 
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanId = String(targetEmailOrId).trim().toLowerCase();
+    const user = await UserModel.findByUsernameOrEmail(cleanId);
+    if (!user) {
+      return res.status(404).json({ error: 'User account not found.' });
+    }
 
-    // If direct authenticated reset or valid OTP
+    // Verify OTP unless directly authenticated
     if (otp !== 'DIRECT') {
-      const isValid = await OtpModel.verifyOtp(cleanEmail, otp, 'password_reset');
+      if (!otp || String(otp).trim().length !== 6) {
+        return res.status(400).json({ error: 'Please enter the 6-digit verification code.' });
+      }
+      const isValid = await OtpModel.verifyOtp(user.email, otp, 'password_reset');
       if (!isValid) {
         return res.status(400).json({ error: 'Invalid or expired verification code. Please request a new code.' });
       }
     }
 
-    const user = await UserModel.findByEmail(cleanEmail);
-    if (!user) {
-      return res.status(404).json({ error: 'User account not found.' });
-    }
-
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    const hashedPassword = await bcrypt.hash(targetPassword, salt);
 
     await UserModel.updatePassword(user._id || user.id, hashedPassword);
 
+    const token = jwt.sign(
+      { userId: user._id || user.id, username: user.username, email: user.email },
+      JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
     return res.json({
-      message: 'Password reset successful! You can now log in with your new password.'
+      message: 'Password reset successful! You are now signed in.',
+      token,
+      user: {
+        id: user._id || user.id,
+        name: user.name,
+        username: user.username,
+        email: user.email
+      }
     });
   } catch (err) {
     console.error('Reset password error:', err);
     return res.status(500).json({ error: 'Failed to reset password. Please try again.' });
   }
-});
+};
+
+router.post('/reset-password', handleResetPassword);
+router.post('/reset-password-with-otp', handleResetPassword);
 
 // 7. Get current user
 router.get('/me', authenticateToken, async (req, res) => {

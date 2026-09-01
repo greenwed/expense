@@ -96,7 +96,7 @@ export default function AuthPage({ onSuccess }) {
       const res = await fetch(resolveUrl('/api/auth/send-register-otp'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: regEmail, username: regUsername, name: regName })
+        body: JSON.stringify({ email: regEmail.trim(), username: regUsername.trim(), name: regName.trim() })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to send OTP code.');
@@ -133,7 +133,7 @@ export default function AuthPage({ onSuccess }) {
       setSuccessMsg('');
       setLoading(true);
 
-      const res = await fetch(resolveUrl('/api/auth/register-with-otp'), {
+      const res = await fetch(resolveUrl('/api/auth/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -175,6 +175,8 @@ export default function AuthPage({ onSuccess }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           identifier: loginIdentifier.trim(),
+          username: loginIdentifier.trim(),
+          email: loginIdentifier.trim(),
           password: loginPassword
         })
       });
@@ -204,10 +206,14 @@ export default function AuthPage({ onSuccess }) {
       setSuccessMsg('');
       setLoading(true);
 
-      const res = await fetch(resolveUrl('/api/auth/forgot-password-otp'), {
+      const res = await fetch(resolveUrl('/api/auth/send-reset-otp'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: resetIdentifier.trim() })
+        body: JSON.stringify({
+          identifier: resetIdentifier.trim(),
+          username: resetIdentifier.trim(),
+          email: resetIdentifier.trim()
+        })
       });
 
       const data = await res.json();
@@ -248,21 +254,29 @@ export default function AuthPage({ onSuccess }) {
       setSuccessMsg('');
       setLoading(true);
 
-      const res = await fetch(resolveUrl('/api/auth/reset-password-with-otp'), {
+      const res = await fetch(resolveUrl('/api/auth/reset-password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: resetEmail,
+          identifier: resetEmail,
           otp: resetOtp.trim(),
-          newPassword
+          newPassword,
+          password: newPassword
         })
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to reset password.');
 
-      login(data.token, data.user);
-      if (onSuccess) onSuccess();
+      if (data.token) {
+        login(data.token, data.user);
+        if (onSuccess) onSuccess();
+      } else {
+        setSuccessMsg('Password reset successful! Please sign in with your new password.');
+        setActiveTab('login');
+        setResetStep(1);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -286,7 +300,7 @@ export default function AuthPage({ onSuccess }) {
       const res = await fetch(resolveUrl('/api/auth/forgot-username'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: recoverEmail })
+        body: JSON.stringify({ email: recoverEmail.trim() })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to process request.');
