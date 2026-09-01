@@ -18,6 +18,9 @@ import ExpenseModal from './components/ExpenseModal';
 import ExpenseListModal from './components/ExpenseListModal';
 import IncomeModal from './components/IncomeModal';
 import IncomeListModal from './components/IncomeListModal';
+import BudgetModal from './components/BudgetModal';
+import UserGuideModal from './components/UserGuideModal';
+import QuickTourModal from './components/QuickTourModal';
 import CreateGroupModal from './components/CreateGroupModal';
 import RenameGroupModal from './components/RenameGroupModal';
 import InviteModal from './components/InviteModal';
@@ -52,6 +55,11 @@ export default function App() {
   const [editingIncome, setEditingIncome] = useState(null);
   const [isIncomeListOpen, setIsIncomeListOpen] = useState(false);
 
+  // Budget & Tour / Guide Modals
+  const [isBudgetOpen, setIsBudgetOpen] = useState(false);
+  const [isUserGuideOpen, setIsUserGuideOpen] = useState(false);
+  const [isQuickTourOpen, setIsQuickTourOpen] = useState(false);
+
   // Group Modals
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const [isRenameGroupOpen, setIsRenameGroupOpen] = useState(false);
@@ -82,6 +90,9 @@ export default function App() {
     // Android Hardware Back Button Handler
     const backListener = CapApp.addListener('backButton', () => {
       // 1. Close any open modals first
+      if (isUserGuideOpen) { setIsUserGuideOpen(false); return; }
+      if (isQuickTourOpen) { setIsQuickTourOpen(false); return; }
+      if (isBudgetOpen) { setIsBudgetOpen(false); return; }
       if (isExpenseOpen) { setIsExpenseOpen(false); return; }
       if (isExpenseListOpen) { setIsExpenseListOpen(false); return; }
       if (isIncomeOpen) { setIsIncomeOpen(false); return; }
@@ -108,6 +119,9 @@ export default function App() {
     };
   }, [
     activeTab,
+    isUserGuideOpen,
+    isQuickTourOpen,
+    isBudgetOpen,
     isExpenseOpen,
     isExpenseListOpen,
     isIncomeOpen,
@@ -181,8 +195,43 @@ export default function App() {
     }
   }, [user, selectedGroupId, month, isAllTime, fetchFamilyData]);
 
+  // First-time interactive app tour popup
+  useEffect(() => {
+    if (user) {
+      try {
+        const tourDone = localStorage.getItem('rupeetrack_tour_completed');
+        if (!tourDone) {
+          const timer = setTimeout(() => {
+            setIsQuickTourOpen(true);
+          }, 600);
+          return () => clearTimeout(timer);
+        }
+      } catch (e) {
+        console.warn('LocalStorage error:', e);
+      }
+    }
+  }, [user]);
+
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
+  };
+
+  // Budget Handler
+  const handleSaveBudget = async (budgetAmount) => {
+    const isFamilyTarget = activeTab === 'family';
+    if (isFamilyTarget && selectedGroupId) {
+      await apiFetch(`/api/family/groups/${selectedGroupId}/budget`, {
+        method: 'PUT',
+        body: { budget: budgetAmount }
+      });
+      await fetchFamilyData();
+    } else {
+      await apiFetch('/api/personal/budget', {
+        method: 'PUT',
+        body: { budget: budgetAmount }
+      });
+      await fetchPersonalData();
+    }
   };
 
   // Expense Handlers (User explicit action only)
@@ -477,6 +526,9 @@ export default function App() {
                 setEditingIncome(null);
                 setIsIncomeOpen(true);
               }}
+              onOpenBudgetModal={() => setIsBudgetOpen(true)}
+              onOpenUserGuide={() => setIsUserGuideOpen(true)}
+              onOpenQuickTour={() => setIsQuickTourOpen(true)}
             />
           )}
         </div>
@@ -514,6 +566,30 @@ export default function App() {
           setMonth(m);
           setIsAllTime(false);
         }}
+      />
+
+      {/* Budget Modal */}
+      <BudgetModal
+        isOpen={isBudgetOpen}
+        onClose={() => setIsBudgetOpen(false)}
+        currentBudget={isFamilyContext ? familyData?.budget : personalData?.budget}
+        month={month}
+        onSave={handleSaveBudget}
+        isFamily={isFamilyContext}
+      />
+
+      {/* Comprehensive User Guide Modal */}
+      <UserGuideModal
+        isOpen={isUserGuideOpen}
+        onClose={() => setIsUserGuideOpen(false)}
+        onStartTour={() => setIsQuickTourOpen(true)}
+      />
+
+      {/* Interactive Step-by-Step Quick Tour Modal */}
+      <QuickTourModal
+        isOpen={isQuickTourOpen}
+        onClose={() => setIsQuickTourOpen(false)}
+        onOpenUserGuide={() => setIsUserGuideOpen(true)}
       />
 
       {/* Expense Modal (Input Form for Adding / Editing an Expense) */}
