@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 export default function AuthPage({ onSuccess }) {
-  const { login, getFullUrl } = useAuth();
+  const { login, setSession, getFullUrl } = useAuth();
   const [activeTab, setActiveTab] = useState('login'); // 'login' | 'register' | 'forgot_password' | 'forgot_username'
 
   // Password Visibility States
@@ -148,7 +148,8 @@ export default function AuthPage({ onSuccess }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Registration failed.');
 
-      login(data.token, data.user);
+      if (setSession) setSession(data.token, data.user);
+      else if (login) login(data.token, data.user);
       if (onSuccess) onSuccess();
     } catch (err) {
       setError(err.message);
@@ -184,7 +185,8 @@ export default function AuthPage({ onSuccess }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Login failed.');
 
-      login(data.token, data.user);
+      if (setSession) setSession(data.token, data.user);
+      else if (login) login(data.token, data.user);
       if (onSuccess) onSuccess();
     } catch (err) {
       setError(err.message);
@@ -270,7 +272,8 @@ export default function AuthPage({ onSuccess }) {
       if (!res.ok) throw new Error(data.error || 'Failed to reset password.');
 
       if (data.token) {
-        login(data.token, data.user);
+        if (setSession) setSession(data.token, data.user);
+        else if (login) login(data.token, data.user);
         if (onSuccess) onSuccess();
       } else {
         setSuccessMsg('Password reset successful! Please sign in with your new password.');

@@ -4,8 +4,12 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('rupee_user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    try {
+      const savedUser = localStorage.getItem('rupee_user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
   });
   const [token, setToken] = useState(() => localStorage.getItem('rupee_token') || null);
   const [loading, setLoading] = useState(true);
@@ -36,20 +40,49 @@ export function AuthProvider({ children }) {
     checkAuth();
   }, [token]);
 
-  const login = async (username, password) => {
+  const setSession = (newToken, newUser) => {
+    setToken(newToken);
+    setUser(newUser);
+    if (newToken) {
+      localStorage.setItem('rupee_token', newToken);
+    } else {
+      localStorage.removeItem('rupee_token');
+    }
+    if (newUser) {
+      localStorage.setItem('rupee_user', JSON.stringify(newUser));
+    } else {
+      localStorage.removeItem('rupee_user');
+    }
+  };
+
+  const login = async (identifierOrToken, passwordOrUser) => {
+    // 1. If called with already authenticated token & user: login(token, user)
+    if (
+      (typeof identifierOrToken === 'string' && identifierOrToken.split('.').length === 3) ||
+      (passwordOrUser && typeof passwordOrUser === 'object')
+    ) {
+      const tokenVal = identifierOrToken;
+      const userVal = passwordOrUser;
+      setSession(tokenVal, userVal);
+      return { token: tokenVal, user: userVal };
+    }
+
+    // 2. Otherwise called with credentials: login(identifier, password)
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({
+        identifier: identifierOrToken,
+        username: identifierOrToken,
+        email: identifierOrToken,
+        password: passwordOrUser
+      })
     });
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.error || 'Failed to login');
     }
-    setToken(data.token);
-    setUser(data.user);
-    localStorage.setItem('rupee_token', data.token);
-    localStorage.setItem('rupee_user', JSON.stringify(data.user));
+    setSession(data.token, data.user);
     return data;
   };
 
@@ -63,18 +96,12 @@ export function AuthProvider({ children }) {
     if (!res.ok) {
       throw new Error(data.error || 'Failed to register');
     }
-    setToken(data.token);
-    setUser(data.user);
-    localStorage.setItem('rupee_token', data.token);
-    localStorage.setItem('rupee_user', JSON.stringify(data.user));
+    setSession(data.token, data.user);
     return data;
   };
 
   const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem('rupee_token');
-    localStorage.removeItem('rupee_user');
+    setSession(null, null);
   };
 
   const apiFetch = async (endpoint, options = {}) => {
@@ -105,7 +132,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, apiFetch }}>
+    <AuthContext.Provider value={{ user, token, loading, login, setSession, register, logout, apiFetch }}>
       {children}
     </AuthContext.Provider>
   );
