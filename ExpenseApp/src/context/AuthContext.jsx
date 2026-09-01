@@ -3,9 +3,9 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const AuthContext = createContext(null);
 
 // Production Vercel backend URL for Android App
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://katexpense.vercel.app';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://trackrupee.vercel.app';
 
-function getFullUrl(endpoint) {
+export function getFullUrl(endpoint) {
   if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
     return endpoint;
   }
@@ -119,7 +119,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, apiFetch, API_BASE_URL }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, apiFetch, API_BASE_URL, getFullUrl }}>
       {children}
     </AuthContext.Provider>
   );

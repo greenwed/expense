@@ -122,7 +122,7 @@ ExpenseApp/android/app/build/outputs/bundle/release/app-release.aab
 
 ### 3. Complete App Content Checklist
 In the Play Console left menu under **"Policy and programs" -> "App content"**:
-- **Privacy Policy**: Provide a link to your privacy policy (e.g. `https://katexpense.vercel.app/privacy` or a hosted Notion page).
+- **Privacy Policy**: Provide a link to your privacy policy (e.g. `https://trackrupee.vercel.app/privacy` or a hosted Notion page).
 - **Data Safety**:
   - Does your app collect user data? **Yes** (Name, Email for authentication; Financial info for personal budgeting).
   - Is data encrypted in transit? **Yes** (HTTPS/TLS).

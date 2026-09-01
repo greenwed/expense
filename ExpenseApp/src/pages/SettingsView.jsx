@@ -9,17 +9,25 @@ import {
   Sparkles,
   Database,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function SettingsView({ onOpenBudgetModal }) {
-  const { user, logout } = useAuth();
+  const { user, logout, getFullUrl } = useAuth();
   const [currentPass, setCurrentPass] = useState('');
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [msg, setMsg] = useState({ type: '', text: '' });
   const [loading, setLoading] = useState(false);
+
+  const resolveUrl = (endpoint) => {
+    return getFullUrl ? getFullUrl(endpoint) : endpoint;
+  };
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
@@ -35,7 +43,7 @@ export default function SettingsView({ onOpenBudgetModal }) {
     try {
       setLoading(true);
       setMsg({ type: '', text: '' });
-      const res = await fetch('/api/auth/reset-password', {
+      const res = await fetch(resolveUrl('/api/auth/reset-password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -170,25 +178,47 @@ export default function SettingsView({ onOpenBudgetModal }) {
         <form onSubmit={handleChangePassword} className="space-y-3">
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-1">New Password</label>
-            <input
-              type="password"
-              required
-              placeholder="••••••••"
-              value={newPass}
-              onChange={(e) => setNewPass(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500"
-            />
+            <div className="relative">
+              <input
+                type={showNewPass ? 'text' : 'password'}
+                required
+                placeholder="••••••••"
+                value={newPass}
+                onChange={(e) => setNewPass(e.target.value)}
+                className="w-full pl-4 pr-11 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPass(!showNewPass)}
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                tabIndex={-1}
+                title={showNewPass ? 'Hide password' : 'Show password'}
+              >
+                {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-1">Confirm New Password</label>
-            <input
-              type="password"
-              required
-              placeholder="••••••••"
-              value={confirmPass}
-              onChange={(e) => setConfirmPass(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500"
-            />
+            <div className="relative">
+              <input
+                type={showConfirmPass ? 'text' : 'password'}
+                required
+                placeholder="••••••••"
+                value={confirmPass}
+                onChange={(e) => setConfirmPass(e.target.value)}
+                className="w-full pl-4 pr-11 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPass(!showConfirmPass)}
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                tabIndex={-1}
+                title={showConfirmPass ? 'Hide password' : 'Show password'}
+              >
+                {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
           <button
             type="submit"

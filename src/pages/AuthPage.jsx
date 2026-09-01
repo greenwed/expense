@@ -12,13 +12,20 @@ import {
   HelpCircle,
   RefreshCw,
   X,
+  Eye,
+  EyeOff,
   Sparkles,
   Info
 } from 'lucide-react';
 
 export default function AuthPage({ onSuccess }) {
-  const { login } = useAuth();
+  const { login, getFullUrl } = useAuth();
   const [activeTab, setActiveTab] = useState('login'); // 'login' | 'register' | 'forgot_password' | 'forgot_username'
+
+  // Password Visibility States
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegPassword, setShowRegPassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
 
   // Register States
   const [regName, setRegName] = useState('');
@@ -55,6 +62,10 @@ export default function AuthPage({ onSuccess }) {
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const resolveUrl = (endpoint) => {
+    return getFullUrl ? getFullUrl(endpoint) : endpoint;
+  };
+
   const startCooldown = () => {
     setOtpCooldown(60);
     const timer = setInterval(() => {
@@ -82,7 +93,7 @@ export default function AuthPage({ onSuccess }) {
     try {
       setError('');
       setSendingOtp(true);
-      const res = await fetch('/api/auth/send-register-otp', {
+      const res = await fetch(resolveUrl('/api/auth/send-register-otp'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: regEmail, username: regUsername, name: regName })
@@ -120,7 +131,7 @@ export default function AuthPage({ onSuccess }) {
     try {
       setError('');
       setLoading(true);
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch(resolveUrl('/api/auth/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -165,7 +176,7 @@ export default function AuthPage({ onSuccess }) {
     try {
       setError('');
       setLoading(true);
-      const res = await fetch('/api/auth/send-reset-otp', {
+      const res = await fetch(resolveUrl('/api/auth/send-reset-otp'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier: resetIdentifier })
@@ -198,7 +209,7 @@ export default function AuthPage({ onSuccess }) {
     try {
       setError('');
       setLoading(true);
-      const res = await fetch('/api/auth/reset-password', {
+      const res = await fetch(resolveUrl('/api/auth/reset-password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -226,7 +237,7 @@ export default function AuthPage({ onSuccess }) {
     try {
       setError('');
       setLoading(true);
-      const res = await fetch('/api/auth/forgot-username', {
+      const res = await fetch(resolveUrl('/api/auth/forgot-username'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: recoverEmail })
@@ -401,7 +412,6 @@ export default function AuthPage({ onSuccess }) {
               {/* OTP Input & Testing Preview Card */}
               {otpSent && (
                 <div className="space-y-2 animate-fadeIn">
-                  {/* If SMTP is not yet configured, show explicit helper card with click-to-fill */}
                   {previewOtp && !emailDelivered && (
                     <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 space-y-1.5">
                       <div className="flex items-center justify-between">
@@ -444,6 +454,7 @@ export default function AuthPage({ onSuccess }) {
                 </div>
               )}
 
+              {/* Register Password with Show/Hide Eye Toggle */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Password *
@@ -453,13 +464,22 @@ export default function AuthPage({ onSuccess }) {
                     <Lock className="w-4 h-4" />
                   </span>
                   <input
-                    type="password"
+                    type={showRegPassword ? 'text' : 'password'}
                     required
                     placeholder="••••••••"
                     value={regPassword}
                     onChange={(e) => setRegPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:bg-white transition-colors"
+                    className="w-full pl-10 pr-11 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:bg-white transition-colors"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegPassword(!showRegPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                    tabIndex={-1}
+                    title={showRegPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showRegPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
@@ -496,6 +516,7 @@ export default function AuthPage({ onSuccess }) {
                 </div>
               </div>
 
+              {/* Login Password with Show/Hide Eye Toggle */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
@@ -514,13 +535,22 @@ export default function AuthPage({ onSuccess }) {
                     <Lock className="w-4 h-4" />
                   </span>
                   <input
-                    type="password"
+                    type={showLoginPassword ? 'text' : 'password'}
                     required
                     placeholder="••••••••"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:bg-white transition-colors"
+                    className="w-full pl-10 pr-11 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:bg-white transition-colors"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                    tabIndex={-1}
+                    title={showLoginPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
@@ -624,14 +654,25 @@ export default function AuthPage({ onSuccess }) {
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                       New Password *
                     </label>
-                    <input
-                      type="password"
-                      required
-                      placeholder="••••••••"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm focus:outline-none focus:border-indigo-500"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showResetPassword ? 'text' : 'password'}
+                        required
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full pl-4 pr-11 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm focus:outline-none focus:border-indigo-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowResetPassword(!showResetPassword)}
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                        tabIndex={-1}
+                        title={showResetPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
