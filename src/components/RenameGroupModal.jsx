@@ -33,8 +33,8 @@ export default function RenameGroupModal({ isOpen, onClose, currentName, onRenam
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fadeIn">
-      <div className="bg-white border border-slate-200/80 rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-backdrop-fade">
+      <div className="bg-white border border-slate-200/80 rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden animate-modal-pop">
         
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
           <div className="flex items-center gap-2.5">

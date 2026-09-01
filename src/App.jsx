@@ -344,86 +344,86 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        
-        {/* TAB 1: HOME (Personal) */}
-        {activeTab === 'home' && (
-          <PersonalWorkspace
-            user={user}
-            month={month}
-            data={personalData}
-            loading={dataLoading}
-            isAllTime={isAllTime}
-            onToggleAllTime={setIsAllTime}
-            onOpenManageIncome={() => setIsIncomeListOpen(true)}
-            onOpenManageExpenses={() => setIsExpenseListOpen(true)}
-            onOpenAddExpense={() => {
-              setEditingExpense(null);
-              setIsExpenseOpen(true);
-            }}
-            onOpenEditExpense={(item) => {
-              setEditingExpense(item);
-              setIsExpenseOpen(true);
-            }}
-            onDeleteExpense={handleDeleteExpense}
-          />
-        )}
+        <div key={activeTab} className="animate-tab-switch">
+          {/* TAB 1: HOME (Personal) */}
+          {activeTab === 'home' && (
+            <PersonalWorkspace
+              user={user}
+              month={month}
+              data={personalData}
+              loading={dataLoading}
+              isAllTime={isAllTime}
+              onToggleAllTime={setIsAllTime}
+              onOpenManageIncome={() => setIsIncomeListOpen(true)}
+              onOpenManageExpenses={() => setIsExpenseListOpen(true)}
+              onOpenAddExpense={() => {
+                setEditingExpense(null);
+                setIsExpenseOpen(true);
+              }}
+              onOpenEditExpense={(item) => {
+                setEditingExpense(item);
+                setIsExpenseOpen(true);
+              }}
+              onDeleteExpense={handleDeleteExpense}
+            />
+          )}
 
-        {/* TAB 2: REPORT */}
-        {activeTab === 'report' && (
-          <ReportView
-            personalData={personalData}
-            familyData={familyData}
-            month={month}
-            onSelectMonth={(m) => {
-              setMonth(m);
-              setIsAllTime(false);
-            }}
-            onOpenMonthSelector={() => setIsMonthOpen(true)}
-            onBackToHome={() => setActiveTab('home')}
-            groups={groups}
-            selectedGroupId={selectedGroupId}
-          />
-        )}
+          {/* TAB 2: REPORT */}
+          {activeTab === 'report' && (
+            <ReportView
+              personalData={personalData}
+              familyData={familyData}
+              month={month}
+              onSelectMonth={(m) => {
+                setMonth(m);
+                setIsAllTime(false);
+              }}
+              onOpenMonthSelector={() => setIsMonthOpen(true)}
+              onBackToHome={() => setActiveTab('home')}
+              groups={groups}
+              selectedGroupId={selectedGroupId}
+            />
+          )}
 
-        {/* TAB 3: FAMILY */}
-        {activeTab === 'family' && (
-          <FamilyWorkspace
-            user={user}
-            month={month}
-            groups={groups}
-            selectedGroupId={selectedGroupId}
-            onSelectGroup={setSelectedGroupId}
-            groupData={familyData}
-            isAllTime={isAllTime}
-            onToggleAllTime={setIsAllTime}
-            onOpenCreateGroup={() => setIsCreateGroupOpen(true)}
-            onOpenRenameGroup={() => setIsRenameGroupOpen(true)}
-            onOpenInviteModal={() => setIsInviteOpen(true)}
-            onOpenMemberManagement={() => setIsMemberMgmtOpen(true)}
-            onOpenManageIncome={() => setIsIncomeListOpen(true)}
-            onOpenManageExpenses={() => setIsExpenseListOpen(true)}
-            onOpenAddExpense={() => {
-              setEditingExpense(null);
-              setIsExpenseOpen(true);
-            }}
-            onOpenEditExpense={(item) => {
-              setEditingExpense(item);
-              setIsExpenseOpen(true);
-            }}
-            onDeleteExpense={handleDeleteExpense}
-          />
-        )}
+          {/* TAB 3: FAMILY */}
+          {activeTab === 'family' && (
+            <FamilyWorkspace
+              user={user}
+              month={month}
+              groups={groups}
+              selectedGroupId={selectedGroupId}
+              onSelectGroup={setSelectedGroupId}
+              groupData={familyData}
+              isAllTime={isAllTime}
+              onToggleAllTime={setIsAllTime}
+              onOpenCreateGroup={() => setIsCreateGroupOpen(true)}
+              onOpenRenameGroup={() => setIsRenameGroupOpen(true)}
+              onOpenInviteModal={() => setIsInviteOpen(true)}
+              onOpenMemberManagement={() => setIsMemberMgmtOpen(true)}
+              onOpenManageIncome={() => setIsIncomeListOpen(true)}
+              onOpenManageExpenses={() => setIsExpenseListOpen(true)}
+              onOpenAddExpense={() => {
+                setEditingExpense(null);
+                setIsExpenseOpen(true);
+              }}
+              onOpenEditExpense={(item) => {
+                setEditingExpense(item);
+                setIsExpenseOpen(true);
+              }}
+              onDeleteExpense={handleDeleteExpense}
+            />
+          )}
 
-        {/* TAB 4: SETTINGS */}
-        {activeTab === 'settings' && (
-          <SettingsView
-            onOpenAddIncome={() => {
-              setEditingIncome(null);
-              setIsIncomeOpen(true);
-            }}
-          />
-        )}
-
+          {/* TAB 4: SETTINGS */}
+          {activeTab === 'settings' && (
+            <SettingsView
+              onOpenAddIncome={() => {
+                setEditingIncome(null);
+                setIsIncomeOpen(true);
+              }}
+            />
+          )}
+        </div>
       </main>
 
       {/* Mobile Bottom Navigation Bar with Center (+) FAB */}

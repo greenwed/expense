@@ -10,14 +10,14 @@ export default function QuickAddModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-md animate-backdrop-fade">
       <div 
         className="fixed inset-0" 
         onClick={onClose} 
         aria-hidden="true" 
       />
       
-      <div className="relative bg-white border border-slate-200/80 rounded-t-[32px] sm:rounded-[32px] w-full max-w-sm p-6 shadow-2xl space-y-4 animate-slideUp">
+      <div className="relative bg-white border border-slate-200/80 rounded-t-[32px] sm:rounded-[32px] w-full max-w-sm p-6 shadow-2xl space-y-4 animate-modal-pop">
         
         {/* Header */}
         <div className="flex items-center justify-between">
