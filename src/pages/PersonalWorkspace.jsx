@@ -28,6 +28,7 @@ export default function PersonalWorkspace({
   isAllTime,
   onToggleAllTime,
   onOpenManageIncome,
+  onOpenManageExpenses,
   onOpenAddExpense,
   onOpenEditExpense,
   onDeleteExpense
@@ -64,7 +65,7 @@ export default function PersonalWorkspace({
   return (
     <div className="space-y-6 animate-fadeIn pb-24 lg:pb-8">
       
-      {/* 1. Flagship Gradient Hero Balance Card (Shows Running Total Balance Regardless of Months) */}
+      {/* 1. Flagship Gradient Hero Balance Card */}
       <HeroBalanceCard
         user={user}
         totalBalance={totalBalance}
@@ -75,17 +76,18 @@ export default function PersonalWorkspace({
         isExceeding100={isExceeding100}
       />
 
-      {/* 2. "Your Money" Dual Metric Cards (Month Income & Month Expenses) */}
+      {/* 2. "Your Money" Dual Metric Cards (Symmetrical Incomes & Expenses Managers) */}
       <MoneySummaryCards
         totalIncome={monthlyIncome}
         totalSpent={monthlySpent}
         incomeCount={incomes.length}
+        expenseCount={expenses.length}
         onOpenManageIncome={onOpenManageIncome}
-        onOpenAddExpense={onOpenAddExpense}
+        onOpenManageExpenses={onOpenManageExpenses}
         canManage={true}
       />
 
-      {/* 3. Budget & Income Health Insight Banner (if user has set monthly income) */}
+      {/* 3. Budget & Income Health Insight Banner */}
       {monthlyIncome > 0 && (
         <BudgetWarningBanner
           isExceeding80={isExceeding80}

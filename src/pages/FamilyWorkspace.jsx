@@ -36,6 +36,7 @@ export default function FamilyWorkspace({
   onOpenInviteModal,
   onOpenMemberManagement,
   onOpenManageIncome,
+  onOpenManageExpenses,
   onOpenAddExpense,
   onOpenEditExpense,
   onDeleteExpense
@@ -143,7 +144,7 @@ export default function FamilyWorkspace({
         </div>
       </div>
 
-      {/* Flagship Hero Balance Card (Shows Running Group Total Balance Regardless of Months) */}
+      {/* Flagship Hero Balance Card */}
       <HeroBalanceCard
         user={{ name: currentGroup?.name || 'Family Hub' }}
         totalBalance={totalBalance}
@@ -159,8 +160,9 @@ export default function FamilyWorkspace({
         totalIncome={monthlyIncome}
         totalSpent={monthlySpent}
         incomeCount={incomes.length}
+        expenseCount={expenses.length}
         onOpenManageIncome={onOpenManageIncome}
-        onOpenAddExpense={onOpenAddExpense}
+        onOpenManageExpenses={onOpenManageExpenses}
         canManage={true}
       />
 

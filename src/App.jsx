@@ -12,6 +12,7 @@ import JoinGroup from './pages/JoinGroup';
 import MonthSelector from './components/MonthSelector';
 import QuickAddModal from './components/QuickAddModal';
 import ExpenseModal from './components/ExpenseModal';
+import ExpenseListModal from './components/ExpenseListModal';
 import IncomeModal from './components/IncomeModal';
 import IncomeListModal from './components/IncomeListModal';
 import CreateGroupModal from './components/CreateGroupModal';
@@ -40,6 +41,7 @@ export default function App() {
   const [isMonthOpen, setIsMonthOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isExpenseOpen, setIsExpenseOpen] = useState(false);
+  const [isExpenseListOpen, setIsExpenseListOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
 
   // Income Modal States
@@ -319,6 +321,7 @@ export default function App() {
 
   const isFamilyContext = activeTab === 'family';
   const currentIncomes = isFamilyContext ? familyData?.incomes || [] : personalData?.incomes || [];
+  const currentExpenses = isFamilyContext ? familyData?.expenses || [] : personalData?.expenses || [];
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900 selection:bg-indigo-500 selection:text-white">
@@ -352,6 +355,7 @@ export default function App() {
             isAllTime={isAllTime}
             onToggleAllTime={setIsAllTime}
             onOpenManageIncome={() => setIsIncomeListOpen(true)}
+            onOpenManageExpenses={() => setIsExpenseListOpen(true)}
             onOpenAddExpense={() => {
               setEditingExpense(null);
               setIsExpenseOpen(true);
@@ -397,6 +401,7 @@ export default function App() {
             onOpenInviteModal={() => setIsInviteOpen(true)}
             onOpenMemberManagement={() => setIsMemberMgmtOpen(true)}
             onOpenManageIncome={() => setIsIncomeListOpen(true)}
+            onOpenManageExpenses={() => setIsExpenseListOpen(true)}
             onOpenAddExpense={() => {
               setEditingExpense(null);
               setIsExpenseOpen(true);
@@ -455,7 +460,7 @@ export default function App() {
         }}
       />
 
-      {/* Expense Modal */}
+      {/* Expense Modal (Input Form for Adding / Editing an Expense) */}
       <ExpenseModal
         isOpen={isExpenseOpen}
         onClose={() => {
@@ -467,7 +472,26 @@ export default function App() {
         title={editingExpense ? 'Edit Expense Entry' : 'Add Expense Entry'}
       />
 
-      {/* Income Modal */}
+      {/* Expense List Manager Modal (Manage Personal/Family Expenses with Add / Edit / Delete) */}
+      <ExpenseListModal
+        isOpen={isExpenseListOpen}
+        onClose={() => setIsExpenseListOpen(false)}
+        expenses={currentExpenses}
+        month={month}
+        onOpenAddExpense={() => {
+          setEditingExpense(null);
+          setIsExpenseOpen(true);
+        }}
+        onOpenEditExpense={(item) => {
+          setEditingExpense(item);
+          setIsExpenseOpen(true);
+        }}
+        onDeleteExpense={handleDeleteExpense}
+        isFamily={isFamilyContext}
+        canManage={true}
+      />
+
+      {/* Income Modal (Input Form for Adding / Editing an Income) */}
       <IncomeModal
         isOpen={isIncomeOpen}
         onClose={() => {
@@ -480,7 +504,7 @@ export default function App() {
         isFamily={isFamilyContext}
       />
 
-      {/* Income List Manager Modal */}
+      {/* Income List Manager Modal (Manage Personal/Family Incomes with Add / Edit / Delete) */}
       <IncomeListModal
         isOpen={isIncomeListOpen}
         onClose={() => setIsIncomeListOpen(false)}
