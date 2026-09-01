@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C3AED" />
+      <stop offset="50%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#4F46E5" />
+    </linearGradient>
+    <linearGradient id="rupeeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#E0E7FF" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#4F46E5" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Squircle Rounded Background -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)" filter="url(#shadow)" />
+  
+  <!-- Subtle glowing border inside -->
+  <rect x="8" y="8" width="496" height="496" rx="120" stroke="rgba(255,255,255,0.2)" stroke-width="6" fill="none" />
+
+  <!-- Stylized Indian Rupee (₹) Symbol -->
+  <!-- Upper horizontal line -->
+  <path d="M150 145 H362" stroke="url(#rupeeGrad)" stroke-width="44" stroke-linecap="round" />
+  
+  <!-- Second horizontal line -->
+  <path d="M150 225 H310" stroke="url(#rupeeGrad)" stroke-width="44" stroke-linecap="round" />
+  
+  <!-- Main loop and diagonal downward stroke -->
+  <path d="M225 145 V305 C295 305 320 280 320 225 C320 170 295 145 225 145" stroke="url(#rupeeGrad)" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M205 305 L335 405" stroke="url(#rupeeGrad)" stroke-width="44" stroke-linecap="round" />
+</svg>

@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">RupeeTrack</string>
+    <string name="app_slogan">Follow your spending</string>
+    <string name="title_activity_main">RupeeTrack</string>
+    <string name="package_name">com.rupeetrack.expenseapp</string>
+    <string name="custom_url_scheme">com.rupeetrack.expenseapp</string>
+</resources>
