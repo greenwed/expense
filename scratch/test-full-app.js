@@ -647,12 +647,12 @@ async function runAllTests() {
     });
     const tempExpId = tempExp.data.expense.id || tempExp.data.expense._id;
 
-    // Delete temporary expense
+    // Delete temporary expense by creator (Charlie)
     const delExp = await request(`/split/expenses/${tempExpId}`, {
       method: 'DELETE',
       headers: charlieHeaders
     });
-    assert(delExp.status === 200, 'Split expense deleted successfully');
+    assert(delExp.status === 200, 'Split expense deleted successfully by expense creator');
 
     // Edge Case: Delete non-existent expense
     const delFake = await request('/split/expenses/fake_expense_id_123', {
@@ -660,6 +660,161 @@ async function runAllTests() {
       headers: charlieHeaders
     });
     assert(delFake.status === 404, 'Deleting non-existent expense returns 404');
+
+    // -------------------------------------------------------------
+    // SECTION 10B: Group Creator Permissions & Expense Creator Protection
+    // -------------------------------------------------------------
+    console.log('\n--- SECTION 10B: Group Creator Permissions & Expense Creator Protection ---');
+    
+    // Register 4th user Frank for testing
+    const userFrank = { name: 'Frank Ocean', email: `frank_${timestamp}@example.com`, username: `frank_${timestamp}`, password: 'Password123!' };
+    const regFrank = await request('/auth/register', { method: 'POST', body: userFrank });
+    assert(regFrank.status === 201, 'Frank registered successfully');
+    const loginFrank = await request('/auth/login', { method: 'POST', body: userFrank });
+    const frankHeaders = { Authorization: `Bearer ${loginFrank.data.token}` };
+    const frankUser = loginFrank.data.user;
+
+    // 10B.1 Group Creator (Charlie) edits group name
+    const editGroupName = await request(`/split/groups/${splitGroupId}`, {
+      method: 'PUT',
+      headers: charlieHeaders,
+      body: { name: 'Goa Summer Retreat 2026' }
+    });
+    assert(editGroupName.status === 200, 'Group creator (Charlie) can edit group name');
+    assert(editGroupName.data?.group?.name === 'Goa Summer Retreat 2026', 'Group name updated');
+
+    // 10B.2 Non-creator (Dave) CANNOT edit group name -> 403
+    const daveEditName = await request(`/split/groups/${splitGroupId}`, {
+      method: 'PUT',
+      headers: daveHeaders,
+      body: { name: 'Hacked by Dave' }
+    });
+    assert(daveEditName.status === 403, 'Non-creator (Dave) cannot edit group name (403 Forbidden)');
+
+    // 10B.3 Group Creator (Charlie) adds Frank to group
+    const addFrank = await request(`/split/groups/${splitGroupId}/members`, {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: { userId: frankUser.id || frankUser._id }
+    });
+    assert(addFrank.status === 200, 'Group creator (Charlie) can add a member');
+
+    // 10B.4 Non-creator (Dave) CANNOT add member -> 403
+    const daveAddMember = await request(`/split/groups/${splitGroupId}/members`, {
+      method: 'POST',
+      headers: daveHeaders,
+      body: { userId: frankUser.id || frankUser._id }
+    });
+    assert(daveAddMember.status === 403, 'Non-creator (Dave) cannot add member (403 Forbidden)');
+
+    // 10B.5 Group Creator (Charlie) removes Frank from group
+    const removeFrank = await request(`/split/groups/${splitGroupId}/members/${frankUser.id || frankUser._id}`, {
+      method: 'DELETE',
+      headers: charlieHeaders
+    });
+    assert(removeFrank.status === 200, 'Group creator (Charlie) can remove a member');
+
+    // 10B.6 Non-creator (Dave) CANNOT remove Eve -> 403
+    const daveRemoveEve = await request(`/split/groups/${splitGroupId}/members/${eveUser.id || eveUser._id}`, {
+      method: 'DELETE',
+      headers: daveHeaders
+    });
+    assert(daveRemoveEve.status === 403, 'Non-creator (Dave) cannot remove member (403 Forbidden)');
+
+    // 10B.7 Group Creator cannot remove themselves -> 400
+    const charlieRemoveSelf = await request(`/split/groups/${splitGroupId}/members/${charlieUser.id || charlieUser._id}`, {
+      method: 'DELETE',
+      headers: charlieHeaders
+    });
+    assert(charlieRemoveSelf.status === 400, 'Group creator cannot remove themselves from group (400)');
+
+    // 10B.8 Dave (Group Member) creates an expense in the group
+    const daveNewExp = await request('/split/expenses', {
+      method: 'POST',
+      headers: daveHeaders,
+      body: {
+        groupId: splitGroupId,
+        payerId: daveUser.id || daveUser._id,
+        payerName: daveUser.name,
+        amount: 450,
+        description: 'Dave Beach Snacks',
+        splitMethod: 'equal',
+        participants: [
+          { userId: charlieUser.id || charlieUser._id, name: charlieUser.name },
+          { userId: daveUser.id || daveUser._id, name: daveUser.name }
+        ]
+      }
+    });
+    assert(daveNewExp.status === 201, 'Dave (group member) creates an expense');
+    const daveExpId = daveNewExp.data.expense.id || daveNewExp.data.expense._id;
+
+    // 10B.9 CRITICAL: Group Creator (Charlie) CANNOT delete Dave\'s expense -> 403
+    const charlieTryDelete = await request(`/split/expenses/${daveExpId}`, {
+      method: 'DELETE',
+      headers: charlieHeaders
+    });
+    assert(charlieTryDelete.status === 403, 'Group Creator CANNOT delete expense created by another member (403 Forbidden)');
+
+    // 10B.10 CRITICAL: Group Creator (Charlie) CANNOT edit Dave\'s expense -> 403
+    const charlieTryEdit = await request(`/split/expenses/${daveExpId}`, {
+      method: 'PUT',
+      headers: charlieHeaders,
+      body: {
+        amount: 999,
+        description: 'Charlie edited Dave expense',
+        splitMethod: 'equal',
+        participants: [
+          { userId: charlieUser.id || charlieUser._id, name: charlieUser.name },
+          { userId: daveUser.id || daveUser._id, name: daveUser.name }
+        ]
+      }
+    });
+    assert(charlieTryEdit.status === 403, 'Group Creator CANNOT edit expense created by another member (403 Forbidden)');
+
+    // 10B.11 Dave (Expense Creator) CAN edit his own expense -> 200
+    const daveEditOwn = await request(`/split/expenses/${daveExpId}`, {
+      method: 'PUT',
+      headers: daveHeaders,
+      body: {
+        amount: 500,
+        description: 'Dave Beach Snacks (Updated with juice)',
+        splitMethod: 'equal',
+        participants: [
+          { userId: charlieUser.id || charlieUser._id, name: charlieUser.name },
+          { userId: daveUser.id || daveUser._id, name: daveUser.name }
+        ]
+      }
+    });
+    assert(daveEditOwn.status === 200, 'Expense creator (Dave) can edit his own expense');
+    assert(daveEditOwn.data?.expense?.amount === 500, 'Expense amount updated to 500');
+
+    // 10B.12 Dave (Expense Creator) CAN delete his own expense -> 200
+    const daveDeleteOwn = await request(`/split/expenses/${daveExpId}`, {
+      method: 'DELETE',
+      headers: daveHeaders
+    });
+    assert(daveDeleteOwn.status === 200, 'Expense creator (Dave) can delete his own expense');
+
+    // 10B.13 Non-creator (Dave) CANNOT delete group -> 403
+    const daveDeleteGroup = await request(`/split/groups/${splitGroupId}`, {
+      method: 'DELETE',
+      headers: daveHeaders
+    });
+    assert(daveDeleteGroup.status === 403, 'Non-creator (Dave) cannot delete group (403 Forbidden)');
+
+    // 10B.14 Group Creator can delete group
+    // Create a temporary group for Charlie to delete
+    const tempGroup = await request('/split/groups', {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: { name: 'Temporary Group to Delete' }
+    });
+    const tempGroupId = tempGroup.data.group.id || tempGroup.data.group._id;
+    const charlieDeleteGroup = await request(`/split/groups/${tempGroupId}`, {
+      method: 'DELETE',
+      headers: charlieHeaders
+    });
+    assert(charlieDeleteGroup.status === 200, 'Group creator (Charlie) can delete group');
 
     // -------------------------------------------------------------
     // SECTION 11: Activity Log Audit Trail

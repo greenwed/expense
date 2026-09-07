@@ -430,6 +430,248 @@ router.post('/groups/join/:inviteToken', async (req, res) => {
   }
 });
 
+// 8b. PUT /api/split/groups/:id - Edit group name (Group Creator only)
+router.put('/groups/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    const currentUserId = String(req.user._id || req.user.id);
+
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'Group name is required.' });
+    }
+
+    const group = await SplitGroupModel.findById(id);
+    if (!group) {
+      return res.status(404).json({ error: 'Split group not found.' });
+    }
+
+    if (String(group.createdBy) !== currentUserId) {
+      return res.status(403).json({ error: 'Only the group creator can edit the group name.' });
+    }
+
+    const updated = await SplitGroupModel.updateName(id, name.trim());
+
+    await SplitActivityModel.log({
+      groupId: id,
+      user: req.user,
+      type: 'group_updated',
+      details: { groupName: updated.name }
+    });
+
+    return res.json({
+      message: 'Group name updated successfully!',
+      group: updated
+    });
+  } catch (err) {
+    console.error('Update split group error:', err);
+    return res.status(500).json({ error: 'Failed to update group name.' });
+  }
+});
+
+// 8c. POST /api/split/groups/:id/members - Add member to group (Group Creator only)
+router.post('/groups/:id/members', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId, email, username } = req.body;
+    const currentUserId = String(req.user._id || req.user.id);
+
+    const group = await SplitGroupModel.findById(id);
+    if (!group) {
+      return res.status(404).json({ error: 'Split group not found.' });
+    }
+
+    if (String(group.createdBy) !== currentUserId) {
+      return res.status(403).json({ error: 'Only the group creator can add members.' });
+    }
+
+    let targetUser = null;
+    if (userId) {
+      targetUser = await UserModel.findById(userId);
+    } else if (email) {
+      const cleanEmail = email.trim().replace(/^@/, '').toLowerCase();
+      targetUser = await UserModel.findByEmail(cleanEmail) || await UserModel.findByUsernameOrEmail(cleanEmail);
+    } else if (username) {
+      const cleanUser = username.trim().replace(/^@/, '');
+      targetUser = await UserModel.findByUsername(cleanUser) || await UserModel.findByUsernameOrEmail(cleanUser);
+    }
+
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found. Ensure the user is registered on RupeeTrack.' });
+    }
+
+    const targetUserId = String(targetUser._id || targetUser.id);
+    const isAlreadyMember = (group.members || []).some(m => String(m.userId) === targetUserId);
+    if (isAlreadyMember) {
+      return res.status(400).json({ error: `${targetUser.name} is already a member of this group.` });
+    }
+
+    const updated = await SplitGroupModel.addMember(id, targetUser);
+
+    await SplitActivityModel.log({
+      groupId: id,
+      user: req.user,
+      type: 'group_member_added',
+      details: { groupName: group.name, memberName: targetUser.name }
+    });
+
+    return res.json({
+      message: `${targetUser.name} added to ${group.name}!`,
+      group: updated
+    });
+  } catch (err) {
+    console.error('Add group member error:', err);
+    return res.status(500).json({ error: 'Failed to add member to group.' });
+  }
+});
+
+// 8d. DELETE /api/split/groups/:id/members/:targetUserId - Remove member from group (Group Creator only)
+router.delete('/groups/:id/members/:targetUserId', async (req, res) => {
+  try {
+    const { id, targetUserId } = req.params;
+    const currentUserId = String(req.user._id || req.user.id);
+
+    const group = await SplitGroupModel.findById(id);
+    if (!group) {
+      return res.status(404).json({ error: 'Split group not found.' });
+    }
+
+    if (String(group.createdBy) !== currentUserId) {
+      return res.status(403).json({ error: 'Only the group creator can remove members.' });
+    }
+
+    if (String(targetUserId) === currentUserId) {
+      return res.status(400).json({ error: 'The group creator cannot be removed from the group. You can delete the group instead.' });
+    }
+
+    const memberExists = (group.members || []).some(m => String(m.userId) === String(targetUserId));
+    if (!memberExists) {
+      return res.status(404).json({ error: 'Member not found in this group.' });
+    }
+
+    const targetMember = group.members.find(m => String(m.userId) === String(targetUserId));
+    const updated = await SplitGroupModel.removeMember(id, targetUserId);
+
+    await SplitActivityModel.log({
+      groupId: id,
+      user: req.user,
+      type: 'group_member_removed',
+      details: { groupName: group.name, memberName: targetMember?.name || 'Member' }
+    });
+
+    return res.json({
+      message: 'Member removed from group successfully!',
+      group: updated
+    });
+  } catch (err) {
+    console.error('Remove group member error:', err);
+    return res.status(500).json({ error: 'Failed to remove member from group.' });
+  }
+});
+
+// 8e. DELETE /api/split/groups/:id - Delete split group (Group Creator only)
+router.delete('/groups/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const currentUserId = String(req.user._id || req.user.id);
+
+    const group = await SplitGroupModel.findById(id);
+    if (!group) {
+      return res.status(404).json({ error: 'Split group not found.' });
+    }
+
+    if (String(group.createdBy) !== currentUserId) {
+      return res.status(403).json({ error: 'Only the group creator can delete this group.' });
+    }
+
+    await SplitGroupModel.deleteGroup(id);
+
+    await SplitActivityModel.log({
+      user: req.user,
+      type: 'group_deleted',
+      details: { groupName: group.name }
+    });
+
+    return res.json({ message: 'Group deleted successfully!' });
+  } catch (err) {
+    console.error('Delete split group error:', err);
+    return res.status(500).json({ error: 'Failed to delete split group.' });
+  }
+});
+
+/**
+ * Helper: Compute participant shares for split expenses
+ */
+function computeSplitParticipants({ splitMethod, parsedAmount, participants }) {
+  if (!participants || participants.length === 0) {
+    throw new Error('At least one participant is required.');
+  }
+
+  if (splitMethod === 'equal') {
+    const count = participants.length;
+    const baseShare = Math.floor((parsedAmount / count) * 100) / 100;
+    let remainder = Math.round((parsedAmount - (baseShare * count)) * 100) / 100;
+
+    return participants.map((p, idx) => {
+      const extra = idx === 0 ? remainder : 0;
+      const share = Math.round((baseShare + extra) * 100) / 100;
+      return {
+        userId: String(p.userId || p.id),
+        name: p.name || p.friendName || 'Member',
+        shareAmount: share,
+        percentage: Number(((share / parsedAmount) * 100).toFixed(1))
+      };
+    });
+  } else if (splitMethod === 'exact') {
+    let totalExact = 0;
+    const computed = participants.map(p => {
+      const share = Number(p.shareAmount) || 0;
+      totalExact += share;
+      return {
+        userId: String(p.userId || p.id),
+        name: p.name || p.friendName || 'Member',
+        shareAmount: Math.round(share * 100) / 100,
+        percentage: Number(((share / parsedAmount) * 100).toFixed(1))
+      };
+    });
+
+    if (Math.abs(totalExact - parsedAmount) > 0.05) {
+      throw new Error(`Exact split shares (₹${totalExact.toFixed(2)}) must equal the total amount (₹${parsedAmount.toFixed(2)}).`);
+    }
+    return computed;
+  } else if (splitMethod === 'percentage') {
+    let totalPercent = 0;
+    participants.forEach(p => {
+      totalPercent += (Number(p.percentage) || 0);
+    });
+
+    if (Math.abs(totalPercent - 100) > 0.1) {
+      throw new Error(`Percentages must add up to 100% (currently ${totalPercent}%).`);
+    }
+
+    let allocatedShares = 0;
+    return participants.map((p, idx) => {
+      const percent = Number(p.percentage) || 0;
+      let share = Math.floor(((percent / 100) * parsedAmount) * 100) / 100;
+      allocatedShares += share;
+
+      if (idx === participants.length - 1) {
+        const diff = Math.round((parsedAmount - allocatedShares) * 100) / 100;
+        share = Math.round((share + diff) * 100) / 100;
+      }
+
+      return {
+        userId: String(p.userId || p.id),
+        name: p.name || p.friendName || 'Member',
+        shareAmount: share,
+        percentage: percent
+      };
+    });
+  } else {
+    throw new Error(`Unsupported split method: ${splitMethod}`);
+  }
+}
+
 // 9. POST /api/split/expenses - Add an expense with Equal, Exact, or Percentage split
 router.post('/expenses', async (req, res) => {
   try {
@@ -455,79 +697,16 @@ router.post('/expenses', async (req, res) => {
     if (!payerId || !payerName) {
       return res.status(400).json({ error: 'Payer information is required.' });
     }
-    if (!participants || participants.length === 0) {
-      return res.status(400).json({ error: 'At least one participant is required.' });
-    }
 
-    // Validate and compute participant shares based on splitMethod
-    let computedParticipants = [];
-
-    if (splitMethod === 'equal') {
-      const count = participants.length;
-      const baseShare = Math.floor((parsedAmount / count) * 100) / 100;
-      let remainder = Math.round((parsedAmount - (baseShare * count)) * 100) / 100;
-
-      computedParticipants = participants.map((p, idx) => {
-        const extra = idx === 0 ? remainder : 0;
-        const share = Math.round((baseShare + extra) * 100) / 100;
-        return {
-          userId: String(p.userId || p.id),
-          name: p.name || p.friendName || 'Member',
-          shareAmount: share,
-          percentage: Number(((share / parsedAmount) * 100).toFixed(1))
-        };
+    let computedParticipants;
+    try {
+      computedParticipants = computeSplitParticipants({
+        splitMethod,
+        parsedAmount,
+        participants
       });
-    } else if (splitMethod === 'exact') {
-      let totalExact = 0;
-      computedParticipants = participants.map(p => {
-        const share = Number(p.shareAmount) || 0;
-        totalExact += share;
-        return {
-          userId: String(p.userId || p.id),
-          name: p.name || p.friendName || 'Member',
-          shareAmount: Math.round(share * 100) / 100,
-          percentage: Number(((share / parsedAmount) * 100).toFixed(1))
-        };
-      });
-
-      if (Math.abs(totalExact - parsedAmount) > 0.05) {
-        return res.status(400).json({
-          error: `Exact split shares (₹${totalExact.toFixed(2)}) must equal the total amount (₹${parsedAmount.toFixed(2)}).`
-        });
-      }
-    } else if (splitMethod === 'percentage') {
-      let totalPercent = 0;
-      participants.forEach(p => {
-        totalPercent += (Number(p.percentage) || 0);
-      });
-
-      if (Math.abs(totalPercent - 100) > 0.1) {
-        return res.status(400).json({
-          error: `Percentages must add up to 100% (currently ${totalPercent}%).`
-        });
-      }
-
-      let allocatedShares = 0;
-      computedParticipants = participants.map((p, idx) => {
-        const percent = Number(p.percentage) || 0;
-        let share = Math.floor(((percent / 100) * parsedAmount) * 100) / 100;
-        allocatedShares += share;
-
-        // Balance remainder onto last item
-        if (idx === participants.length - 1) {
-          const diff = Math.round((parsedAmount - allocatedShares) * 100) / 100;
-          share = Math.round((share + diff) * 100) / 100;
-        }
-
-        return {
-          userId: String(p.userId || p.id),
-          name: p.name || p.friendName || 'Member',
-          shareAmount: share,
-          percentage: percent
-        };
-      });
-    } else {
-      return res.status(400).json({ error: `Unsupported split method: ${splitMethod}` });
+    } catch (valErr) {
+      return res.status(400).json({ error: valErr.message });
     }
 
     const expense = await SplitExpenseModel.create({
@@ -565,13 +744,103 @@ router.post('/expenses', async (req, res) => {
   }
 });
 
-// 10. DELETE /api/split/expenses/:id - Delete split expense
-router.delete('/expenses/:id', async (req, res) => {
+// 9b. PUT /api/split/expenses/:id - Edit split expense (Creator only)
+router.put('/expenses/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const currentUserId = String(req.user._id || req.user.id);
+
     const expense = await SplitExpenseModel.findById(id);
     if (!expense) {
       return res.status(404).json({ error: 'Expense not found.' });
+    }
+
+    const expenseCreator = String(expense.createdBy || expense.payerId);
+    if (expenseCreator !== currentUserId) {
+      return res.status(403).json({
+        error: 'Only the user who created this expense has permission to edit it.'
+      });
+    }
+
+    const {
+      payerId = expense.payerId,
+      payerName = expense.payerName,
+      amount = expense.amount,
+      description = expense.description,
+      category = expense.category || 'Others',
+      date = expense.date || new Date().toISOString(),
+      splitMethod = expense.splitMethod || 'equal',
+      participants = expense.participants || []
+    } = req.body;
+
+    const parsedAmount = Number(amount);
+    if (!parsedAmount || parsedAmount <= 0) {
+      return res.status(400).json({ error: 'Valid expense amount is required.' });
+    }
+    if (!description || typeof description !== 'string' || description.trim().length === 0) {
+      return res.status(400).json({ error: 'Description is required.' });
+    }
+
+    let computedParticipants;
+    try {
+      computedParticipants = computeSplitParticipants({
+        splitMethod,
+        parsedAmount,
+        participants
+      });
+    } catch (valErr) {
+      return res.status(400).json({ error: valErr.message });
+    }
+
+    const updated = await SplitExpenseModel.update(id, {
+      payerId,
+      payerName,
+      amount: parsedAmount,
+      description: description.trim(),
+      category,
+      date,
+      splitMethod,
+      participants: computedParticipants
+    });
+
+    await SplitActivityModel.log({
+      groupId: expense.groupId,
+      user: req.user,
+      type: 'expense_updated',
+      details: {
+        description: updated.description,
+        amount: updated.amount,
+        payerName: updated.payerName,
+        splitMethod
+      }
+    });
+
+    return res.json({
+      message: 'Split expense updated successfully!',
+      expense: updated
+    });
+  } catch (err) {
+    console.error('Update split expense error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to update split expense.' });
+  }
+});
+
+// 10. DELETE /api/split/expenses/:id - Delete split expense (Creator only)
+router.delete('/expenses/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const currentUserId = String(req.user._id || req.user.id);
+
+    const expense = await SplitExpenseModel.findById(id);
+    if (!expense) {
+      return res.status(404).json({ error: 'Expense not found.' });
+    }
+
+    const expenseCreator = String(expense.createdBy || expense.payerId);
+    if (expenseCreator !== currentUserId) {
+      return res.status(403).json({
+        error: 'Only the user who created this expense has permission to delete it.'
+      });
     }
 
     await SplitExpenseModel.delete(id);

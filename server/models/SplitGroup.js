@@ -178,6 +178,45 @@ export const SplitGroupModel = {
       g => g.id === String(groupId) || g._id === String(groupId),
       { members: newMembers }
     ));
+  },
+
+  async updateName(groupId, name) {
+    const gIdStr = String(groupId);
+    const pool = getPgPool();
+    if (pool) {
+      const res = await pool.query(
+        'UPDATE split_groups SET name = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+        [name.trim(), gIdStr]
+      );
+      return formatGroup(res.rows[0]);
+    }
+
+    return formatGroup(splitGroupStore.update(
+      g => g.id === gIdStr || g._id === gIdStr,
+      { name: name.trim() }
+    ));
+  },
+
+  async deleteGroup(groupId) {
+    const gIdStr = String(groupId);
+    const pool = getPgPool();
+    if (pool) {
+      await pool.query('DELETE FROM split_expenses WHERE group_id = $1', [gIdStr]);
+      await pool.query('DELETE FROM split_settlements WHERE group_id = $1', [gIdStr]);
+      await pool.query('DELETE FROM split_activities WHERE group_id = $1', [gIdStr]);
+      await pool.query('DELETE FROM split_groups WHERE id = $1', [gIdStr]);
+      return true;
+    }
+
+    const expenseStore = new JsonStore('split_expenses');
+    const settlementStore = new JsonStore('split_settlements');
+    const activityStore = new JsonStore('split_activities');
+
+    expenseStore.delete(e => String(e.groupId) === gIdStr);
+    settlementStore.delete(s => String(s.groupId) === gIdStr);
+    activityStore.delete(a => String(a.groupId) === gIdStr);
+    splitGroupStore.delete(g => g.id === gIdStr || g._id === gIdStr);
+    return true;
   }
 };
 

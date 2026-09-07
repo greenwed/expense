@@ -134,6 +134,58 @@ export const SplitExpenseModel = {
     return formatExpense(item);
   },
 
+  async update(expenseId, {
+    payerId,
+    payerName,
+    amount,
+    description,
+    category = 'Others',
+    date = new Date().toISOString(),
+    splitMethod = 'equal',
+    participants = []
+  }) {
+    const idStr = String(expenseId);
+    const pool = getPgPool();
+    const parsedAmount = Number(amount);
+
+    if (pool) {
+      const res = await pool.query(
+        `UPDATE split_expenses
+         SET payer_id = $1, payer_name = $2, amount = $3, description = $4,
+             category = $5, date = $6, split_method = $7, participants = $8, updated_at = NOW()
+         WHERE id = $9
+         RETURNING *`,
+        [
+          String(payerId),
+          payerName,
+          parsedAmount,
+          description.trim(),
+          category,
+          date,
+          splitMethod,
+          JSON.stringify(participants),
+          idStr
+        ]
+      );
+      return formatExpense(res.rows[0]);
+    }
+
+    const updated = splitExpenseStore.update(
+      e => e.id === idStr || e._id === idStr,
+      {
+        payerId: String(payerId),
+        payerName,
+        amount: parsedAmount,
+        description: description.trim(),
+        category,
+        date,
+        splitMethod,
+        participants
+      }
+    );
+    return formatExpense(updated);
+  },
+
   async delete(expenseId) {
     const idStr = String(expenseId);
     const pool = getPgPool();

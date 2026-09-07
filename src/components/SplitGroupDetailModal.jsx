@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
   X,
@@ -9,6 +9,9 @@ import {
   Copy,
   Check,
   Trash2,
+  Pencil,
+  UserPlus,
+  UserMinus,
   ArrowRight,
   TrendingDown,
   TrendingUp,
@@ -21,9 +24,13 @@ export default function SplitGroupDetailModal({
   isOpen,
   onClose,
   group,
+  friends = [],
   onOpenAddExpense,
+  onOpenEditExpense,
   onOpenSettleUp,
-  onExpenseDeleted
+  onExpenseDeleted,
+  onGroupUpdated,
+  onGroupDeleted
 }) {
   const { apiFetch, user } = useAuth();
   const [mounted, setMounted] = useState(false);
@@ -34,11 +41,17 @@ export default function SplitGroupDetailModal({
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
 
+  // Group Creator Management States
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const [isAddingMember, setIsAddingMember] = useState(false);
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const currentUserId = String(user?._id || user?.id || '');
+  const isCreator = String(groupDetails?.createdBy || group?.createdBy) === currentUserId;
 
   const loadGroupDetails = async () => {
     if (!group) return;
@@ -60,6 +73,8 @@ export default function SplitGroupDetailModal({
   useEffect(() => {
     if (isOpen && group) {
       loadGroupDetails();
+      setIsEditingName(false);
+      setIsAddingMember(false);
     }
   }, [isOpen, group]);
 
@@ -88,6 +103,84 @@ export default function SplitGroupDetailModal({
     }
   };
 
+  // Group Creator: Edit Group Name
+  const handleStartEditName = () => {
+    setEditedName(groupDetails?.name || group?.name || '');
+    setIsEditingName(true);
+  };
+
+  const handleSaveGroupName = async () => {
+    if (!editedName.trim()) return;
+    try {
+      const gId = groupDetails?.id || group?.id || group?._id;
+      const data = await apiFetch(`/api/split/groups/${gId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ name: editedName.trim() })
+      });
+      setGroupDetails(prev => ({ ...prev, name: editedName.trim() }));
+      setIsEditingName(false);
+      if (onGroupUpdated) onGroupUpdated(data?.group);
+    } catch (err) {
+      setError(err.message || 'Failed to update group name');
+    }
+  };
+
+  // Group Creator: Add member from user friends
+  const availableFriendsToAdd = useMemo(() => {
+    const memberIds = new Set((groupDetails?.members || []).map(m => String(m.userId)));
+    return (friends || []).filter(f => {
+      const fId = String(f.friendId || f.userId || f.id);
+      return fId && !memberIds.has(fId);
+    });
+  }, [friends, groupDetails?.members]);
+
+  const handleAddMember = async (friendId) => {
+    try {
+      const gId = groupDetails?.id || group?.id || group?._id;
+      await apiFetch(`/api/split/groups/${gId}/members`, {
+        method: 'POST',
+        body: JSON.stringify({ userId: friendId })
+      });
+      setIsAddingMember(false);
+      await loadGroupDetails();
+      if (onGroupUpdated) onGroupUpdated();
+    } catch (err) {
+      setError(err.message || 'Failed to add member to group');
+    }
+  };
+
+  // Group Creator: Remove member
+  const handleRemoveMember = async (memberUserId, memberName) => {
+    if (!window.confirm(`Are you sure you want to remove ${memberName} from this group?`)) return;
+    try {
+      const gId = groupDetails?.id || group?.id || group?._id;
+      await apiFetch(`/api/split/groups/${gId}/members/${memberUserId}`, {
+        method: 'DELETE'
+      });
+      await loadGroupDetails();
+      if (onGroupUpdated) onGroupUpdated();
+    } catch (err) {
+      setError(err.message || 'Failed to remove member');
+    }
+  };
+
+  // Group Creator: Delete group
+  const handleDeleteGroup = async () => {
+    const gName = groupDetails?.name || group?.name || 'this group';
+    if (!window.confirm(`Are you sure you want to delete "${gName}"? All expenses and settlements in this group will be deleted.`)) {
+      return;
+    }
+    try {
+      const gId = groupDetails?.id || group?.id || group?._id;
+      await apiFetch(`/api/split/groups/${gId}`, { method: 'DELETE' });
+      if (onGroupDeleted) onGroupDeleted(gId);
+      onClose();
+    } catch (err) {
+      setError(err.message || 'Failed to delete group');
+    }
+  };
+
+  // Expense Creator: Delete expense
   const handleDeleteExpense = async (expId) => {
     if (!window.confirm('Are you sure you want to delete this split expense?')) return;
     try {
@@ -112,23 +205,64 @@ export default function SplitGroupDetailModal({
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/40 flex items-center justify-center shadow-sm">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/40 flex items-center justify-center shadow-sm shrink-0">
               <Users className="w-5 h-5" />
             </div>
-            <div>
-              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-                {groupDetails?.name || group?.name || 'Split Group'}
-              </h3>
-              <span className="text-xs text-slate-400 dark:text-slate-400">
-                {(groupDetails?.members || []).length} members
+            <div className="min-w-0 flex-1">
+              {isEditingName ? (
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={editedName}
+                    onChange={(e) => setEditedName(e.target.value)}
+                    className="px-2.5 py-1 text-sm font-bold rounded-xl bg-slate-100 dark:bg-[#1A2234] border border-indigo-500/50 text-slate-900 dark:text-white focus:outline-none w-full"
+                    autoFocus
+                    placeholder="Group name..."
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSaveGroupName}
+                    className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shrink-0"
+                    title="Save name"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingName(false)}
+                    className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 shrink-0"
+                    title="Cancel"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white truncate">
+                    {groupDetails?.name || group?.name || 'Split Group'}
+                  </h3>
+                  {isCreator && (
+                    <button
+                      type="button"
+                      onClick={handleStartEditName}
+                      className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors shrink-0"
+                      title="Edit group name (Creator only)"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
+              <span className="text-xs text-slate-400 dark:text-slate-400 block">
+                {(groupDetails?.members || []).length} members {isCreator ? '• Creator' : ''}
               </span>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+            className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
@@ -218,9 +352,68 @@ export default function SplitGroupDetailModal({
 
           {/* Members List with Individual Balances */}
           <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Members & Balances
-            </h4>
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Members & Balances
+              </h4>
+              {isCreator && (
+                <button
+                  type="button"
+                  onClick={() => setIsAddingMember(prev => !prev)}
+                  className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>{isAddingMember ? 'Cancel' : '+ Add Member'}</span>
+                </button>
+              )}
+            </div>
+
+            {/* Creator inline friend picker to add member */}
+            {isCreator && isAddingMember && (
+              <div className="p-3 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-800/50 space-y-2 animate-fadeIn">
+                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">
+                  Add a friend to this group:
+                </span>
+                {availableFriendsToAdd.length === 0 ? (
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    All your friends are already in this group! Use the invite link above to invite new friends.
+                  </p>
+                ) : (
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                    {availableFriendsToAdd.map(f => {
+                      const fId = String(f.friendId || f.userId || f.id);
+                      return (
+                        <div
+                          key={fId}
+                          className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#111726] border border-slate-200/60 dark:border-slate-800"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div
+                              className="w-6 h-6 rounded-lg text-white font-bold text-[10px] flex items-center justify-center shrink-0"
+                              style={{ backgroundColor: f.avatarColor || '#6366F1' }}
+                            >
+                              {f.friendName ? f.friendName[0].toUpperCase() : 'F'}
+                            </div>
+                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                              {f.friendName || f.name}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleAddMember(fId)}
+                            className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold flex items-center gap-1 active:scale-95 transition-all"
+                          >
+                            <Plus className="w-3 h-3" />
+                            <span>Add</span>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="space-y-1.5">
               {(groupDetails?.members || []).map(m => {
                 const mId = String(m.userId);
@@ -250,16 +443,28 @@ export default function SplitGroupDetailModal({
                     </div>
 
                     {!isSelf && (
-                      <div className="shrink-0 text-right">
-                        <span className={`text-xs font-black font-mono block ${
-                          mNet > 0
-                            ? 'text-emerald-600 dark:text-emerald-400'
-                            : mNet < 0
-                            ? 'text-rose-600 dark:text-rose-400'
-                            : 'text-slate-400 dark:text-slate-400'
-                        }`}>
-                          {mNet > 0 ? `owes you ₹${mNet.toFixed(2)}` : mNet < 0 ? `you owe ₹${Math.abs(mNet).toFixed(2)}` : 'settled'}
-                        </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="text-right">
+                          <span className={`text-xs font-black font-mono block ${
+                            mNet > 0
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : mNet < 0
+                              ? 'text-rose-600 dark:text-rose-400'
+                              : 'text-slate-400 dark:text-slate-400'
+                          }`}>
+                            {mNet > 0 ? `owes you ₹${mNet.toFixed(2)}` : mNet < 0 ? `you owe ₹${Math.abs(mNet).toFixed(2)}` : 'settled'}
+                          </span>
+                        </div>
+                        {isCreator && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveMember(mId, m.name)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
+                            title={`Remove ${m.name} from group`}
+                          >
+                            <UserMinus className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -286,6 +491,8 @@ export default function SplitGroupDetailModal({
                   const eId = e.id || e._id;
                   const isPayer = String(e.payerId) === currentUserId;
                   const myShare = (e.participants || []).find(p => String(p.userId) === currentUserId)?.shareAmount || 0;
+                  // Strictly check if current user created this expense
+                  const canModifyExpense = String(e.createdBy || e.payerId) === currentUserId;
 
                   return (
                     <div
@@ -306,7 +513,7 @@ export default function SplitGroupDetailModal({
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-3 shrink-0">
+                      <div className="flex items-center gap-2.5 shrink-0">
                         <div className="text-right">
                           <span className="text-xs font-black text-slate-900 dark:text-white block">
                             ₹{Number(e.amount).toLocaleString('en-IN')}
@@ -315,14 +522,31 @@ export default function SplitGroupDetailModal({
                             {myShare > 0 ? `Your share: ₹${myShare}` : 'Not involved'}
                           </span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteExpense(eId)}
-                          className="p-1.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/60 text-slate-400 hover:text-rose-600 transition-colors"
-                          title="Delete expense"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+
+                        {/* ONLY the user who created this expense can edit or delete it */}
+                        {canModifyExpense && (
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onClose();
+                                if (onOpenEditExpense) onOpenEditExpense(e);
+                              }}
+                              className="p-1.5 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-950/60 text-slate-400 hover:text-indigo-600 transition-colors"
+                              title="Edit expense (Creator only)"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteExpense(eId)}
+                              className="p-1.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/60 text-slate-400 hover:text-rose-600 transition-colors"
+                              title="Delete expense (Creator only)"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -330,6 +554,20 @@ export default function SplitGroupDetailModal({
               </div>
             )}
           </div>
+
+          {/* Delete Group (Group Creator Only) */}
+          {isCreator && (
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+              <button
+                type="button"
+                onClick={handleDeleteGroup}
+                className="px-3 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 flex items-center gap-1.5 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Group</span>
+              </button>
+            </div>
+          )}
 
         </div>
       </div>

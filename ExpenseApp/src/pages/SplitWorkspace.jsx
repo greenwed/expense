@@ -41,6 +41,7 @@ export default function SplitWorkspace() {
   // Modals state
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [selectedGroupForExpense, setSelectedGroupForExpense] = useState(null);
+  const [editingExpense, setEditingExpense] = useState(null);
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const [isAddFriendOpen, setIsAddFriendOpen] = useState(false);
   const [isSettleUpOpen, setIsSettleUpOpen] = useState(false);
@@ -117,6 +118,7 @@ export default function SplitWorkspace() {
               <button
                 type="button"
                 onClick={() => {
+                  setEditingExpense(null);
                   setSelectedGroupForExpense(null);
                   setIsAddExpenseOpen(true);
                 }}
@@ -532,16 +534,23 @@ export default function SplitWorkspace() {
 
       {/* ================= MODALS ================= */}
       
-      {/* 1. Add Split Expense Modal */}
+      {/* 1. Add / Edit Split Expense Modal */}
       <AddSplitExpenseModal
         isOpen={isAddExpenseOpen}
-        onClose={() => setIsAddExpenseOpen(false)}
+        onClose={() => {
+          setIsAddExpenseOpen(false);
+          setEditingExpense(null);
+        }}
         onExpenseAdded={() => {
+          fetchDashboardData();
+        }}
+        onExpenseUpdated={() => {
           fetchDashboardData();
         }}
         groups={groups}
         friends={friends}
         initialGroupId={selectedGroupForExpense}
+        editingExpense={editingExpense}
       />
 
       {/* 2. Create Split Group Modal */}
@@ -587,8 +596,15 @@ export default function SplitWorkspace() {
           isOpen={Boolean(selectedGroupDetail)}
           onClose={() => setSelectedGroupDetail(null)}
           group={selectedGroupDetail}
+          friends={friends}
           onOpenAddExpense={(gId) => {
             setSelectedGroupForExpense(gId);
+            setEditingExpense(null);
+            setIsAddExpenseOpen(true);
+          }}
+          onOpenEditExpense={(exp) => {
+            setSelectedGroupForExpense(exp.groupId || null);
+            setEditingExpense(exp);
             setIsAddExpenseOpen(true);
           }}
           onOpenSettleUp={() => {
@@ -596,6 +612,13 @@ export default function SplitWorkspace() {
             setIsSettleUpOpen(true);
           }}
           onExpenseDeleted={() => {
+            fetchDashboardData();
+          }}
+          onGroupUpdated={() => {
+            fetchDashboardData();
+          }}
+          onGroupDeleted={() => {
+            setSelectedGroupDetail(null);
             fetchDashboardData();
           }}
         />

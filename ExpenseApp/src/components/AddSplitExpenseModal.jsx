@@ -153,9 +153,11 @@ export default function AddSplitExpenseModal({
   isOpen,
   onClose,
   onExpenseAdded,
+  onExpenseUpdated,
   groups = [],
   friends = [],
-  initialGroupId = null
+  initialGroupId = null,
+  editingExpense = null
 }) {
   const { apiFetch, user } = useAuth();
   const [mounted, setMounted] = useState(false);
@@ -226,16 +228,41 @@ export default function AddSplitExpenseModal({
   // Reset/initialize when modal opens or group changes
   useEffect(() => {
     if (isOpen) {
-      setDescription('');
-      setAmount('');
-      setCategory('Food');
-      setDate(new Date().toISOString().slice(0, 10));
-      setSelectedGroupId(initialGroupId || (groups[0]?.id || groups[0]?._id || ''));
-      setPayerId(currentUserId);
-      setSplitMethod('equal');
+      if (editingExpense) {
+        setDescription(editingExpense.description || '');
+        setAmount(String(editingExpense.amount || ''));
+        setCategory(editingExpense.category || 'Food');
+        setDate(editingExpense.date ? editingExpense.date.slice(0, 10) : new Date().toISOString().slice(0, 10));
+        setSelectedGroupId(editingExpense.groupId || initialGroupId || '');
+        setPayerId(String(editingExpense.payerId || currentUserId));
+        setSplitMethod(editingExpense.splitMethod || 'equal');
+
+        if (editingExpense.participants && editingExpense.participants.length > 0) {
+          const pIds = editingExpense.participants.map(p => String(p.userId || p.id));
+          setSelectedParticipantIds(pIds);
+
+          const exact = {};
+          const perc = {};
+          editingExpense.participants.forEach(p => {
+            const uid = String(p.userId || p.id);
+            exact[uid] = Number(p.shareAmount) || 0;
+            perc[uid] = Number(p.percentage) || 0;
+          });
+          setExactShares(exact);
+          setPercentShares(perc);
+        }
+      } else {
+        setDescription('');
+        setAmount('');
+        setCategory('Food');
+        setDate(new Date().toISOString().slice(0, 10));
+        setSelectedGroupId(initialGroupId || (groups[0]?.id || groups[0]?._id || ''));
+        setPayerId(currentUserId);
+        setSplitMethod('equal');
+      }
       setError('');
     }
-  }, [isOpen, initialGroupId, groups, currentUserId]);
+  }, [isOpen, initialGroupId, groups, currentUserId, editingExpense]);
 
   // When eligible members change, select all by default and distribute shares
   useEffect(() => {
@@ -395,8 +422,13 @@ export default function AddSplitExpenseModal({
       setLoading(true);
       setError('');
 
-      const data = await apiFetch('/api/split/expenses', {
-        method: 'POST',
+      const endpoint = editingExpense
+        ? `/api/split/expenses/${editingExpense.id || editingExpense._id}`
+        : '/api/split/expenses';
+      const method = editingExpense ? 'PUT' : 'POST';
+
+      const data = await apiFetch(endpoint, {
+        method,
         body: JSON.stringify({
           groupId: selectedGroupId || null,
           payerId: payer.userId,
@@ -410,10 +442,15 @@ export default function AddSplitExpenseModal({
         })
       });
 
-      if (onExpenseAdded) onExpenseAdded(data?.expense);
+      if (editingExpense) {
+        if (onExpenseUpdated) onExpenseUpdated(data?.expense);
+        if (onExpenseAdded) onExpenseAdded(data?.expense);
+      } else {
+        if (onExpenseAdded) onExpenseAdded(data?.expense);
+      }
       onClose();
     } catch (err) {
-      setError(err.message || 'Failed to add split expense.');
+      setError(err.message || 'Failed to save split expense.');
     } finally {
       setLoading(false);
     }
@@ -435,10 +472,10 @@ export default function AddSplitExpenseModal({
             </div>
             <div>
               <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-                Add Split Expense
+                {editingExpense ? 'Edit Split Expense' : 'Add Split Expense'}
               </h3>
               <span className="text-xs text-slate-400 dark:text-slate-400">
-                Divide costs with friends or groups
+                {editingExpense ? 'Update amount, split method or shares' : 'Divide costs with friends or groups'}
               </span>
             </div>
           </div>
@@ -772,8 +809,8 @@ export default function AddSplitExpenseModal({
             disabled={loading || !parsedAmount || !description.trim() || (splitMethod === 'exact' && !isExactValid) || (splitMethod === 'percentage' && !isPercentValid)}
             className="w-full py-3.5 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 active:scale-98"
           >
-            <Plus className="w-4 h-4 stroke-[3]" />
-            <span>{loading ? 'Adding Expense...' : 'Add Split Expense'}</span>
+            {editingExpense ? <Check className="w-4 h-4 stroke-[3]" /> : <Plus className="w-4 h-4 stroke-[3]" />}
+            <span>{loading ? 'Saving...' : editingExpense ? 'Save Changes' : 'Add Split Expense'}</span>
           </button>
         </form>
 
