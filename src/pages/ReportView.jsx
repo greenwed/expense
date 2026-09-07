@@ -464,6 +464,7 @@ export default function ReportView({
         <CategoryPieChart
           categories={categories}
           totalSpent={totalSpent}
+          expenses={reportData?.expenses || []}
           title={
             reportType === 'personal'
               ? `Personal Expenses (${filterMode === 'monthly' ? getMonthName(month) : `${formatDateOnly(startDate)} - ${formatDateOnly(endDate)}`})`

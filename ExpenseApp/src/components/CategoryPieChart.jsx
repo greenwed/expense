@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import {
   Utensils,
@@ -7,9 +7,11 @@ import {
   HeartPulse,
   Car,
   MoreHorizontal,
-  PieChart as PieIcon
+  PieChart as PieIcon,
+  ChevronDown,
+  Clock
 } from 'lucide-react';
-import { formatINR, CATEGORY_CONFIG } from '../utils/formatters';
+import { formatINR, formatDateTime, CATEGORY_CONFIG } from '../utils/formatters';
 import { useTheme } from '../context/ThemeContext';
 
 const ICON_MAP = {
@@ -24,9 +26,17 @@ const ICON_MAP = {
 export default function CategoryPieChart({
   categories = [],
   totalSpent = 0,
+  expenses = [],
   title = 'Expenses Report'
 }) {
   const { isDark } = useTheme();
+
+  // Accordion state: only one category open at a time
+  const [expandedCategory, setExpandedCategory] = useState(null);
+
+  const toggleCategory = (categoryName) => {
+    setExpandedCategory((prev) => (prev === categoryName ? null : categoryName));
+  };
 
   const chartData = categories
     .map((c) => ({
@@ -37,6 +47,17 @@ export default function CategoryPieChart({
     .filter((c) => c.amount > 0);
 
   const numTotalSpent = Number(totalSpent) || chartData.reduce((acc, c) => acc + c.amount, 0);
+
+  // Group and sort expenses for the currently expanded category
+  const activeCategoryExpenses = useMemo(() => {
+    if (!expandedCategory) return [];
+    return (expenses || [])
+      .filter((e) => {
+        const cat = e.category || 'Others';
+        return cat.toLowerCase() === expandedCategory.toLowerCase();
+      })
+      .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+  }, [expenses, expandedCategory]);
 
   if (numTotalSpent === 0 && chartData.length === 0) {
     return (
@@ -101,15 +122,18 @@ export default function CategoryPieChart({
               paddingAngle={4}
               cornerRadius={8}
               animationDuration={800}
+              onClick={(entry) => entry && entry.category && toggleCategory(entry.category)}
+              className="cursor-pointer"
             >
               {chartData.map((entry, index) => {
                 const conf = CATEGORY_CONFIG[entry.category] || CATEGORY_CONFIG.Others;
+                const isSelected = expandedCategory === entry.category;
                 return (
                   <Cell 
                     key={`cell-${index}`} 
                     fill={conf.color} 
-                    stroke={isDark ? "#131926" : "#FFFFFF"} 
-                    strokeWidth={2} 
+                    stroke={isSelected ? (isDark ? "#818CF8" : "#4F46E5") : (isDark ? "#131926" : "#FFFFFF")} 
+                    strokeWidth={isSelected ? 3 : 2} 
                   />
                 );
               })}
@@ -128,7 +152,7 @@ export default function CategoryPieChart({
         </div>
       </div>
 
-      {/* Category Progress Cards List */}
+      {/* Category Progress Cards List with Interactive Accordion Dropdown */}
       <div className="space-y-3 pt-2">
         <div className="flex items-center justify-between text-xs font-bold text-slate-400 dark:text-slate-400 px-1 uppercase tracking-wider">
           <span>All Categories</span>
@@ -141,56 +165,124 @@ export default function CategoryPieChart({
           const amount = Number(item.amount) || 0;
           const percentage = Number(item.percentage) || 0;
           const hasSpending = amount > 0;
+          const isExpanded = expandedCategory === item.category;
+          const itemExpenses = isExpanded ? activeCategoryExpenses : [];
 
           return (
             <div
               key={item.category}
-              className={`p-3.5 sm:p-4 rounded-2xl border transition-all ${
-                hasSpending
-                  ? 'bg-slate-50/80 dark:bg-[#1A2234] border-slate-200/80 dark:border-slate-700/80 shadow-sm'
+              className={`rounded-2xl border transition-all overflow-hidden ${
+                isExpanded
+                  ? 'bg-slate-50 dark:bg-[#1A2234] border-indigo-300 dark:border-indigo-600/80 shadow-md ring-1 ring-indigo-500/20'
+                  : hasSpending
+                  ? 'bg-slate-50/80 dark:bg-[#1A2234] border-slate-200/80 dark:border-slate-700/80 shadow-sm hover:border-slate-300 dark:hover:border-slate-600'
                   : 'bg-transparent border-slate-100 dark:border-slate-800/50 opacity-60'
               }`}
             >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm"
-                    style={{ backgroundColor: `${conf.color}15`, color: conf.color }}
-                  >
-                    <Icon className="w-5 h-5" />
+              {/* Clickable Card Header */}
+              <button
+                type="button"
+                onClick={() => toggleCategory(item.category)}
+                className="w-full text-left p-3.5 sm:p-4 focus:outline-none transition-colors select-none cursor-pointer"
+                aria-expanded={isExpanded}
+                title={`Click to ${isExpanded ? 'close' : 'view'} ${conf.name} expenses`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm shrink-0"
+                      style={{ backgroundColor: `${conf.color}15`, color: conf.color }}
+                    >
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-sm font-bold text-slate-900 dark:text-white block leading-tight truncate">
+                        {conf.name}
+                      </span>
+                      <span className="text-xs text-slate-400 dark:text-slate-400 font-medium">
+                        {percentage}% of total
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-sm font-bold text-slate-900 dark:text-white block leading-tight">
-                      {conf.name}
-                    </span>
-                    <span className="text-xs text-slate-400 dark:text-slate-400 font-medium">
-                      {percentage}% of total
-                    </span>
+
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <div className="text-right">
+                      <span className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white block">
+                        {formatINR(amount)}
+                      </span>
+                      {hasSpending && (
+                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                          Active
+                        </span>
+                      )}
+                    </div>
+                    <div className={`p-1 rounded-lg text-slate-400 dark:text-slate-400 transition-transform duration-200 ${
+                      isExpanded ? 'rotate-180 text-indigo-600 dark:text-indigo-400' : ''
+                    }`}>
+                      <ChevronDown className="w-4 h-4" />
+                    </div>
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <span className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white block">
-                    {formatINR(amount)}
-                  </span>
-                  {hasSpending && (
-                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                      Active
+                {/* Horizontal Progress Bar */}
+                <div className="w-full bg-slate-200/60 dark:bg-slate-700/60 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.min(100, Math.max(0, percentage))}%`,
+                      backgroundColor: conf.color
+                    }}
+                  />
+                </div>
+              </button>
+
+              {/* Accordion Dropdown List of Expenses */}
+              {isExpanded && (
+                <div className="px-3.5 pb-3.5 sm:px-4 sm:pb-4 pt-1 space-y-2 animate-fadeIn border-t border-slate-200/60 dark:border-slate-800">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 dark:text-slate-400 pt-1.5 px-1">
+                    <span>
+                      {itemExpenses.length} {itemExpenses.length === 1 ? 'Entry' : 'Entries'}
                     </span>
+                    <span>
+                      Total: <strong className="text-slate-700 dark:text-slate-200">{formatINR(amount)}</strong>
+                    </span>
+                  </div>
+
+                  {itemExpenses.length === 0 ? (
+                    <div className="p-3 text-center text-xs text-slate-400 dark:text-slate-500 rounded-xl bg-white/60 dark:bg-[#131926]/60 border border-slate-100 dark:border-slate-800/80">
+                      No expense entries found in {conf.name} for this period.
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5 max-h-72 overflow-y-auto pr-0.5 divide-y-0">
+                      {itemExpenses.map((exp) => (
+                        <div
+                          key={exp.id || exp._id}
+                          className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#131926] border border-slate-200/70 dark:border-slate-800 flex items-center justify-between gap-3 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white block truncate">
+                              {exp.description}
+                            </span>
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-400 mt-0.5">
+                              <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                              <span>{formatDateTime(exp.date)}</span>
+                              {exp.userName && (
+                                <span className="truncate">• by {exp.userName}</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="text-right shrink-0">
+                            <span className="text-xs sm:text-base font-black text-slate-900 dark:text-white">
+                              -{formatINR(exp.amount)}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
-              </div>
-
-              {/* Horizontal Progress Bar */}
-              <div className="w-full bg-slate-200/60 dark:bg-slate-700/60 rounded-full h-2 overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    width: `${Math.min(100, Math.max(0, percentage))}%`,
-                    backgroundColor: conf.color
-                  }}
-                />
-              </div>
+              )}
             </div>
           );
         })}
