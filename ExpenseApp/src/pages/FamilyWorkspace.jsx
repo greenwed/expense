@@ -15,7 +15,8 @@ import {
   Layers,
   User,
   ChevronDown,
-  X
+  X,
+  Check
 } from 'lucide-react';
 import {
   formatINR,
@@ -59,6 +60,10 @@ export default function FamilyWorkspace({
 
   // Selected member filter state (only for Family tab)
   const [selectedMemberId, setSelectedMemberId] = useState('all');
+  
+  // Custom themed popups state (replaces native OS dialog on Android/Web)
+  const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
 
   // Reset member filter when switching groups
   useEffect(() => {
@@ -153,17 +158,17 @@ export default function FamilyWorkspace({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <select
-                value={selectedGroupId || ''}
-                onChange={(e) => onSelectGroup(e.target.value)}
-                className="text-base font-extrabold text-slate-900 dark:text-white bg-transparent cursor-pointer focus:outline-none dark:bg-[#131926]"
+              <button
+                type="button"
+                onClick={() => groups.length > 1 && setIsGroupModalOpen(true)}
+                className={`text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5 text-left transition-opacity ${
+                  groups.length > 1 ? 'cursor-pointer hover:opacity-80 active:scale-98' : 'cursor-default'
+                }`}
+                title={groups.length > 1 ? 'Tap to switch group' : undefined}
               >
-                {groups.map((g) => (
-                  <option key={g.id || g._id} value={g.id || g._id} className="dark:bg-[#131926] dark:text-white">
-                    {g.name}
-                  </option>
-                ))}
-              </select>
+                <span>{currentGroup?.name || 'Family Hub'}</span>
+                {groups.length > 1 && <ChevronDown className="w-4 h-4 text-slate-400" />}
+              </button>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                 {userRole}
               </span>
@@ -287,41 +292,26 @@ export default function FamilyWorkspace({
             </span>
           </div>
 
-          {/* Group Member Filter Option (Circled in Family Tab) */}
+          {/* Group Member Filter Button (Custom Themed Modal Trigger) */}
           <div className="flex items-center gap-1.5 shrink-0">
-            <div
-              className={`relative inline-flex items-center rounded-xl border transition-all ${
+            <button
+              type="button"
+              onClick={() => setIsMemberModalOpen(true)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
                 selectedMemberId !== 'all'
-                  ? 'bg-indigo-50/90 dark:bg-indigo-950/60 border-indigo-300 dark:border-indigo-700/80 shadow-sm ring-1 ring-indigo-500/20'
-                  : 'bg-white dark:bg-[#131926] hover:bg-slate-50 dark:hover:bg-[#1A2234] border-slate-200/90 dark:border-slate-700/80 shadow-sm'
+                  ? 'bg-indigo-50/90 dark:bg-indigo-950/60 border-indigo-300 dark:border-indigo-700/80 text-indigo-700 dark:text-indigo-300 shadow-sm ring-1 ring-indigo-500/20'
+                  : 'bg-white dark:bg-[#131926] hover:bg-slate-50 dark:hover:bg-[#1A2234] border-slate-200/90 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 shadow-sm'
               }`}
+              title="Filter expenses by group member"
             >
-              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-indigo-500 dark:text-indigo-400">
-                <User className="w-3.5 h-3.5" />
-              </div>
-              <select
-                value={selectedMemberId}
-                onChange={(e) => setSelectedMemberId(e.target.value)}
-                className="pl-7 pr-7 py-1.5 bg-transparent text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer focus:outline-none appearance-none"
-                title="Filter expenses by group member"
-              >
-                <option value="all" className="dark:bg-[#131926] dark:text-white">
-                  All Members ({members.length})
-                </option>
-                {members.map((m) => {
-                  const mId = String(m.userId || m.id || m._id);
-                  const isSelf = String(user?._id || user?.id) === mId;
-                  return (
-                    <option key={mId} value={mId} className="dark:bg-[#131926] dark:text-white">
-                      {m.name || m.username || 'Member'}{isSelf ? ' (You)' : ''}
-                    </option>
-                  );
-                })}
-              </select>
-              <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-slate-400">
-                <ChevronDown className="w-3.5 h-3.5" />
-              </div>
-            </div>
+              <User className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
+              <span className="truncate max-w-[130px] sm:max-w-none">
+                {selectedMemberId === 'all'
+                  ? `All Members (${members.length})`
+                  : `${selectedMember?.name || 'Member'}${selectedMemberId === String(user?._id || user?.id) ? ' (You)' : ''}`}
+              </span>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            </button>
 
             {selectedMemberId !== 'all' && (
               <button
@@ -481,6 +471,228 @@ export default function FamilyWorkspace({
           </div>
         )}
       </div>
+
+      {/* ================= CUSTOM THEMED MEMBER SELECTION MODAL ================= */}
+      {/* Replaces Android OS grey alert dialog with luxury themed bottom-sheet/modal */}
+      {isMemberModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-xs animate-backdrop-fade">
+          <div className="fixed inset-0" onClick={() => setIsMemberModalOpen(false)} />
+
+          <div className="relative z-10 w-full sm:max-w-md bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden animate-modal-pop">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shadow-sm">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                    Filter by Member
+                  </h3>
+                  <span className="text-[11px] text-slate-400 dark:text-slate-400">
+                    {members.length} member{members.length !== 1 ? 's' : ''} in this group
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMemberModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Member Options List */}
+            <div className="p-4 sm:p-5 space-y-2 max-h-[60vh] overflow-y-auto">
+              
+              {/* Option 1: All Members */}
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedMemberId('all');
+                  setIsMemberModalOpen(false);
+                }}
+                className={`w-full p-3.5 rounded-2xl flex items-center justify-between gap-3 text-left transition-all ${
+                  selectedMemberId === 'all'
+                    ? 'bg-indigo-50 dark:bg-indigo-950/70 border-2 border-indigo-500 dark:border-indigo-600 shadow-sm'
+                    : 'bg-slate-50/70 dark:bg-[#1A2234] hover:bg-slate-100 dark:hover:bg-[#222C42] border border-slate-200/60 dark:border-slate-700/60'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${
+                    selectedMemberId === 'all'
+                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
+                      : 'bg-white dark:bg-[#111726] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                  }`}>
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className={`text-sm font-bold block ${
+                      selectedMemberId === 'all' ? 'text-indigo-900 dark:text-white' : 'text-slate-900 dark:text-white'
+                    }`}>
+                      All Members ({members.length})
+                    </span>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-400">
+                      Show all group expenses combined
+                    </span>
+                  </div>
+                </div>
+
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 border transition-all ${
+                  selectedMemberId === 'all'
+                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
+                    : 'border-slate-300 dark:border-slate-600'
+                }`}>
+                  {selectedMemberId === 'all' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                </div>
+              </button>
+
+              {/* Individual Members */}
+              {members.map((m) => {
+                const mId = String(m.userId || m.id || m._id);
+                const isSelected = selectedMemberId === mId;
+                const isSelf = String(user?._id || user?.id) === mId;
+
+                return (
+                  <button
+                    key={mId}
+                    type="button"
+                    onClick={() => {
+                      setSelectedMemberId(mId);
+                      setIsMemberModalOpen(false);
+                    }}
+                    className={`w-full p-3.5 rounded-2xl flex items-center justify-between gap-3 text-left transition-all ${
+                      isSelected
+                        ? 'bg-indigo-50 dark:bg-indigo-950/70 border-2 border-indigo-500 dark:border-indigo-600 shadow-sm'
+                        : 'bg-slate-50/70 dark:bg-[#1A2234] hover:bg-slate-100 dark:hover:bg-[#222C42] border border-slate-200/60 dark:border-slate-700/60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${
+                        isSelected
+                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
+                          : 'bg-white dark:bg-[#111726] text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-slate-700'
+                      }`}>
+                        {m.name ? m.name[0].toUpperCase() : 'M'}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-sm font-bold truncate ${
+                            isSelected ? 'text-indigo-900 dark:text-white' : 'text-slate-900 dark:text-white'
+                          }`}>
+                            {m.name || 'Member'}
+                          </span>
+                          {isSelf && (
+                            <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
+                              You
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-slate-400 dark:text-slate-400 font-mono block truncate">
+                          @{m.username || 'member'} • {m.role || 'member'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 border transition-all ${
+                      isSelected
+                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
+                        : 'border-slate-300 dark:border-slate-600'
+                    }`}>
+                      {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= CUSTOM THEMED GROUP SWITCHER MODAL ================= */}
+      {isGroupModalOpen && groups.length > 1 && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-xs animate-backdrop-fade">
+          <div className="fixed inset-0" onClick={() => setIsGroupModalOpen(false)} />
+
+          <div className="relative z-10 w-full sm:max-w-md bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden animate-modal-pop">
+            
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shadow-sm">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                    Switch Family Group
+                  </h3>
+                  <span className="text-[11px] text-slate-400 dark:text-slate-400">
+                    Select a group to view transactions
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsGroupModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-4 sm:p-5 space-y-2 max-h-[60vh] overflow-y-auto">
+              {groups.map((g) => {
+                const gId = g.id || g._id;
+                const isSelected = (selectedGroupId || '') === gId;
+                return (
+                  <button
+                    key={gId}
+                    type="button"
+                    onClick={() => {
+                      onSelectGroup(gId);
+                      setIsGroupModalOpen(false);
+                    }}
+                    className={`w-full p-3.5 rounded-2xl flex items-center justify-between gap-3 text-left transition-all ${
+                      isSelected
+                        ? 'bg-indigo-50 dark:bg-indigo-950/70 border-2 border-indigo-500 dark:border-indigo-600 shadow-sm'
+                        : 'bg-slate-50/70 dark:bg-[#1A2234] hover:bg-slate-100 dark:hover:bg-[#222C42] border border-slate-200/60 dark:border-slate-700/60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${
+                        isSelected
+                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
+                          : 'bg-white dark:bg-[#111726] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                      }`}>
+                        <Users className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <span className={`text-sm font-bold block ${
+                          isSelected ? 'text-indigo-900 dark:text-white' : 'text-slate-900 dark:text-white'
+                        }`}>
+                          {g.name}
+                        </span>
+                        <span className="text-[11px] text-slate-400 dark:text-slate-400">
+                          {(g.members || []).length} members
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 border transition-all ${
+                      isSelected
+                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
+                        : 'border-slate-300 dark:border-slate-600'
+                    }`}>
+                      {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
