@@ -40,6 +40,10 @@ export const UserModel = {
     return this.findOne({ id });
   },
 
+  async findByUsername(username) {
+    return this.findOne({ username });
+  },
+
   async findByEmail(email) {
     return this.findOne({ email });
   },

@@ -213,5 +213,155 @@
     "password": "$2a$10$vhv3IdH3TOMHm7lsnoKkUOPUYMMOGrUmvjP1kRYW9zWJic4nxgOM2",
     "createdAt": "2026-09-01T06:22:11.923Z",
     "updatedAt": "2026-09-01T06:22:12.078Z"
+  },
+  {
+    "_id": "usr_334eeceb02354c31",
+    "id": "usr_334eeceb02354c31",
+    "name": "Charlie Day",
+    "username": "charlie_1788781095900",
+    "email": "charlie_1788781095900@example.com",
+    "password": "$2a$10$LamTJu.RCA7nVlnKSg9Kou6NruwNUesT0LZuaOXKPwtRQwJZ03eUu",
+    "createdAt": "2026-09-07T11:38:15.963Z",
+    "updatedAt": "2026-09-07T11:38:15.963Z"
+  },
+  {
+    "_id": "usr_6c7c63fde4e44987",
+    "id": "usr_6c7c63fde4e44987",
+    "name": "Dave Miller",
+    "username": "dave_1788781095900",
+    "email": "dave_1788781095900@example.com",
+    "password": "$2a$10$FIZAz0AQ4HI/f.E0n7dFf.yB0E.xpVtAFEkbeJNdY8IMVqeTFVWFa",
+    "createdAt": "2026-09-07T11:38:16.123Z",
+    "updatedAt": "2026-09-07T11:38:16.123Z"
+  },
+  {
+    "_id": "usr_896d0aea3a0d4afe",
+    "id": "usr_896d0aea3a0d4afe",
+    "name": "Eve Johnson",
+    "username": "eve_1788781095900",
+    "email": "eve_1788781095900@example.com",
+    "password": "$2a$10$51x3psrb3mzNc2o7bk2Mru5f0kwplNBQwwnn24W.mszsaHIbW1wX6",
+    "createdAt": "2026-09-07T11:38:16.223Z",
+    "updatedAt": "2026-09-07T11:38:16.223Z"
+  },
+  {
+    "_id": "usr_4e96668394a644da",
+    "id": "usr_4e96668394a644da",
+    "name": "Charlie Day",
+    "username": "charlie_1788781116768",
+    "email": "charlie_1788781116768@example.com",
+    "password": "$2a$10$1RWxVwMCurwptXEwH1L.cO3m/4eh1SVp90o2oHd7d5FqJrVMknTna",
+    "createdAt": "2026-09-07T11:38:36.826Z",
+    "updatedAt": "2026-09-07T11:38:36.826Z"
+  },
+  {
+    "_id": "usr_d88c927f6c364593",
+    "id": "usr_d88c927f6c364593",
+    "name": "Dave Miller",
+    "username": "dave_1788781116768",
+    "email": "dave_1788781116768@example.com",
+    "password": "$2a$10$vgueGdl0I4bA4ovmWwuocebahu3L43507vWx1Fz.sdgEXaQ8I4soW",
+    "createdAt": "2026-09-07T11:38:36.984Z",
+    "updatedAt": "2026-09-07T11:38:36.984Z"
+  },
+  {
+    "_id": "usr_798aef07c7ca443d",
+    "id": "usr_798aef07c7ca443d",
+    "name": "Eve Johnson",
+    "username": "eve_1788781116768",
+    "email": "eve_1788781116768@example.com",
+    "password": "$2a$10$tPokojhkbm8w1IZqF40XgOEI8dLXTrzeVKv.N9bJQvkopg6agyqgi",
+    "createdAt": "2026-09-07T11:38:37.085Z",
+    "updatedAt": "2026-09-07T11:38:37.085Z"
+  },
+  {
+    "_id": "usr_be62ef2266264565",
+    "id": "usr_be62ef2266264565",
+    "name": "Charlie Day",
+    "username": "charlie_1788781129077",
+    "email": "charlie_1788781129077@example.com",
+    "password": "$2a$10$XAmtpXhzl2D0Jyub26lw4OqToXcHLbYXMQoTw9eqb7iqTqyX0fMkK",
+    "createdAt": "2026-09-07T11:38:49.136Z",
+    "updatedAt": "2026-09-07T11:38:49.136Z"
+  },
+  {
+    "_id": "usr_39d0b5884ca644c1",
+    "id": "usr_39d0b5884ca644c1",
+    "name": "Dave Miller",
+    "username": "dave_1788781129077",
+    "email": "dave_1788781129077@example.com",
+    "password": "$2a$10$2EMYv2mTX3N3LXkBib3SmeCy./yby0kOKRE29aUA80cU3WDlf5EBy",
+    "createdAt": "2026-09-07T11:38:49.294Z",
+    "updatedAt": "2026-09-07T11:38:49.294Z"
+  },
+  {
+    "_id": "usr_a26e6ad03db64f3c",
+    "id": "usr_a26e6ad03db64f3c",
+    "name": "Eve Johnson",
+    "username": "eve_1788781129077",
+    "email": "eve_1788781129077@example.com",
+    "password": "$2a$10$KCQ2f9ASqdSzlBR0LMzbVeYUbjMJlFJ8NwZlkxxNKmT7p7Tz2oXHO",
+    "createdAt": "2026-09-07T11:38:49.395Z",
+    "updatedAt": "2026-09-07T11:38:49.395Z"
+  },
+  {
+    "_id": "usr_c0f91dda593f4796",
+    "id": "usr_c0f91dda593f4796",
+    "name": "Charlie Day",
+    "username": "charlie_1788781139900",
+    "email": "charlie_1788781139900@example.com",
+    "password": "$2a$10$kNdIelktcyxTK5OHPo29GuLre1KvY5dg8R47eSBjcFgxMlmaEZv6C",
+    "createdAt": "2026-09-07T11:38:59.956Z",
+    "updatedAt": "2026-09-07T11:38:59.956Z"
+  },
+  {
+    "_id": "usr_9502fd5adc6341e0",
+    "id": "usr_9502fd5adc6341e0",
+    "name": "Dave Miller",
+    "username": "dave_1788781139900",
+    "email": "dave_1788781139900@example.com",
+    "password": "$2a$10$vKBf.uBXC6osKLc3.2byzuXpezejMNvYdEd/hMzYYvpZFqzikYZ7S",
+    "createdAt": "2026-09-07T11:39:00.116Z",
+    "updatedAt": "2026-09-07T11:39:00.116Z"
+  },
+  {
+    "_id": "usr_791e2bf4d9b94374",
+    "id": "usr_791e2bf4d9b94374",
+    "name": "Eve Johnson",
+    "username": "eve_1788781139900",
+    "email": "eve_1788781139900@example.com",
+    "password": "$2a$10$5uGouXn5kPKwD6Rz.UBon.tQhQqV5AlOLrD3qNT61gc3YHf0TO132",
+    "createdAt": "2026-09-07T11:39:00.215Z",
+    "updatedAt": "2026-09-07T11:39:00.215Z"
+  },
+  {
+    "_id": "usr_e379ed2198c645c0",
+    "id": "usr_e379ed2198c645c0",
+    "name": "Charlie Day",
+    "username": "charlie_1788781162904",
+    "email": "charlie_1788781162904@example.com",
+    "password": "$2a$10$h/8OTTRZHmopzXKhw8zW/uWzPb9SGNOo1/4HZp9mlSkRXlPVXTPxm",
+    "createdAt": "2026-09-07T11:39:22.964Z",
+    "updatedAt": "2026-09-07T11:39:22.964Z"
+  },
+  {
+    "_id": "usr_d2569d04f0894684",
+    "id": "usr_d2569d04f0894684",
+    "name": "Dave Miller",
+    "username": "dave_1788781162904",
+    "email": "dave_1788781162904@example.com",
+    "password": "$2a$10$7Gd4CSq.To9T.FreuWtLnObWhXSZ2lySrHAAo15RF0obAe534Nkkm",
+    "createdAt": "2026-09-07T11:39:23.121Z",
+    "updatedAt": "2026-09-07T11:39:23.121Z"
+  },
+  {
+    "_id": "usr_4b1f477de53e48bc",
+    "id": "usr_4b1f477de53e48bc",
+    "name": "Eve Johnson",
+    "username": "eve_1788781162904",
+    "email": "eve_1788781162904@example.com",
+    "password": "$2a$10$tdZs8V0HxIJbMzRr5NniLewa2VMa3C8gZuTfnrpq8CxsedSaPYWbO",
+    "createdAt": "2026-09-07T11:39:23.226Z",
+    "updatedAt": "2026-09-07T11:39:23.227Z"
   }
 ]

@@ -404,5 +404,93 @@
     "date": "2026-08-05T10:00:00.000Z",
     "createdAt": "2026-09-01T06:22:11.798Z",
     "updatedAt": "2026-09-01T06:22:11.798Z"
+  },
+  {
+    "_id": "pex_ad9a2bf244a4476e",
+    "id": "pex_ad9a2bf244a4476e",
+    "userId": "usr_4e96668394a644da",
+    "amount": 16000,
+    "category": "Shopping",
+    "description": "New work phone",
+    "date": "2026-09-07T11:38:37.141Z",
+    "createdAt": "2026-09-07T11:38:37.142Z",
+    "updatedAt": "2026-09-07T11:38:37.142Z"
+  },
+  {
+    "_id": "pex_fd0f8dddcfcb471f",
+    "id": "pex_fd0f8dddcfcb471f",
+    "userId": "usr_4e96668394a644da",
+    "amount": 5000,
+    "category": "Food",
+    "description": "Monthly dining out",
+    "date": "2026-09-07T11:38:37.144Z",
+    "createdAt": "2026-09-07T11:38:37.144Z",
+    "updatedAt": "2026-09-07T11:38:37.144Z"
+  },
+  {
+    "_id": "pex_a21e2e2e86464262",
+    "id": "pex_a21e2e2e86464262",
+    "userId": "usr_be62ef2266264565",
+    "amount": 16000,
+    "category": "Shopping",
+    "description": "New work phone",
+    "date": "2026-09-07T11:38:49.450Z",
+    "createdAt": "2026-09-07T11:38:49.451Z",
+    "updatedAt": "2026-09-07T11:38:49.451Z"
+  },
+  {
+    "_id": "pex_b97b1d7c5655414c",
+    "id": "pex_b97b1d7c5655414c",
+    "userId": "usr_be62ef2266264565",
+    "amount": 5000,
+    "category": "Food",
+    "description": "Monthly dining out",
+    "date": "2026-09-07T11:38:49.452Z",
+    "createdAt": "2026-09-07T11:38:49.453Z",
+    "updatedAt": "2026-09-07T11:38:49.453Z"
+  },
+  {
+    "_id": "pex_3271e8a4a6e445b3",
+    "id": "pex_3271e8a4a6e445b3",
+    "userId": "usr_c0f91dda593f4796",
+    "amount": 16000,
+    "category": "Shopping",
+    "description": "New work phone",
+    "date": "2026-09-07T11:39:00.269Z",
+    "createdAt": "2026-09-07T11:39:00.270Z",
+    "updatedAt": "2026-09-07T11:39:00.270Z"
+  },
+  {
+    "_id": "pex_1a78a5fde3474482",
+    "id": "pex_1a78a5fde3474482",
+    "userId": "usr_c0f91dda593f4796",
+    "amount": 5000,
+    "category": "Food",
+    "description": "Monthly dining out",
+    "date": "2026-09-07T11:39:00.271Z",
+    "createdAt": "2026-09-07T11:39:00.272Z",
+    "updatedAt": "2026-09-07T11:39:00.272Z"
+  },
+  {
+    "_id": "pex_1397bbb5ecaa4d9f",
+    "id": "pex_1397bbb5ecaa4d9f",
+    "userId": "usr_e379ed2198c645c0",
+    "amount": 16000,
+    "category": "Shopping",
+    "description": "New work phone",
+    "date": "2026-09-07T11:39:23.282Z",
+    "createdAt": "2026-09-07T11:39:23.283Z",
+    "updatedAt": "2026-09-07T11:39:23.283Z"
+  },
+  {
+    "_id": "pex_e6e04bc6aeef465e",
+    "id": "pex_e6e04bc6aeef465e",
+    "userId": "usr_e379ed2198c645c0",
+    "amount": 5000,
+    "category": "Food",
+    "description": "Monthly dining out",
+    "date": "2026-09-07T11:39:23.285Z",
+    "createdAt": "2026-09-07T11:39:23.286Z",
+    "updatedAt": "2026-09-07T11:39:23.286Z"
   }
 ]

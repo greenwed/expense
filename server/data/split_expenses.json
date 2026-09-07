@@ -1,0 +1,422 @@
+[
+  {
+    "_id": "spe_523b6af724274024",
+    "id": "spe_523b6af724274024",
+    "groupId": "spg_eaa16dc7a5734b60",
+    "payerId": "usr_be62ef2266264565",
+    "payerName": "Charlie Day",
+    "amount": 1500,
+    "description": "Goa Beach House Stay",
+    "category": "Travel",
+    "date": "2026-09-07T11:38:49.470Z",
+    "splitMethod": "equal",
+    "participants": [
+      {
+        "userId": "usr_be62ef2266264565",
+        "name": "Charlie Day",
+        "shareAmount": 500,
+        "percentage": 33.3
+      },
+      {
+        "userId": "usr_39d0b5884ca644c1",
+        "name": "Dave Miller",
+        "shareAmount": 500,
+        "percentage": 33.3
+      },
+      {
+        "userId": "usr_a26e6ad03db64f3c",
+        "name": "Eve Johnson",
+        "shareAmount": 500,
+        "percentage": 33.3
+      }
+    ],
+    "createdBy": "usr_be62ef2266264565",
+    "createdAt": "2026-09-07T11:38:49.470Z",
+    "updatedAt": "2026-09-07T11:38:49.470Z"
+  },
+  {
+    "_id": "spe_4293192db4e241fc",
+    "id": "spe_4293192db4e241fc",
+    "groupId": "spg_eaa16dc7a5734b60",
+    "payerId": "usr_39d0b5884ca644c1",
+    "payerName": "Dave Miller",
+    "amount": 100,
+    "description": "Highway Toll Fee",
+    "category": "Transport",
+    "date": "2026-09-07T11:38:49.471Z",
+    "splitMethod": "equal",
+    "participants": [
+      {
+        "userId": "usr_be62ef2266264565",
+        "name": "Charlie Day",
+        "shareAmount": 33.34,
+        "percentage": 33.3
+      },
+      {
+        "userId": "usr_39d0b5884ca644c1",
+        "name": "Dave Miller",
+        "shareAmount": 33.33,
+        "percentage": 33.3
+      },
+      {
+        "userId": "usr_a26e6ad03db64f3c",
+        "name": "Eve Johnson",
+        "shareAmount": 33.33,
+        "percentage": 33.3
+      }
+    ],
+    "createdBy": "usr_39d0b5884ca644c1",
+    "createdAt": "2026-09-07T11:38:49.471Z",
+    "updatedAt": "2026-09-07T11:38:49.471Z"
+  },
+  {
+    "_id": "spe_5f80ca3d3e514715",
+    "id": "spe_5f80ca3d3e514715",
+    "groupId": "spg_eaa16dc7a5734b60",
+    "payerId": "usr_a26e6ad03db64f3c",
+    "payerName": "Eve Johnson",
+    "amount": 1000,
+    "description": "Seafood Buffet",
+    "category": "Food",
+    "date": "2026-09-07T11:38:49.473Z",
+    "splitMethod": "exact",
+    "participants": [
+      {
+        "userId": "usr_be62ef2266264565",
+        "name": "Charlie Day",
+        "shareAmount": 400,
+        "percentage": 40
+      },
+      {
+        "userId": "usr_39d0b5884ca644c1",
+        "name": "Dave Miller",
+        "shareAmount": 300,
+        "percentage": 30
+      },
+      {
+        "userId": "usr_a26e6ad03db64f3c",
+        "name": "Eve Johnson",
+        "shareAmount": 300,
+        "percentage": 30
+      }
+    ],
+    "createdBy": "usr_a26e6ad03db64f3c",
+    "createdAt": "2026-09-07T11:38:49.473Z",
+    "updatedAt": "2026-09-07T11:38:49.473Z"
+  },
+  {
+    "_id": "spe_7d52af1d91a14b2e",
+    "id": "spe_7d52af1d91a14b2e",
+    "groupId": "spg_eaa16dc7a5734b60",
+    "payerId": "usr_be62ef2266264565",
+    "payerName": "Charlie Day",
+    "amount": 2000,
+    "description": "Scuba Diving Gear",
+    "category": "Entertainment",
+    "date": "2026-09-07T11:38:49.474Z",
+    "splitMethod": "percentage",
+    "participants": [
+      {
+        "userId": "usr_be62ef2266264565",
+        "name": "Charlie Day",
+        "shareAmount": 1000,
+        "percentage": 50
+      },
+      {
+        "userId": "usr_39d0b5884ca644c1",
+        "name": "Dave Miller",
+        "shareAmount": 500,
+        "percentage": 25
+      },
+      {
+        "userId": "usr_a26e6ad03db64f3c",
+        "name": "Eve Johnson",
+        "shareAmount": 500,
+        "percentage": 25
+      }
+    ],
+    "createdBy": "usr_be62ef2266264565",
+    "createdAt": "2026-09-07T11:38:49.474Z",
+    "updatedAt": "2026-09-07T11:38:49.474Z"
+  },
+  {
+    "_id": "spe_76cc122c3a3f4c09",
+    "id": "spe_76cc122c3a3f4c09",
+    "groupId": "spg_aafe450a07534349",
+    "payerId": "usr_c0f91dda593f4796",
+    "payerName": "Charlie Day",
+    "amount": 1500,
+    "description": "Goa Beach House Stay",
+    "category": "Travel",
+    "date": "2026-09-07T11:39:00.289Z",
+    "splitMethod": "equal",
+    "participants": [
+      {
+        "userId": "usr_c0f91dda593f4796",
+        "name": "Charlie Day",
+        "shareAmount": 500,
+        "percentage": 33.3
+      },
+      {
+        "userId": "usr_9502fd5adc6341e0",
+        "name": "Dave Miller",
+        "shareAmount": 500,
+        "percentage": 33.3
+      },
+      {
+        "userId": "usr_791e2bf4d9b94374",
+        "name": "Eve Johnson",
+        "shareAmount": 500,
+        "percentage": 33.3
+      }
+    ],
+    "createdBy": "usr_c0f91dda593f4796",
+    "createdAt": "2026-09-07T11:39:00.289Z",
+    "updatedAt": "2026-09-07T11:39:00.289Z"
+  },
+  {
+    "_id": "spe_303a7dcfb0a4467c",
+    "id": "spe_303a7dcfb0a4467c",
+    "groupId": "spg_aafe450a07534349",
+    "payerId": "usr_9502fd5adc6341e0",
+    "payerName": "Dave Miller",
+    "amount": 100,
+    "description": "Highway Toll Fee",
+    "category": "Transport",
+    "date": "2026-09-07T11:39:00.290Z",
+    "splitMethod": "equal",
+    "participants": [
+      {
+        "userId": "usr_c0f91dda593f4796",
+        "name": "Charlie Day",
+        "shareAmount": 33.34,
+        "percentage": 33.3
+      },
+      {
+        "userId": "usr_9502fd5adc6341e0",
+        "name": "Dave Miller",
+        "shareAmount": 33.33,
+        "percentage": 33.3
+      },
+      {
+        "userId": "usr_791e2bf4d9b94374",
+        "name": "Eve Johnson",
+        "shareAmount": 33.33,
+        "percentage": 33.3
+      }
+    ],
+    "createdBy": "usr_9502fd5adc6341e0",
+    "createdAt": "2026-09-07T11:39:00.290Z",
+    "updatedAt": "2026-09-07T11:39:00.290Z"
+  },
+  {
+    "_id": "spe_3da9f48db51b4ed3",
+    "id": "spe_3da9f48db51b4ed3",
+    "groupId": "spg_aafe450a07534349",
+    "payerId": "usr_791e2bf4d9b94374",
+    "payerName": "Eve Johnson",
+    "amount": 1000,
+    "description": "Seafood Buffet",
+    "category": "Food",
+    "date": "2026-09-07T11:39:00.292Z",
+    "splitMethod": "exact",
+    "participants": [
+      {
+        "userId": "usr_c0f91dda593f4796",
+        "name": "Charlie Day",
+        "shareAmount": 400,
+        "percentage": 40
+      },
+      {
+        "userId": "usr_9502fd5adc6341e0",
+        "name": "Dave Miller",
+        "shareAmount": 300,
+        "percentage": 30
+      },
+      {
+        "userId": "usr_791e2bf4d9b94374",
+        "name": "Eve Johnson",
+        "shareAmount": 300,
+        "percentage": 30
+      }
+    ],
+    "createdBy": "usr_791e2bf4d9b94374",
+    "createdAt": "2026-09-07T11:39:00.292Z",
+    "updatedAt": "2026-09-07T11:39:00.292Z"
+  },
+  {
+    "_id": "spe_e519c28cc2744f60",
+    "id": "spe_e519c28cc2744f60",
+    "groupId": "spg_aafe450a07534349",
+    "payerId": "usr_c0f91dda593f4796",
+    "payerName": "Charlie Day",
+    "amount": 2000,
+    "description": "Scuba Diving Gear",
+    "category": "Entertainment",
+    "date": "2026-09-07T11:39:00.293Z",
+    "splitMethod": "percentage",
+    "participants": [
+      {
+        "userId": "usr_c0f91dda593f4796",
+        "name": "Charlie Day",
+        "shareAmount": 1000,
+        "percentage": 50
+      },
+      {
+        "userId": "usr_9502fd5adc6341e0",
+        "name": "Dave Miller",
+        "shareAmount": 500,
+        "percentage": 25
+      },
+      {
+        "userId": "usr_791e2bf4d9b94374",
+        "name": "Eve Johnson",
+        "shareAmount": 500,
+        "percentage": 25
+      }
+    ],
+    "createdBy": "usr_c0f91dda593f4796",
+    "createdAt": "2026-09-07T11:39:00.293Z",
+    "updatedAt": "2026-09-07T11:39:00.293Z"
+  },
+  {
+    "_id": "spe_c4265184ba34441e",
+    "id": "spe_c4265184ba34441e",
+    "groupId": "spg_a93c1df4bb4c4b78",
+    "payerId": "usr_e379ed2198c645c0",
+    "payerName": "Charlie Day",
+    "amount": 1500,
+    "description": "Goa Beach House Stay",
+    "category": "Travel",
+    "date": "2026-09-07T11:39:23.306Z",
+    "splitMethod": "equal",
+    "participants": [
+      {
+        "userId": "usr_e379ed2198c645c0",
+        "name": "Charlie Day",
+        "shareAmount": 500,
+        "percentage": 33.3
+      },
+      {
+        "userId": "usr_d2569d04f0894684",
+        "name": "Dave Miller",
+        "shareAmount": 500,
+        "percentage": 33.3
+      },
+      {
+        "userId": "usr_4b1f477de53e48bc",
+        "name": "Eve Johnson",
+        "shareAmount": 500,
+        "percentage": 33.3
+      }
+    ],
+    "createdBy": "usr_e379ed2198c645c0",
+    "createdAt": "2026-09-07T11:39:23.307Z",
+    "updatedAt": "2026-09-07T11:39:23.307Z"
+  },
+  {
+    "_id": "spe_7610b4c82fb54032",
+    "id": "spe_7610b4c82fb54032",
+    "groupId": "spg_a93c1df4bb4c4b78",
+    "payerId": "usr_d2569d04f0894684",
+    "payerName": "Dave Miller",
+    "amount": 100,
+    "description": "Highway Toll Fee",
+    "category": "Transport",
+    "date": "2026-09-07T11:39:23.308Z",
+    "splitMethod": "equal",
+    "participants": [
+      {
+        "userId": "usr_e379ed2198c645c0",
+        "name": "Charlie Day",
+        "shareAmount": 33.34,
+        "percentage": 33.3
+      },
+      {
+        "userId": "usr_d2569d04f0894684",
+        "name": "Dave Miller",
+        "shareAmount": 33.33,
+        "percentage": 33.3
+      },
+      {
+        "userId": "usr_4b1f477de53e48bc",
+        "name": "Eve Johnson",
+        "shareAmount": 33.33,
+        "percentage": 33.3
+      }
+    ],
+    "createdBy": "usr_d2569d04f0894684",
+    "createdAt": "2026-09-07T11:39:23.308Z",
+    "updatedAt": "2026-09-07T11:39:23.308Z"
+  },
+  {
+    "_id": "spe_ba1f0fba3be24c39",
+    "id": "spe_ba1f0fba3be24c39",
+    "groupId": "spg_a93c1df4bb4c4b78",
+    "payerId": "usr_4b1f477de53e48bc",
+    "payerName": "Eve Johnson",
+    "amount": 1000,
+    "description": "Seafood Buffet",
+    "category": "Food",
+    "date": "2026-09-07T11:39:23.309Z",
+    "splitMethod": "exact",
+    "participants": [
+      {
+        "userId": "usr_e379ed2198c645c0",
+        "name": "Charlie Day",
+        "shareAmount": 400,
+        "percentage": 40
+      },
+      {
+        "userId": "usr_d2569d04f0894684",
+        "name": "Dave Miller",
+        "shareAmount": 300,
+        "percentage": 30
+      },
+      {
+        "userId": "usr_4b1f477de53e48bc",
+        "name": "Eve Johnson",
+        "shareAmount": 300,
+        "percentage": 30
+      }
+    ],
+    "createdBy": "usr_4b1f477de53e48bc",
+    "createdAt": "2026-09-07T11:39:23.309Z",
+    "updatedAt": "2026-09-07T11:39:23.309Z"
+  },
+  {
+    "_id": "spe_72f7c5a0805d4533",
+    "id": "spe_72f7c5a0805d4533",
+    "groupId": "spg_a93c1df4bb4c4b78",
+    "payerId": "usr_e379ed2198c645c0",
+    "payerName": "Charlie Day",
+    "amount": 2000,
+    "description": "Scuba Diving Gear",
+    "category": "Entertainment",
+    "date": "2026-09-07T11:39:23.312Z",
+    "splitMethod": "percentage",
+    "participants": [
+      {
+        "userId": "usr_e379ed2198c645c0",
+        "name": "Charlie Day",
+        "shareAmount": 1000,
+        "percentage": 50
+      },
+      {
+        "userId": "usr_d2569d04f0894684",
+        "name": "Dave Miller",
+        "shareAmount": 500,
+        "percentage": 25
+      },
+      {
+        "userId": "usr_4b1f477de53e48bc",
+        "name": "Eve Johnson",
+        "shareAmount": 500,
+        "percentage": 25
+      }
+    ],
+    "createdBy": "usr_e379ed2198c645c0",
+    "createdAt": "2026-09-07T11:39:23.312Z",
+    "updatedAt": "2026-09-07T11:39:23.312Z"
+  }
+]

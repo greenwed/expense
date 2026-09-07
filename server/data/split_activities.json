@@ -1,0 +1,511 @@
+[
+  {
+    "_id": "act_5c8444340c574835",
+    "id": "act_5c8444340c574835",
+    "groupId": null,
+    "userId": "usr_d88c927f6c364593",
+    "userName": "Dave Miller",
+    "type": "friend_added",
+    "details": {
+      "friendName": "Charlie Day",
+      "friendUsername": "charlie_1788781116768"
+    },
+    "createdAt": "2026-09-07T11:38:37.155Z",
+    "updatedAt": "2026-09-07T11:38:37.155Z"
+  },
+  {
+    "_id": "act_dbce77dbea134190",
+    "id": "act_dbce77dbea134190",
+    "groupId": null,
+    "userId": "usr_39d0b5884ca644c1",
+    "userName": "Dave Miller",
+    "type": "friend_added",
+    "details": {
+      "friendName": "Charlie Day",
+      "friendUsername": "charlie_1788781129077"
+    },
+    "createdAt": "2026-09-07T11:38:49.463Z",
+    "updatedAt": "2026-09-07T11:38:49.463Z"
+  },
+  {
+    "_id": "act_489593efdca24c18",
+    "id": "act_489593efdca24c18",
+    "groupId": null,
+    "userId": "usr_be62ef2266264565",
+    "userName": "Charlie Day",
+    "type": "friend_added",
+    "details": {
+      "friendName": "Eve Johnson",
+      "friendUsername": "eve_1788781129077"
+    },
+    "createdAt": "2026-09-07T11:38:49.466Z",
+    "updatedAt": "2026-09-07T11:38:49.466Z"
+  },
+  {
+    "_id": "act_0f028510c8cf445e",
+    "id": "act_0f028510c8cf445e",
+    "groupId": "spg_eaa16dc7a5734b60",
+    "userId": "usr_be62ef2266264565",
+    "userName": "Charlie Day",
+    "type": "group_created",
+    "details": {
+      "groupName": "Goa Trip 2026",
+      "memberCount": 2
+    },
+    "createdAt": "2026-09-07T11:38:49.468Z",
+    "updatedAt": "2026-09-07T11:38:49.468Z"
+  },
+  {
+    "_id": "act_61d0d6a9abbb475a",
+    "id": "act_61d0d6a9abbb475a",
+    "groupId": "spg_eaa16dc7a5734b60",
+    "userId": "usr_a26e6ad03db64f3c",
+    "userName": "Eve Johnson",
+    "type": "group_joined",
+    "details": {
+      "groupName": "Goa Trip 2026"
+    },
+    "createdAt": "2026-09-07T11:38:49.469Z",
+    "updatedAt": "2026-09-07T11:38:49.469Z"
+  },
+  {
+    "_id": "act_baba00b9b5fc421e",
+    "id": "act_baba00b9b5fc421e",
+    "groupId": "spg_eaa16dc7a5734b60",
+    "userId": "usr_be62ef2266264565",
+    "userName": "Charlie Day",
+    "type": "expense_added",
+    "details": {
+      "description": "Goa Beach House Stay",
+      "amount": 1500,
+      "payerName": "Charlie Day",
+      "splitMethod": "equal"
+    },
+    "createdAt": "2026-09-07T11:38:49.470Z",
+    "updatedAt": "2026-09-07T11:38:49.470Z"
+  },
+  {
+    "_id": "act_a7f7989e73334b7a",
+    "id": "act_a7f7989e73334b7a",
+    "groupId": "spg_eaa16dc7a5734b60",
+    "userId": "usr_39d0b5884ca644c1",
+    "userName": "Dave Miller",
+    "type": "expense_added",
+    "details": {
+      "description": "Highway Toll Fee",
+      "amount": 100,
+      "payerName": "Dave Miller",
+      "splitMethod": "equal"
+    },
+    "createdAt": "2026-09-07T11:38:49.471Z",
+    "updatedAt": "2026-09-07T11:38:49.471Z"
+  },
+  {
+    "_id": "act_d220fb4fd0514a86",
+    "id": "act_d220fb4fd0514a86",
+    "groupId": "spg_eaa16dc7a5734b60",
+    "userId": "usr_a26e6ad03db64f3c",
+    "userName": "Eve Johnson",
+    "type": "expense_added",
+    "details": {
+      "description": "Seafood Buffet",
+      "amount": 1000,
+      "payerName": "Eve Johnson",
+      "splitMethod": "exact"
+    },
+    "createdAt": "2026-09-07T11:38:49.473Z",
+    "updatedAt": "2026-09-07T11:38:49.473Z"
+  },
+  {
+    "_id": "act_26d46557aee442b1",
+    "id": "act_26d46557aee442b1",
+    "groupId": "spg_eaa16dc7a5734b60",
+    "userId": "usr_be62ef2266264565",
+    "userName": "Charlie Day",
+    "type": "expense_added",
+    "details": {
+      "description": "Scuba Diving Gear",
+      "amount": 2000,
+      "payerName": "Charlie Day",
+      "splitMethod": "percentage"
+    },
+    "createdAt": "2026-09-07T11:38:49.474Z",
+    "updatedAt": "2026-09-07T11:38:49.474Z"
+  },
+  {
+    "_id": "act_c77b387438334bd5",
+    "id": "act_c77b387438334bd5",
+    "groupId": "spg_eaa16dc7a5734b60",
+    "userId": "usr_39d0b5884ca644c1",
+    "userName": "Dave Miller",
+    "type": "settlement_recorded",
+    "details": {
+      "payerName": "Dave Miller",
+      "payeeName": "Charlie Day",
+      "amount": 200,
+      "note": "GPay payment for Villa"
+    },
+    "createdAt": "2026-09-07T11:38:49.492Z",
+    "updatedAt": "2026-09-07T11:38:49.492Z"
+  },
+  {
+    "_id": "act_620507006a234671",
+    "id": "act_620507006a234671",
+    "groupId": "spg_eaa16dc7a5734b60",
+    "userId": "usr_be62ef2266264565",
+    "userName": "Charlie Day",
+    "type": "expense_added",
+    "details": {
+      "description": "Snacks to be deleted",
+      "amount": 300,
+      "payerName": "Charlie Day",
+      "splitMethod": "equal"
+    },
+    "createdAt": "2026-09-07T11:38:49.494Z",
+    "updatedAt": "2026-09-07T11:38:49.494Z"
+  },
+  {
+    "_id": "act_e242d95661c04a09",
+    "id": "act_e242d95661c04a09",
+    "groupId": "spg_eaa16dc7a5734b60",
+    "userId": "usr_be62ef2266264565",
+    "userName": "Charlie Day",
+    "type": "expense_deleted",
+    "details": {
+      "description": "Snacks to be deleted",
+      "amount": 300
+    },
+    "createdAt": "2026-09-07T11:38:49.496Z",
+    "updatedAt": "2026-09-07T11:38:49.496Z"
+  },
+  {
+    "_id": "act_63386300aeb74270",
+    "id": "act_63386300aeb74270",
+    "groupId": null,
+    "userId": "usr_9502fd5adc6341e0",
+    "userName": "Dave Miller",
+    "type": "friend_added",
+    "details": {
+      "friendName": "Charlie Day",
+      "friendUsername": "charlie_1788781139900"
+    },
+    "createdAt": "2026-09-07T11:39:00.282Z",
+    "updatedAt": "2026-09-07T11:39:00.282Z"
+  },
+  {
+    "_id": "act_9761445024394546",
+    "id": "act_9761445024394546",
+    "groupId": null,
+    "userId": "usr_c0f91dda593f4796",
+    "userName": "Charlie Day",
+    "type": "friend_added",
+    "details": {
+      "friendName": "Eve Johnson",
+      "friendUsername": "eve_1788781139900"
+    },
+    "createdAt": "2026-09-07T11:39:00.285Z",
+    "updatedAt": "2026-09-07T11:39:00.285Z"
+  },
+  {
+    "_id": "act_0f0e4930d25945de",
+    "id": "act_0f0e4930d25945de",
+    "groupId": "spg_aafe450a07534349",
+    "userId": "usr_c0f91dda593f4796",
+    "userName": "Charlie Day",
+    "type": "group_created",
+    "details": {
+      "groupName": "Goa Trip 2026",
+      "memberCount": 2
+    },
+    "createdAt": "2026-09-07T11:39:00.287Z",
+    "updatedAt": "2026-09-07T11:39:00.287Z"
+  },
+  {
+    "_id": "act_fe930619ec4b459f",
+    "id": "act_fe930619ec4b459f",
+    "groupId": "spg_aafe450a07534349",
+    "userId": "usr_791e2bf4d9b94374",
+    "userName": "Eve Johnson",
+    "type": "group_joined",
+    "details": {
+      "groupName": "Goa Trip 2026"
+    },
+    "createdAt": "2026-09-07T11:39:00.288Z",
+    "updatedAt": "2026-09-07T11:39:00.288Z"
+  },
+  {
+    "_id": "act_655178bb07724d25",
+    "id": "act_655178bb07724d25",
+    "groupId": "spg_aafe450a07534349",
+    "userId": "usr_c0f91dda593f4796",
+    "userName": "Charlie Day",
+    "type": "expense_added",
+    "details": {
+      "description": "Goa Beach House Stay",
+      "amount": 1500,
+      "payerName": "Charlie Day",
+      "splitMethod": "equal"
+    },
+    "createdAt": "2026-09-07T11:39:00.290Z",
+    "updatedAt": "2026-09-07T11:39:00.290Z"
+  },
+  {
+    "_id": "act_0a1710d1e1414fb7",
+    "id": "act_0a1710d1e1414fb7",
+    "groupId": "spg_aafe450a07534349",
+    "userId": "usr_9502fd5adc6341e0",
+    "userName": "Dave Miller",
+    "type": "expense_added",
+    "details": {
+      "description": "Highway Toll Fee",
+      "amount": 100,
+      "payerName": "Dave Miller",
+      "splitMethod": "equal"
+    },
+    "createdAt": "2026-09-07T11:39:00.291Z",
+    "updatedAt": "2026-09-07T11:39:00.291Z"
+  },
+  {
+    "_id": "act_ee9986296ac34cc5",
+    "id": "act_ee9986296ac34cc5",
+    "groupId": "spg_aafe450a07534349",
+    "userId": "usr_791e2bf4d9b94374",
+    "userName": "Eve Johnson",
+    "type": "expense_added",
+    "details": {
+      "description": "Seafood Buffet",
+      "amount": 1000,
+      "payerName": "Eve Johnson",
+      "splitMethod": "exact"
+    },
+    "createdAt": "2026-09-07T11:39:00.292Z",
+    "updatedAt": "2026-09-07T11:39:00.292Z"
+  },
+  {
+    "_id": "act_b26e58e2a5014cba",
+    "id": "act_b26e58e2a5014cba",
+    "groupId": "spg_aafe450a07534349",
+    "userId": "usr_c0f91dda593f4796",
+    "userName": "Charlie Day",
+    "type": "expense_added",
+    "details": {
+      "description": "Scuba Diving Gear",
+      "amount": 2000,
+      "payerName": "Charlie Day",
+      "splitMethod": "percentage"
+    },
+    "createdAt": "2026-09-07T11:39:00.293Z",
+    "updatedAt": "2026-09-07T11:39:00.293Z"
+  },
+  {
+    "_id": "act_3995382f890c4afb",
+    "id": "act_3995382f890c4afb",
+    "groupId": "spg_aafe450a07534349",
+    "userId": "usr_9502fd5adc6341e0",
+    "userName": "Dave Miller",
+    "type": "settlement_recorded",
+    "details": {
+      "payerName": "Dave Miller",
+      "payeeName": "Charlie Day",
+      "amount": 200,
+      "note": "GPay payment for Villa"
+    },
+    "createdAt": "2026-09-07T11:39:00.303Z",
+    "updatedAt": "2026-09-07T11:39:00.303Z"
+  },
+  {
+    "_id": "act_1aa74a899f254ae3",
+    "id": "act_1aa74a899f254ae3",
+    "groupId": "spg_aafe450a07534349",
+    "userId": "usr_c0f91dda593f4796",
+    "userName": "Charlie Day",
+    "type": "expense_added",
+    "details": {
+      "description": "Snacks to be deleted",
+      "amount": 300,
+      "payerName": "Charlie Day",
+      "splitMethod": "equal"
+    },
+    "createdAt": "2026-09-07T11:39:00.305Z",
+    "updatedAt": "2026-09-07T11:39:00.305Z"
+  },
+  {
+    "_id": "act_d1bb8114c5524a79",
+    "id": "act_d1bb8114c5524a79",
+    "groupId": "spg_aafe450a07534349",
+    "userId": "usr_c0f91dda593f4796",
+    "userName": "Charlie Day",
+    "type": "expense_deleted",
+    "details": {
+      "description": "Snacks to be deleted",
+      "amount": 300
+    },
+    "createdAt": "2026-09-07T11:39:00.306Z",
+    "updatedAt": "2026-09-07T11:39:00.306Z"
+  },
+  {
+    "_id": "act_26444d89c8874b0a",
+    "id": "act_26444d89c8874b0a",
+    "groupId": null,
+    "userId": "usr_d2569d04f0894684",
+    "userName": "Dave Miller",
+    "type": "friend_added",
+    "details": {
+      "friendName": "Charlie Day",
+      "friendUsername": "charlie_1788781162904"
+    },
+    "createdAt": "2026-09-07T11:39:23.297Z",
+    "updatedAt": "2026-09-07T11:39:23.297Z"
+  },
+  {
+    "_id": "act_3f32028b318243c0",
+    "id": "act_3f32028b318243c0",
+    "groupId": null,
+    "userId": "usr_e379ed2198c645c0",
+    "userName": "Charlie Day",
+    "type": "friend_added",
+    "details": {
+      "friendName": "Eve Johnson",
+      "friendUsername": "eve_1788781162904"
+    },
+    "createdAt": "2026-09-07T11:39:23.300Z",
+    "updatedAt": "2026-09-07T11:39:23.300Z"
+  },
+  {
+    "_id": "act_ffa439ea438f4e43",
+    "id": "act_ffa439ea438f4e43",
+    "groupId": "spg_a93c1df4bb4c4b78",
+    "userId": "usr_e379ed2198c645c0",
+    "userName": "Charlie Day",
+    "type": "group_created",
+    "details": {
+      "groupName": "Goa Trip 2026",
+      "memberCount": 2
+    },
+    "createdAt": "2026-09-07T11:39:23.303Z",
+    "updatedAt": "2026-09-07T11:39:23.303Z"
+  },
+  {
+    "_id": "act_b49a8cb68af54173",
+    "id": "act_b49a8cb68af54173",
+    "groupId": "spg_a93c1df4bb4c4b78",
+    "userId": "usr_4b1f477de53e48bc",
+    "userName": "Eve Johnson",
+    "type": "group_joined",
+    "details": {
+      "groupName": "Goa Trip 2026"
+    },
+    "createdAt": "2026-09-07T11:39:23.305Z",
+    "updatedAt": "2026-09-07T11:39:23.305Z"
+  },
+  {
+    "_id": "act_137262076bbf41f0",
+    "id": "act_137262076bbf41f0",
+    "groupId": "spg_a93c1df4bb4c4b78",
+    "userId": "usr_e379ed2198c645c0",
+    "userName": "Charlie Day",
+    "type": "expense_added",
+    "details": {
+      "description": "Goa Beach House Stay",
+      "amount": 1500,
+      "payerName": "Charlie Day",
+      "splitMethod": "equal"
+    },
+    "createdAt": "2026-09-07T11:39:23.307Z",
+    "updatedAt": "2026-09-07T11:39:23.307Z"
+  },
+  {
+    "_id": "act_1444f73842764374",
+    "id": "act_1444f73842764374",
+    "groupId": "spg_a93c1df4bb4c4b78",
+    "userId": "usr_d2569d04f0894684",
+    "userName": "Dave Miller",
+    "type": "expense_added",
+    "details": {
+      "description": "Highway Toll Fee",
+      "amount": 100,
+      "payerName": "Dave Miller",
+      "splitMethod": "equal"
+    },
+    "createdAt": "2026-09-07T11:39:23.308Z",
+    "updatedAt": "2026-09-07T11:39:23.308Z"
+  },
+  {
+    "_id": "act_a13c18c147b1441a",
+    "id": "act_a13c18c147b1441a",
+    "groupId": "spg_a93c1df4bb4c4b78",
+    "userId": "usr_4b1f477de53e48bc",
+    "userName": "Eve Johnson",
+    "type": "expense_added",
+    "details": {
+      "description": "Seafood Buffet",
+      "amount": 1000,
+      "payerName": "Eve Johnson",
+      "splitMethod": "exact"
+    },
+    "createdAt": "2026-09-07T11:39:23.309Z",
+    "updatedAt": "2026-09-07T11:39:23.309Z"
+  },
+  {
+    "_id": "act_d2ec6e498cb0405f",
+    "id": "act_d2ec6e498cb0405f",
+    "groupId": "spg_a93c1df4bb4c4b78",
+    "userId": "usr_e379ed2198c645c0",
+    "userName": "Charlie Day",
+    "type": "expense_added",
+    "details": {
+      "description": "Scuba Diving Gear",
+      "amount": 2000,
+      "payerName": "Charlie Day",
+      "splitMethod": "percentage"
+    },
+    "createdAt": "2026-09-07T11:39:23.312Z",
+    "updatedAt": "2026-09-07T11:39:23.312Z"
+  },
+  {
+    "_id": "act_c5838d929ae54010",
+    "id": "act_c5838d929ae54010",
+    "groupId": "spg_a93c1df4bb4c4b78",
+    "userId": "usr_d2569d04f0894684",
+    "userName": "Dave Miller",
+    "type": "settlement_recorded",
+    "details": {
+      "payerName": "Dave Miller",
+      "payeeName": "Charlie Day",
+      "amount": 200,
+      "note": "GPay payment for Villa"
+    },
+    "createdAt": "2026-09-07T11:39:23.323Z",
+    "updatedAt": "2026-09-07T11:39:23.323Z"
+  },
+  {
+    "_id": "act_884cee5a047d45d3",
+    "id": "act_884cee5a047d45d3",
+    "groupId": "spg_a93c1df4bb4c4b78",
+    "userId": "usr_e379ed2198c645c0",
+    "userName": "Charlie Day",
+    "type": "expense_added",
+    "details": {
+      "description": "Snacks to be deleted",
+      "amount": 300,
+      "payerName": "Charlie Day",
+      "splitMethod": "equal"
+    },
+    "createdAt": "2026-09-07T11:39:23.326Z",
+    "updatedAt": "2026-09-07T11:39:23.326Z"
+  },
+  {
+    "_id": "act_97faccd81eec43b9",
+    "id": "act_97faccd81eec43b9",
+    "groupId": "spg_a93c1df4bb4c4b78",
+    "userId": "usr_e379ed2198c645c0",
+    "userName": "Charlie Day",
+    "type": "expense_deleted",
+    "details": {
+      "description": "Snacks to be deleted",
+      "amount": 300
+    },
+    "createdAt": "2026-09-07T11:39:23.327Z",
+    "updatedAt": "2026-09-07T11:39:23.327Z"
+  }
+]

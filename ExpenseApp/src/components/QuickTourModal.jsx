@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   IndianRupee,
@@ -6,6 +7,7 @@ import {
   ArrowDownRight,
   Bell,
   Users,
+  Scale,
   Sparkles,
   ChevronRight,
   ChevronLeft,
@@ -24,12 +26,12 @@ export default function QuickTourModal({ isOpen, onClose, onOpenUserGuide }) {
       icon: IndianRupee,
       iconBg: 'bg-gradient-to-tr from-violet-600 to-indigo-600 dark:from-indigo-500 dark:to-cyan-500',
       iconColor: 'text-white',
-      badge: 'Step 1 of 5',
+      badge: 'Step 1 of 6',
       title: 'Welcome to RupeeTrack',
       subtitle: 'Follow your spending with complete control',
       content: (
         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-          RupeeTrack brings all your personal and shared expenses into a single, clean workspace. Easily follow your <strong className="text-slate-900 dark:text-white">Total Balance</strong>, <strong className="text-slate-900 dark:text-white">Monthly Income</strong>, and <strong className="text-slate-900 dark:text-white">Daily Expenses</strong> in real-time.
+          RupeeTrack brings all your personal, family, and shared expenses into a single, clean workspace. Easily follow your <strong className="text-slate-900 dark:text-white">Total Balance</strong>, <strong className="text-slate-900 dark:text-white">Monthly Income</strong>, and <strong className="text-slate-900 dark:text-white">Daily Expenses</strong> in real-time.
         </p>
       )
     },
@@ -38,7 +40,7 @@ export default function QuickTourModal({ isOpen, onClose, onOpenUserGuide }) {
       icon: TrendingUp,
       iconBg: 'bg-gradient-to-tr from-emerald-500 to-teal-600 dark:from-emerald-500 dark:to-teal-500',
       iconColor: 'text-white',
-      badge: 'Step 2 of 5',
+      badge: 'Step 2 of 6',
       title: 'Fast & Intuitive Tracking',
       subtitle: 'Record transactions in seconds',
       content: (
@@ -52,7 +54,7 @@ export default function QuickTourModal({ isOpen, onClose, onOpenUserGuide }) {
       icon: Bell,
       iconBg: 'bg-gradient-to-tr from-amber-500 to-orange-500 dark:from-amber-500 dark:to-orange-400',
       iconColor: 'text-white',
-      badge: 'Step 3 of 5',
+      badge: 'Step 3 of 6',
       title: 'Smart Budgets & Alerts',
       subtitle: 'Keep your finances on track',
       content: (
@@ -66,7 +68,7 @@ export default function QuickTourModal({ isOpen, onClose, onOpenUserGuide }) {
       icon: Users,
       iconBg: 'bg-gradient-to-tr from-pink-500 to-purple-600 dark:from-pink-500 dark:to-purple-500',
       iconColor: 'text-white',
-      badge: 'Step 4 of 5',
+      badge: 'Step 4 of 6',
       title: 'Collaborative Family Groups',
       subtitle: 'Track shared household expenses',
       content: (
@@ -76,17 +78,38 @@ export default function QuickTourModal({ isOpen, onClose, onOpenUserGuide }) {
       )
     },
     {
+      id: 'split',
+      icon: Scale,
+      iconBg: 'bg-gradient-to-tr from-cyan-500 to-indigo-600 dark:from-cyan-500 dark:to-indigo-500',
+      iconColor: 'text-white',
+      badge: 'Step 5 of 6',
+      title: 'Split Bills & Settle Up',
+      subtitle: 'Effortlessly share costs with friends & trips',
+      content: (
+        <div className="space-y-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          <p>
+            Switch to the <strong className="text-slate-900 dark:text-white">Split</strong> tab to manage shared spending with friends:
+          </p>
+          <ul className="list-disc pl-5 space-y-1 text-xs">
+            <li><strong className="text-slate-900 dark:text-white">Groups & Trips:</strong> Create groups for Apartments, Goa Trips, Dinners, and add friends with color-coded avatars.</li>
+            <li><strong className="text-slate-900 dark:text-white">3 Split Methods:</strong> Split costs <em>Equally</em>, by <em>Exact amounts (₹)</em>, or by <em>Percentage (%)</em>.</li>
+            <li><strong className="text-slate-900 dark:text-white">Balance & Settle Up:</strong> See who owes you and who you owe, and tap <em>Settle Up</em> to clear debts in seconds!</li>
+          </ul>
+        </div>
+      )
+    },
+    {
       id: 'finish',
       icon: Sparkles,
       iconBg: 'bg-gradient-to-tr from-indigo-600 to-violet-600 dark:from-indigo-500 dark:to-cyan-500',
       iconColor: 'text-white',
-      badge: 'Step 5 of 5',
+      badge: 'Step 6 of 6',
       title: "You're All Set! 🎉",
       subtitle: 'Ready to follow your spending',
       content: (
         <div className="space-y-3">
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-            You're ready to master your money! Start recording your incomes and daily expenses today.
+            You're ready to master your money! Start recording your incomes, daily expenses, and group splits today.
           </p>
           <div className="p-3.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/80 dark:border-indigo-800/60 text-indigo-950 dark:text-indigo-200 flex items-start gap-2.5">
             <BookOpen className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
@@ -124,8 +147,8 @@ export default function QuickTourModal({ isOpen, onClose, onOpenUserGuide }) {
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-md animate-backdrop-fade">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-md animate-backdrop-fade">
       <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden flex flex-col animate-modal-pop">
         
         {/* Header with Step Badge & Skip Button */}
@@ -215,6 +238,7 @@ export default function QuickTourModal({ isOpen, onClose, onOpenUserGuide }) {
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

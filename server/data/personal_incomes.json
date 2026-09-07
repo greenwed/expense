@@ -148,5 +148,45 @@
     "date": "2026-08-01T10:00:00.000Z",
     "createdAt": "2026-09-01T06:22:11.797Z",
     "updatedAt": "2026-09-01T06:22:11.797Z"
+  },
+  {
+    "_id": "inc_ae2cb62f951e4670",
+    "id": "inc_ae2cb62f951e4670",
+    "userId": "usr_4e96668394a644da",
+    "amount": 20000,
+    "description": "Monthly Salary",
+    "date": "2026-09-07T11:38:37.140Z",
+    "createdAt": "2026-09-07T11:38:37.140Z",
+    "updatedAt": "2026-09-07T11:38:37.140Z"
+  },
+  {
+    "_id": "inc_238d5378f5bf466b",
+    "id": "inc_238d5378f5bf466b",
+    "userId": "usr_be62ef2266264565",
+    "amount": 20000,
+    "description": "Monthly Salary",
+    "date": "2026-09-07T11:38:49.449Z",
+    "createdAt": "2026-09-07T11:38:49.450Z",
+    "updatedAt": "2026-09-07T11:38:49.450Z"
+  },
+  {
+    "_id": "inc_5e903638c4d443a5",
+    "id": "inc_5e903638c4d443a5",
+    "userId": "usr_c0f91dda593f4796",
+    "amount": 20000,
+    "description": "Monthly Salary",
+    "date": "2026-09-07T11:39:00.268Z",
+    "createdAt": "2026-09-07T11:39:00.269Z",
+    "updatedAt": "2026-09-07T11:39:00.269Z"
+  },
+  {
+    "_id": "inc_43dcffd8d4fe40e4",
+    "id": "inc_43dcffd8d4fe40e4",
+    "userId": "usr_e379ed2198c645c0",
+    "amount": 20000,
+    "description": "Monthly Salary",
+    "date": "2026-09-07T11:39:23.281Z",
+    "createdAt": "2026-09-07T11:39:23.282Z",
+    "updatedAt": "2026-09-07T11:39:23.282Z"
   }
 ]

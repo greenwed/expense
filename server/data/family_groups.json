@@ -230,5 +230,105 @@
     "inviteToken": "e0c48ddd-2ad8-410f-b1ad-4432cbc39aeb",
     "createdAt": "2026-08-29T04:25:07.852Z",
     "updatedAt": "2026-08-29T04:25:07.857Z"
+  },
+  {
+    "_id": "grp_ba7396d50ecb4a86",
+    "id": "grp_ba7396d50ecb4a86",
+    "name": "The Day Family",
+    "createdBy": "usr_4e96668394a644da",
+    "members": [
+      {
+        "userId": "usr_4e96668394a644da",
+        "name": "Charlie Day",
+        "username": "charlie_1788781116768",
+        "role": "admin",
+        "joinedAt": "2026-09-07T11:38:37.146Z"
+      },
+      {
+        "userId": "usr_d88c927f6c364593",
+        "name": "Dave Miller",
+        "username": "dave_1788781116768",
+        "role": "member",
+        "joinedAt": "2026-09-07T11:38:37.147Z"
+      }
+    ],
+    "inviteToken": "ef8ad13b-9e64-487f-ac04-f614d46211a2",
+    "createdAt": "2026-09-07T11:38:37.146Z",
+    "updatedAt": "2026-09-07T11:38:37.147Z"
+  },
+  {
+    "_id": "grp_a631dae629c44b12",
+    "id": "grp_a631dae629c44b12",
+    "name": "The Day Family",
+    "createdBy": "usr_be62ef2266264565",
+    "members": [
+      {
+        "userId": "usr_be62ef2266264565",
+        "name": "Charlie Day",
+        "username": "charlie_1788781129077",
+        "role": "admin",
+        "joinedAt": "2026-09-07T11:38:49.455Z"
+      },
+      {
+        "userId": "usr_39d0b5884ca644c1",
+        "name": "Dave Miller",
+        "username": "dave_1788781129077",
+        "role": "member",
+        "joinedAt": "2026-09-07T11:38:49.456Z"
+      }
+    ],
+    "inviteToken": "0bdf1b4d-056b-43e6-a320-f2fedcc3d540",
+    "createdAt": "2026-09-07T11:38:49.455Z",
+    "updatedAt": "2026-09-07T11:38:49.456Z"
+  },
+  {
+    "_id": "grp_8df9ea99955d4c0e",
+    "id": "grp_8df9ea99955d4c0e",
+    "name": "The Day Family",
+    "createdBy": "usr_c0f91dda593f4796",
+    "members": [
+      {
+        "userId": "usr_c0f91dda593f4796",
+        "name": "Charlie Day",
+        "username": "charlie_1788781139900",
+        "role": "admin",
+        "joinedAt": "2026-09-07T11:39:00.274Z"
+      },
+      {
+        "userId": "usr_9502fd5adc6341e0",
+        "name": "Dave Miller",
+        "username": "dave_1788781139900",
+        "role": "member",
+        "joinedAt": "2026-09-07T11:39:00.275Z"
+      }
+    ],
+    "inviteToken": "0e15b7ba-751e-42af-8f17-b85087b05c9e",
+    "createdAt": "2026-09-07T11:39:00.274Z",
+    "updatedAt": "2026-09-07T11:39:00.275Z"
+  },
+  {
+    "_id": "grp_74da34551039416b",
+    "id": "grp_74da34551039416b",
+    "name": "The Day Family",
+    "createdBy": "usr_e379ed2198c645c0",
+    "members": [
+      {
+        "userId": "usr_e379ed2198c645c0",
+        "name": "Charlie Day",
+        "username": "charlie_1788781162904",
+        "role": "admin",
+        "joinedAt": "2026-09-07T11:39:23.288Z"
+      },
+      {
+        "userId": "usr_d2569d04f0894684",
+        "name": "Dave Miller",
+        "username": "dave_1788781162904",
+        "role": "member",
+        "joinedAt": "2026-09-07T11:39:23.289Z"
+      }
+    ],
+    "inviteToken": "dcfcb5f6-5496-4c34-ac43-e7bf162f2783",
+    "createdAt": "2026-09-07T11:39:23.288Z",
+    "updatedAt": "2026-09-07T11:39:23.289Z"
   }
 ]

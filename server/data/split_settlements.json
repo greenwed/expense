@@ -1,0 +1,44 @@
+[
+  {
+    "_id": "stl_b38b0d684f1d4343",
+    "id": "stl_b38b0d684f1d4343",
+    "groupId": "spg_eaa16dc7a5734b60",
+    "payerId": "usr_39d0b5884ca644c1",
+    "payerName": "Dave Miller",
+    "payeeId": "usr_be62ef2266264565",
+    "payeeName": "Charlie Day",
+    "amount": 200,
+    "date": "2026-09-07T11:38:49.492Z",
+    "note": "GPay payment for Villa",
+    "createdAt": "2026-09-07T11:38:49.492Z",
+    "updatedAt": "2026-09-07T11:38:49.492Z"
+  },
+  {
+    "_id": "stl_acf586c04cab4da6",
+    "id": "stl_acf586c04cab4da6",
+    "groupId": "spg_aafe450a07534349",
+    "payerId": "usr_9502fd5adc6341e0",
+    "payerName": "Dave Miller",
+    "payeeId": "usr_c0f91dda593f4796",
+    "payeeName": "Charlie Day",
+    "amount": 200,
+    "date": "2026-09-07T11:39:00.303Z",
+    "note": "GPay payment for Villa",
+    "createdAt": "2026-09-07T11:39:00.303Z",
+    "updatedAt": "2026-09-07T11:39:00.303Z"
+  },
+  {
+    "_id": "stl_ca209aa223654b97",
+    "id": "stl_ca209aa223654b97",
+    "groupId": "spg_a93c1df4bb4c4b78",
+    "payerId": "usr_d2569d04f0894684",
+    "payerName": "Dave Miller",
+    "payeeId": "usr_e379ed2198c645c0",
+    "payeeName": "Charlie Day",
+    "amount": 200,
+    "date": "2026-09-07T11:39:23.323Z",
+    "note": "GPay payment for Villa",
+    "createdAt": "2026-09-07T11:39:23.323Z",
+    "updatedAt": "2026-09-07T11:39:23.323Z"
+  }
+]

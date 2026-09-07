@@ -207,5 +207,61 @@
     "date": "2026-08-18T10:00:00.000Z",
     "createdAt": "2026-08-29T04:25:07.855Z",
     "updatedAt": "2026-08-29T04:25:07.858Z"
+  },
+  {
+    "_id": "fex_f3b8f538451a4e16",
+    "id": "fex_f3b8f538451a4e16",
+    "groupId": "grp_ba7396d50ecb4a86",
+    "userId": "usr_d88c927f6c364593",
+    "userName": "Dave Miller",
+    "userUsername": "dave_1788781116768",
+    "amount": 2200,
+    "category": "Medical",
+    "description": "First aid supplies (discounted)",
+    "date": "2026-09-07T11:38:37.148Z",
+    "createdAt": "2026-09-07T11:38:37.149Z",
+    "updatedAt": "2026-09-07T11:38:37.150Z"
+  },
+  {
+    "_id": "fex_371f7b44fa4c451c",
+    "id": "fex_371f7b44fa4c451c",
+    "groupId": "grp_a631dae629c44b12",
+    "userId": "usr_39d0b5884ca644c1",
+    "userName": "Dave Miller",
+    "userUsername": "dave_1788781129077",
+    "amount": 2200,
+    "category": "Medical",
+    "description": "First aid supplies (discounted)",
+    "date": "2026-09-07T11:38:49.456Z",
+    "createdAt": "2026-09-07T11:38:49.457Z",
+    "updatedAt": "2026-09-07T11:38:49.459Z"
+  },
+  {
+    "_id": "fex_8d74dd81584b4828",
+    "id": "fex_8d74dd81584b4828",
+    "groupId": "grp_8df9ea99955d4c0e",
+    "userId": "usr_9502fd5adc6341e0",
+    "userName": "Dave Miller",
+    "userUsername": "dave_1788781139900",
+    "amount": 2200,
+    "category": "Medical",
+    "description": "First aid supplies (discounted)",
+    "date": "2026-09-07T11:39:00.275Z",
+    "createdAt": "2026-09-07T11:39:00.277Z",
+    "updatedAt": "2026-09-07T11:39:00.279Z"
+  },
+  {
+    "_id": "fex_46d51c8d53264ff6",
+    "id": "fex_46d51c8d53264ff6",
+    "groupId": "grp_74da34551039416b",
+    "userId": "usr_d2569d04f0894684",
+    "userName": "Dave Miller",
+    "userUsername": "dave_1788781162904",
+    "amount": 2200,
+    "category": "Medical",
+    "description": "First aid supplies (discounted)",
+    "date": "2026-09-07T11:39:23.289Z",
+    "createdAt": "2026-09-07T11:39:23.291Z",
+    "updatedAt": "2026-09-07T11:39:23.293Z"
   }
 ]

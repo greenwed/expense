@@ -1,0 +1,107 @@
+[
+  {
+    "_id": "spg_eaa16dc7a5734b60",
+    "id": "spg_eaa16dc7a5734b60",
+    "name": "Goa Trip 2026",
+    "createdBy": "usr_be62ef2266264565",
+    "members": [
+      {
+        "userId": "usr_be62ef2266264565",
+        "name": "Charlie Day",
+        "username": "charlie_1788781129077",
+        "avatarColor": "#8B5CF6",
+        "role": "admin",
+        "joinedAt": "2026-09-07T11:38:49.467Z"
+      },
+      {
+        "userId": "usr_39d0b5884ca644c1",
+        "name": "Dave Miller",
+        "username": "dave_1788781129077",
+        "avatarColor": "#8B5CF6",
+        "role": "member",
+        "joinedAt": "2026-09-07T11:38:49.467Z"
+      },
+      {
+        "userId": "usr_a26e6ad03db64f3c",
+        "name": "Eve Johnson",
+        "username": "eve_1788781129077",
+        "avatarColor": "#F97316",
+        "role": "member",
+        "joinedAt": "2026-09-07T11:38:49.469Z"
+      }
+    ],
+    "inviteToken": "44374b5d-d1ef-4131-bc17-047cb7e7ab89",
+    "createdAt": "2026-09-07T11:38:49.468Z",
+    "updatedAt": "2026-09-07T11:38:49.469Z"
+  },
+  {
+    "_id": "spg_aafe450a07534349",
+    "id": "spg_aafe450a07534349",
+    "name": "Goa Trip 2026",
+    "createdBy": "usr_c0f91dda593f4796",
+    "members": [
+      {
+        "userId": "usr_c0f91dda593f4796",
+        "name": "Charlie Day",
+        "username": "charlie_1788781139900",
+        "avatarColor": "#10B981",
+        "role": "admin",
+        "joinedAt": "2026-09-07T11:39:00.286Z"
+      },
+      {
+        "userId": "usr_9502fd5adc6341e0",
+        "name": "Dave Miller",
+        "username": "dave_1788781139900",
+        "avatarColor": "#8B5CF6",
+        "role": "member",
+        "joinedAt": "2026-09-07T11:39:00.286Z"
+      },
+      {
+        "userId": "usr_791e2bf4d9b94374",
+        "name": "Eve Johnson",
+        "username": "eve_1788781139900",
+        "avatarColor": "#6366F1",
+        "role": "member",
+        "joinedAt": "2026-09-07T11:39:00.288Z"
+      }
+    ],
+    "inviteToken": "b74a6359-0f14-4d0d-a6be-c01a95c19fdc",
+    "createdAt": "2026-09-07T11:39:00.286Z",
+    "updatedAt": "2026-09-07T11:39:00.288Z"
+  },
+  {
+    "_id": "spg_a93c1df4bb4c4b78",
+    "id": "spg_a93c1df4bb4c4b78",
+    "name": "Goa Trip 2026",
+    "createdBy": "usr_e379ed2198c645c0",
+    "members": [
+      {
+        "userId": "usr_e379ed2198c645c0",
+        "name": "Charlie Day",
+        "username": "charlie_1788781162904",
+        "avatarColor": "#10B981",
+        "role": "admin",
+        "joinedAt": "2026-09-07T11:39:23.303Z"
+      },
+      {
+        "userId": "usr_d2569d04f0894684",
+        "name": "Dave Miller",
+        "username": "dave_1788781162904",
+        "avatarColor": "#8B5CF6",
+        "role": "member",
+        "joinedAt": "2026-09-07T11:39:23.303Z"
+      },
+      {
+        "userId": "usr_4b1f477de53e48bc",
+        "name": "Eve Johnson",
+        "username": "eve_1788781162904",
+        "avatarColor": "#6366F1",
+        "role": "member",
+        "joinedAt": "2026-09-07T11:39:23.304Z"
+      }
+    ],
+    "inviteToken": "de0be4d0-2630-4db0-9576-4d30ce24af41",
+    "createdAt": "2026-09-07T11:39:23.303Z",
+    "updatedAt": "2026-09-07T11:39:23.304Z"
+  }
+]

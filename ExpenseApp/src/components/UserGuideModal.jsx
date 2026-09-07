@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   BookOpen,
@@ -9,6 +10,7 @@ import {
   ArrowDownRight,
   PieChart,
   Users,
+  Scale,
   ShieldCheck,
   Bell,
   Sparkles,
@@ -148,8 +150,58 @@ export default function UserGuideModal({ isOpen, onClose, onStartTour }) {
       )
     },
     {
+      id: 'split',
+      title: '6. Split Bills & Settle Up',
+      icon: Scale,
+      color: '#06B6D4',
+      content: (
+        <div className="space-y-3 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          <p>
+            The dedicated <strong className="text-slate-900 dark:text-white">Split</strong> tab is designed for roommates, friends, trips, and outings. Track balances transparently and settle debts in seconds.
+          </p>
+          <div className="space-y-2.5">
+            <div className="p-3 rounded-2xl bg-cyan-50/70 dark:bg-cyan-950/50 border border-cyan-100 dark:border-cyan-800/40">
+              <span className="font-bold text-cyan-950 dark:text-cyan-200 block mb-1">👥 1. Add Friends & Color-Coded Avatars:</span>
+              <p className="text-xs text-cyan-900 dark:text-cyan-300">
+                Tap <strong className="text-cyan-950 dark:text-cyan-100">+ Add Friend</strong> to create unique invite links with 1-tap WhatsApp sharing, or search directly by RupeeTrack <strong>@username</strong>. Friends receive vibrant, deterministic avatars.
+              </p>
+            </div>
+            <div className="p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-800/40">
+              <span className="font-bold text-indigo-950 dark:text-indigo-200 block mb-1">🏢 2. Create Split Groups:</span>
+              <p className="text-xs text-indigo-900 dark:text-indigo-300">
+                Set up groups like <em>Apartment Rent, Goa Trip, Office Dinners, or Events</em>. Multi-select friends or share group invite links directly.
+              </p>
+            </div>
+            <div className="p-3.5 rounded-2xl bg-violet-50/70 dark:bg-violet-950/50 border border-violet-100 dark:border-violet-800/40 space-y-1.5">
+              <span className="font-bold text-violet-950 dark:text-violet-200 block">⚡ 3. Add Expenses with 3 Split Methods:</span>
+              <p className="text-xs text-violet-900 dark:text-violet-300">
+                Enter the amount, category, description, and select who paid. Then choose from 3 calculation methods:
+              </p>
+              <ul className="list-disc pl-5 space-y-1 text-xs text-violet-900 dark:text-violet-200">
+                <li><strong className="text-violet-950 dark:text-violet-100">Equal Split:</strong> Auto-divides costs evenly with remainder balancing.</li>
+                <li><strong className="text-violet-950 dark:text-violet-100">Exact Amounts (₹):</strong> Enter exact rupee allocations per member with real-time sum validation.</li>
+                <li><strong className="text-violet-950 dark:text-violet-100">Percentage (%):</strong> Allocate percentages per person with real-time 100% total validation.</li>
+              </ul>
+            </div>
+            <div className="p-3 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/50 border border-emerald-100 dark:border-emerald-800/40">
+              <span className="font-bold text-emerald-950 dark:text-emerald-200 block mb-1">🤝 4. Balance Tracking & Settle Up:</span>
+              <p className="text-xs text-emerald-900 dark:text-emerald-300">
+                The top hero card shows <span className="font-bold text-emerald-600 dark:text-emerald-400">"You are owed"</span> (credits) and <span className="font-bold text-rose-600 dark:text-rose-400">"You owe"</span> (debts). Tap <strong>Settle Up</strong> to record payments (UPI, Cash, Bank Transfer) and clear balances.
+              </p>
+            </div>
+            <div className="p-3 rounded-2xl bg-amber-50/70 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-800/40">
+              <span className="font-bold text-amber-950 dark:text-amber-200 block mb-1">📜 5. Activity Log & Reports:</span>
+              <p className="text-xs text-amber-900 dark:text-amber-300">
+                Follow the <strong>Activity Log</strong> for a full audit trail of expenses and settlements. Switch to <strong>Reports ➔ Split</strong> for category charts and per-group expenditure summaries.
+              </p>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
       id: 'security',
-      title: '6. Security & Account Recovery',
+      title: '7. Security & Account Recovery',
       icon: ShieldCheck,
       color: '#60A5FA',
       content: (
@@ -167,8 +219,8 @@ export default function UserGuideModal({ isOpen, onClose, onStartTour }) {
     }
   ];
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-md animate-backdrop-fade">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-md animate-backdrop-fade">
       <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-modal-pop">
         
         {/* Header */}
@@ -274,6 +326,7 @@ export default function UserGuideModal({ isOpen, onClose, onStartTour }) {
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
