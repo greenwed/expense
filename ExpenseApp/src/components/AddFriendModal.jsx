@@ -42,9 +42,8 @@ export default function AddFriendModal({ isOpen, onClose, onFriendAdded, existin
   const fetchInviteToken = async () => {
     try {
       setLoading(true);
-      const res = await apiFetch('/api/split/friends/invite', { method: 'POST' });
-      const data = await res.json();
-      if (data.inviteToken) {
+      const data = await apiFetch('/api/split/friends/invite', { method: 'POST' });
+      if (data?.inviteToken) {
         setInviteToken(data.inviteToken);
       }
     } catch (err) {
@@ -96,17 +95,12 @@ export default function AddFriendModal({ isOpen, onClose, onFriendAdded, existin
       setError('');
       setSuccessMsg('');
 
-      const res = await apiFetch('/api/split/friends/add-by-username', {
+      const data = await apiFetch('/api/split/friends/add-by-username', {
         method: 'POST',
         body: JSON.stringify({ username: cleanUsername })
       });
-      const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to add friend.');
-      }
-
-      setSuccessMsg(data.message || `Added @${cleanUsername} to your friends!`);
+      setSuccessMsg(data?.message || `Added @${cleanUsername} to your friends!`);
       setUsernameInput('');
       if (onFriendAdded) onFriendAdded();
     } catch (err) {

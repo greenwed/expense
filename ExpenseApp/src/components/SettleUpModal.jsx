@@ -1,7 +1,88 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, CheckCircle2, ArrowRight, IndianRupee, Calendar, FileText, Check } from 'lucide-react';
+import { X, CheckCircle2, ArrowRight, IndianRupee, Calendar, FileText, Check, ChevronDown, Users, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+
+function CustomDropdown({
+  value,
+  onChange,
+  options = [],
+  placeholder = 'Select...',
+  icon: LeadingIcon
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const selected = options.find(o => String(o.value) === String(value));
+
+  return (
+    <div className="relative text-left">
+      <button
+        type="button"
+        onClick={() => setIsOpen(prev => !prev)}
+        className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white flex items-center justify-between gap-2 hover:bg-slate-50 dark:hover:bg-[#1E2638] transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+      >
+        <div className="flex items-center gap-1.5 truncate">
+          {selected?.avatarColor && (
+            <div
+              className="w-4 h-4 rounded-full text-white font-bold text-[9px] flex items-center justify-center shrink-0"
+              style={{ backgroundColor: selected.avatarColor }}
+            >
+              {selected.label ? selected.label[0].toUpperCase() : 'M'}
+            </div>
+          )}
+          {LeadingIcon && !selected?.avatarColor && (
+            <LeadingIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          )}
+          <span className="truncate">{selected?.label || placeholder}</span>
+        </div>
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setIsOpen(false)} />
+          <div className="absolute left-0 right-0 top-full mt-1.5 z-40 max-h-48 overflow-y-auto rounded-2xl bg-white dark:bg-[#151C2C] border border-slate-200 dark:border-slate-700 shadow-xl p-1.5 space-y-1 animate-fadeIn">
+            {options.map((opt) => {
+              const isSelected = String(opt.value) === String(value);
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center justify-between gap-2 transition-colors ${
+                    isSelected
+                      ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-extrabold'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1F273B]'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 truncate">
+                    {opt.avatarColor && (
+                      <div
+                        className="w-4 h-4 rounded-full text-white font-bold text-[9px] flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: opt.avatarColor }}
+                      >
+                        {opt.label ? opt.label[0].toUpperCase() : 'M'}
+                      </div>
+                    )}
+                    <span className="truncate">{opt.label}</span>
+                    {opt.sublabel && (
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {opt.sublabel}
+                      </span>
+                    )}
+                  </div>
+                  {isSelected && <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function SettleUpModal({
   isOpen,
@@ -57,6 +138,24 @@ export default function SettleUpModal({
     return list;
   }, [friends, currentUserId, user]);
 
+  const userOptions = useMemo(() => {
+    return allUsers.map(u => ({
+      value: u.userId,
+      label: `${u.name}${u.userId === currentUserId ? ' (You)' : ''}`,
+      avatarColor: u.avatarColor
+    }));
+  }, [allUsers, currentUserId]);
+
+  const groupOptions = useMemo(() => {
+    return [
+      { value: '', label: 'Direct Settlement' },
+      ...groups.map(g => ({
+        value: g.id || g._id,
+        label: g.name
+      }))
+    ];
+  }, [groups]);
+
   useEffect(() => {
     if (isOpen) {
       setPayerId(initialPayerId || currentUserId);
@@ -98,7 +197,7 @@ export default function SettleUpModal({
       setLoading(true);
       setError('');
 
-      const res = await apiFetch('/api/split/settle', {
+      const data = await apiFetch('/api/split/settle', {
         method: 'POST',
         body: JSON.stringify({
           groupId: groupId || null,
@@ -112,12 +211,7 @@ export default function SettleUpModal({
         })
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to record settlement.');
-      }
-
-      if (onSettled) onSettled(data.settlement);
+      if (onSettled) onSettled(data?.settlement);
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to record settlement.');
@@ -172,17 +266,12 @@ export default function SettleUpModal({
               <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 block mb-1">
                 Payer (Paid)
               </span>
-              <select
+              <CustomDropdown
                 value={payerId}
-                onChange={(e) => setPayerId(e.target.value)}
-                className="w-full text-xs font-bold p-2 rounded-xl bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none"
-              >
-                {allUsers.map(u => (
-                  <option key={u.userId} value={u.userId}>
-                    {u.name} {u.userId === currentUserId ? '(You)' : ''}
-                  </option>
-                ))}
-              </select>
+                onChange={setPayerId}
+                options={userOptions}
+                placeholder="Select Payer"
+              />
             </div>
 
             <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-4">
@@ -193,17 +282,12 @@ export default function SettleUpModal({
               <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 block mb-1">
                 Payee (Received)
               </span>
-              <select
+              <CustomDropdown
                 value={payeeId}
-                onChange={(e) => setPayeeId(e.target.value)}
-                className="w-full text-xs font-bold p-2 rounded-xl bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none"
-              >
-                {allUsers.map(u => (
-                  <option key={u.userId} value={u.userId}>
-                    {u.name} {u.userId === currentUserId ? '(You)' : ''}
-                  </option>
-                ))}
-              </select>
+                onChange={setPayeeId}
+                options={userOptions}
+                placeholder="Select Payee"
+              />
             </div>
           </div>
 
@@ -277,18 +361,13 @@ export default function SettleUpModal({
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Group (Optional)
               </label>
-              <select
+              <CustomDropdown
                 value={groupId}
-                onChange={(e) => setGroupId(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-200 dark:border-slate-700/80 text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
-              >
-                <option value="">Direct Settlement</option>
-                {groups.map(g => (
-                  <option key={g.id || g._id} value={g.id || g._id}>
-                    {g.name}
-                  </option>
-                ))}
-              </select>
+                onChange={setGroupId}
+                options={groupOptions}
+                placeholder="Direct Settlement"
+                icon={Users}
+              />
             </div>
           </div>
 

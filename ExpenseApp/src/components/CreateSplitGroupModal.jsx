@@ -66,20 +66,15 @@ export default function CreateSplitGroupModal({
           avatarColor: f.avatarColor
         }));
 
-      const res = await apiFetch('/api/split/groups', {
+      const data = await apiFetch('/api/split/groups', {
         method: 'POST',
         body: JSON.stringify({
           name: name.trim(),
           members: selectedFriends
         })
       });
-      const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to create split group.');
-      }
-
-      if (onGroupCreated) onGroupCreated(data.group);
+      if (onGroupCreated) onGroupCreated(data?.group);
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to create split group.');

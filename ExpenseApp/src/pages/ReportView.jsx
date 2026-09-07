@@ -13,7 +13,8 @@ import {
   RefreshCw,
   Users,
   User,
-  Scale
+  Scale,
+  Check
 } from 'lucide-react';
 import CategoryPieChart from '../components/CategoryPieChart';
 import { useAuth } from '../context/AuthContext';
@@ -34,6 +35,7 @@ export default function ReportView({
   // Report Scope: 'personal' | 'family' (Keeps user on the Report page!)
   const [reportType, setReportType] = useState('personal');
   const [activeGroupId, setActiveGroupId] = useState(selectedGroupId || (groups[0]?.id || groups[0]?._id));
+  const [groupDropdownOpen, setGroupDropdownOpen] = useState(false);
 
   // Date Filter Mode: 'monthly' | 'custom'
   const [filterMode, setFilterMode] = useState('monthly');
@@ -333,18 +335,48 @@ export default function ReportView({
 
           {/* Family Group Selector if viewing family report */}
           {reportType === 'family' && groups.length > 1 && (
-            <div className="flex items-center gap-2">
-              <select
-                value={activeGroupId || selectedGroupId || ''}
-                onChange={(e) => setActiveGroupId(e.target.value)}
-                className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-[#1A2234] border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none"
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setGroupDropdownOpen(prev => !prev)}
+                className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-[#1A2234] hover:bg-slate-100 dark:hover:bg-[#222C42] border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 transition-colors focus:outline-none"
               >
-                {groups.map((g) => (
-                  <option key={g.id || g._id} value={g.id || g._id}>
-                    {g.name}
-                  </option>
-                ))}
-              </select>
+                <Users className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                <span className="truncate max-w-[120px]">
+                  {groups.find(g => String(g.id || g._id) === String(activeGroupId || selectedGroupId))?.name || 'Select Group'}
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${groupDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {groupDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setGroupDropdownOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1.5 z-40 min-w-[160px] max-h-48 overflow-y-auto rounded-2xl bg-white dark:bg-[#151C2C] border border-slate-200 dark:border-slate-700 shadow-xl p-1.5 space-y-1 animate-fadeIn">
+                    {groups.map((g) => {
+                      const gId = g.id || g._id;
+                      const isSelected = String(gId) === String(activeGroupId || selectedGroupId);
+                      return (
+                        <button
+                          key={gId}
+                          type="button"
+                          onClick={() => {
+                            setActiveGroupId(gId);
+                            setGroupDropdownOpen(false);
+                          }}
+                          className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center justify-between gap-2 transition-colors ${
+                            isSelected
+                              ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300'
+                              : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1F273B]'
+                          }`}
+                        >
+                          <span className="truncate">{g.name}</span>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           )}
 

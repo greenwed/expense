@@ -46,12 +46,10 @@ export default function SplitGroupDetailModal({
     try {
       setLoading(true);
       setError('');
-      const res = await apiFetch(`/api/split/groups/${gId}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to fetch group details');
-      setGroupDetails(data.group);
-      setExpenses(data.expenses || []);
-      setSettlements(data.settlements || []);
+      const data = await apiFetch(`/api/split/groups/${gId}`);
+      setGroupDetails(data?.group);
+      setExpenses(data?.expenses || []);
+      setSettlements(data?.settlements || []);
     } catch (err) {
       setError(err.message || 'Error loading group details');
     } finally {
@@ -93,8 +91,7 @@ export default function SplitGroupDetailModal({
   const handleDeleteExpense = async (expId) => {
     if (!window.confirm('Are you sure you want to delete this split expense?')) return;
     try {
-      const res = await apiFetch(`/api/split/expenses/${expId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete expense');
+      await apiFetch(`/api/split/expenses/${expId}`, { method: 'DELETE' });
       setExpenses(prev => prev.filter(e => e.id !== expId && e._id !== expId));
       loadGroupDetails();
       if (onExpenseDeleted) onExpenseDeleted();

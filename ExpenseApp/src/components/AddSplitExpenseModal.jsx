@@ -13,7 +13,15 @@ import {
   Calculator,
   Equal,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  ChevronDown,
+  Utensils,
+  Car,
+  Zap,
+  Film,
+  ShoppingBag,
+  Plane,
+  MoreHorizontal
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { CATEGORY_CONFIG } from '../utils/formatters';
@@ -27,6 +35,119 @@ const CATEGORIES = [
   'Travel',
   'Others'
 ];
+
+const ICON_MAP = {
+  Food: Utensils,
+  Transport: Car,
+  Utilities: Zap,
+  Entertainment: Film,
+  Shopping: ShoppingBag,
+  Travel: Plane,
+  Others: MoreHorizontal
+};
+
+const CATEGORY_COLORS = {
+  Food: '#0EA5E9',
+  Transport: '#3B82F6',
+  Utilities: '#F59E0B',
+  Entertainment: '#8B5CF6',
+  Shopping: '#F97316',
+  Travel: '#10B981',
+  Others: '#6B7280'
+};
+
+function CustomDropdown({
+  value,
+  onChange,
+  options = [],
+  placeholder = 'Select...',
+  icon: LeadingIcon
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const selected = options.find(o => String(o.value) === String(value));
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(prev => !prev)}
+        className="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-200 dark:border-slate-700/80 text-xs font-bold text-slate-900 dark:text-white flex items-center justify-between gap-2 hover:bg-slate-100/80 dark:hover:bg-[#20293D] transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+      >
+        <div className="flex items-center gap-2 truncate">
+          {selected?.avatarColor && (
+            <div
+              className="w-5 h-5 rounded-lg text-white font-bold text-[10px] flex items-center justify-center shrink-0"
+              style={{ backgroundColor: selected.avatarColor }}
+            >
+              {selected.label ? selected.label[0].toUpperCase() : 'M'}
+            </div>
+          )}
+          {selected?.icon && !selected?.avatarColor && (
+            React.createElement(selected.icon, {
+              className: 'w-4 h-4 shrink-0',
+              style: { color: selected.color || '#6366F1' }
+            })
+          )}
+          {LeadingIcon && !selected?.icon && !selected?.avatarColor && (
+            <LeadingIcon className="w-4 h-4 text-slate-400 shrink-0" />
+          )}
+          <span className="truncate">{selected?.label || placeholder}</span>
+        </div>
+        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setIsOpen(false)} />
+          <div className="absolute left-0 right-0 top-full mt-1.5 z-40 max-h-56 overflow-y-auto rounded-2xl bg-white dark:bg-[#151C2C] border border-slate-200 dark:border-slate-700 shadow-xl p-1.5 space-y-1 animate-fadeIn">
+            {options.map((opt) => {
+              const isSelected = String(opt.value) === String(value);
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between gap-2 transition-colors ${
+                    isSelected
+                      ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-extrabold'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1F273B]'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    {opt.avatarColor && (
+                      <div
+                        className="w-5 h-5 rounded-lg text-white font-bold text-[10px] flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: opt.avatarColor }}
+                      >
+                        {opt.label ? opt.label[0].toUpperCase() : 'M'}
+                      </div>
+                    )}
+                    {opt.icon && !opt.avatarColor && (
+                      React.createElement(opt.icon, {
+                        className: 'w-4 h-4 shrink-0',
+                        style: { color: opt.color || '#6366F1' }
+                      })
+                    )}
+                    <span className="truncate">{opt.label}</span>
+                    {opt.sublabel && (
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {opt.sublabel}
+                      </span>
+                    )}
+                  </div>
+                  {isSelected && <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function AddSplitExpenseModal({
   isOpen,
@@ -171,7 +292,8 @@ export default function AddSplitExpenseModal({
   }, [selectedParticipantIds, exactShares]);
 
   const exactDiff = Math.round((parsedAmount - exactSum) * 100) / 100;
-  const isExactValid = Math.abs(exactDiff) < 0.05 && parsedAmount > 0;
+  const isExactBalanced = Math.abs(exactDiff) < 0.05;
+  const isExactValid = isExactBalanced && parsedAmount > 0;
 
   // Percentage split validation
   const percentSum = useMemo(() => {
@@ -179,7 +301,36 @@ export default function AddSplitExpenseModal({
   }, [selectedParticipantIds, percentShares]);
 
   const percentDiff = Math.round((100 - percentSum) * 10) / 10;
-  const isPercentValid = Math.abs(percentDiff) < 0.1 && parsedAmount > 0;
+  const isPercentBalanced = Math.abs(percentDiff) < 0.05;
+  const isPercentValid = isPercentBalanced && parsedAmount > 0;
+
+  const groupOptions = useMemo(() => [
+    { value: '', label: 'Direct Friend Split (No Group)', icon: Users },
+    ...groups.map(g => ({
+      value: String(g.id || g._id),
+      label: g.name,
+      sublabel: `${(g.members || []).length} members`,
+      icon: Users
+    }))
+  ], [groups]);
+
+  const payerOptions = useMemo(() => {
+    return eligibleMembers.map(m => ({
+      value: m.userId,
+      label: `${m.name}${m.userId === currentUserId ? ' (You)' : ''}`,
+      sublabel: m.username ? `@${m.username}` : '',
+      avatarColor: m.avatarColor || '#6366F1'
+    }));
+  }, [eligibleMembers, currentUserId]);
+
+  const categoryOptions = useMemo(() => {
+    return CATEGORIES.map(cat => ({
+      value: cat,
+      label: cat,
+      icon: ICON_MAP[cat] || MoreHorizontal,
+      color: CATEGORY_COLORS[cat] || '#8B5CF6'
+    }));
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -244,7 +395,7 @@ export default function AddSplitExpenseModal({
       setLoading(true);
       setError('');
 
-      const res = await apiFetch('/api/split/expenses', {
+      const data = await apiFetch('/api/split/expenses', {
         method: 'POST',
         body: JSON.stringify({
           groupId: selectedGroupId || null,
@@ -259,12 +410,7 @@ export default function AddSplitExpenseModal({
         })
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to add split expense.');
-      }
-
-      if (onExpenseAdded) onExpenseAdded(data.expense);
+      if (onExpenseAdded) onExpenseAdded(data?.expense);
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to add split expense.');
@@ -357,35 +503,24 @@ export default function AddSplitExpenseModal({
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Group
               </label>
-              <select
+              <CustomDropdown
                 value={selectedGroupId}
-                onChange={(e) => setSelectedGroupId(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-200 dark:border-slate-700/80 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-              >
-                <option value="">Direct Friend Split (No Group)</option>
-                {groups.map(g => (
-                  <option key={g.id || g._id} value={g.id || g._id}>
-                    {g.name}
-                  </option>
-                ))}
-              </select>
+                onChange={setSelectedGroupId}
+                options={groupOptions}
+                icon={Users}
+              />
             </div>
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Who Paid?
               </label>
-              <select
+              <CustomDropdown
                 value={payerId}
-                onChange={(e) => setPayerId(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-200 dark:border-slate-700/80 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-              >
-                {eligibleMembers.map(m => (
-                  <option key={m.userId} value={m.userId}>
-                    {m.name} {m.userId === currentUserId ? '(You)' : ''}
-                  </option>
-                ))}
-              </select>
+                onChange={setPayerId}
+                options={payerOptions}
+                icon={User}
+              />
             </div>
           </div>
 
@@ -395,15 +530,12 @@ export default function AddSplitExpenseModal({
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Category
               </label>
-              <select
+              <CustomDropdown
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-200 dark:border-slate-700/80 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-              >
-                {CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
+                onChange={setCategory}
+                options={categoryOptions}
+                icon={Tag}
+              />
             </div>
 
             <div className="space-y-1.5">
@@ -414,7 +546,7 @@ export default function AddSplitExpenseModal({
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-200 dark:border-slate-700/80 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-200 dark:border-slate-700/80 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
               />
             </div>
           </div>
@@ -472,24 +604,57 @@ export default function AddSplitExpenseModal({
 
             {/* Validation Feedback for Exact and Percentage */}
             {splitMethod === 'exact' && (
-              <div className={`p-2.5 rounded-2xl text-xs font-bold flex items-center justify-between ${
-                isExactValid
-                  ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-                  : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+              <div className={`p-2.5 rounded-2xl text-xs font-bold flex items-center justify-between border ${
+                parsedAmount <= 0
+                  ? 'bg-slate-100/80 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+                  : isExactBalanced
+                    ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                    : exactDiff > 0
+                      ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+                      : 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
               }`}>
                 <span>Total: ₹{exactSum.toFixed(2)} / ₹{parsedAmount.toFixed(2)}</span>
-                <span>{isExactValid ? '✓ Balanced' : exactDiff > 0 ? `Remaining: ₹${exactDiff.toFixed(2)}` : `Over by: ₹${Math.abs(exactDiff).toFixed(2)}`}</span>
+                <span>
+                  {parsedAmount <= 0
+                    ? 'Enter expense amount first'
+                    : isExactBalanced
+                      ? '✓ Balanced'
+                      : exactDiff > 0
+                        ? `Remaining: ₹${exactDiff.toFixed(2)}`
+                        : `Over by: ₹${Math.abs(exactDiff).toFixed(2)}`}
+                </span>
               </div>
             )}
 
             {splitMethod === 'percentage' && (
-              <div className={`p-2.5 rounded-2xl text-xs font-bold flex items-center justify-between ${
-                isPercentValid
+              <div className={`p-2.5 rounded-2xl text-xs font-bold flex items-center justify-between border ${
+                isPercentBalanced
                   ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-                  : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+                  : percentDiff > 0
+                    ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+                    : 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
               }`}>
                 <span>Total: {percentSum.toFixed(1)}% / 100%</span>
-                <span>{isPercentValid ? '✓ 100% Balanced' : percentDiff > 0 ? `Needs ${percentDiff.toFixed(1)}% more` : `Over by ${Math.abs(percentDiff).toFixed(1)}%`}</span>
+                <span>
+                  {isPercentBalanced
+                    ? '✓ 100% Balanced'
+                    : percentDiff > 0
+                      ? `Needs ${percentDiff.toFixed(1)}% more`
+                      : `Over by ${Math.abs(percentDiff).toFixed(1)}%`}
+                </span>
+              </div>
+            )}
+
+            {/* Single member hint if user has no friends in direct split */}
+            {eligibleMembers.length === 1 && !selectedGroupId && (
+              <div className="p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-800/40 flex items-start gap-2.5 text-xs text-indigo-950 dark:text-indigo-200">
+                <Sparkles className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold block">Splitting alone?</span>
+                  <span className="text-slate-600 dark:text-slate-300">
+                    You are currently the only person in this direct split. Add friends using <strong>+ Add Friend</strong> or create a <strong>Split Group</strong> to share expenses with others!
+                  </span>
+                </div>
               </div>
             )}
 
