@@ -86,9 +86,8 @@ export default function App() {
   useEffect(() => {
     if (user && friendInviteToken) {
       apiFetch(`/api/split/friends/accept/${friendInviteToken}`, { method: 'POST' })
-        .then(res => res.json())
         .then(data => {
-          alert(data.message || 'Friend connected successfully!');
+          alert(data?.message || 'Friend connected successfully!');
           window.history.replaceState({}, '', '/');
           setFriendInviteToken(null);
           setActiveTab('split');
@@ -105,9 +104,8 @@ export default function App() {
   useEffect(() => {
     if (user && splitGroupInviteToken) {
       apiFetch(`/api/split/groups/join/${splitGroupInviteToken}`, { method: 'POST' })
-        .then(res => res.json())
         .then(data => {
-          alert(data.message || 'Joined split group successfully!');
+          alert(data?.message || 'Joined split group successfully!');
           window.history.replaceState({}, '', '/');
           setSplitGroupInviteToken(null);
           setActiveTab('split');

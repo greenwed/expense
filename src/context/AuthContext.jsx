@@ -128,6 +128,18 @@ export function AuthProvider({ children }) {
       throw new Error(data?.error || `Request failed with status ${res.status}`);
     }
 
+    if (data && typeof data === 'object') {
+      if (!('ok' in data)) {
+        Object.defineProperty(data, 'ok', { value: true, enumerable: false });
+      }
+      if (!('json' in data)) {
+        Object.defineProperty(data, 'json', {
+          value: async () => data,
+          enumerable: false
+        });
+      }
+    }
+
     return data;
   };
 

@@ -51,9 +51,8 @@ export default function SplitWorkspace() {
     try {
       setLoading(true);
       const res = await apiFetch('/api/split/dashboard');
-      const json = await res.json();
-      if (res.ok) {
-        setData(json);
+      if (res) {
+        setData(res);
       }
     } catch (err) {
       console.error('Failed to load split dashboard:', err);
@@ -549,8 +548,11 @@ export default function SplitWorkspace() {
       <CreateSplitGroupModal
         isOpen={isCreateGroupOpen}
         onClose={() => setIsCreateGroupOpen(false)}
-        onGroupCreated={() => {
+        onGroupCreated={(newGroup) => {
           fetchDashboardData();
+          if (newGroup) {
+            setSelectedGroupDetail(newGroup);
+          }
         }}
         friends={friends}
       />

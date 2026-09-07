@@ -224,10 +224,13 @@ router.post('/friends/add-by-email', async (req, res) => {
       return res.status(400).json({ error: 'Email address is required.' });
     }
 
-    const cleanEmail = email.trim().toLowerCase();
-    const targetUser = await UserModel.findByEmail(cleanEmail) || await UserModel.findByUsernameOrEmail(cleanEmail);
+    const rawInput = email.trim();
+    const clean = rawInput.replace(/^@/, '').toLowerCase();
+    const targetUser = await UserModel.findByEmail(clean) || 
+                       await UserModel.findByUsername(clean) || 
+                       await UserModel.findByUsernameOrEmail(clean);
     if (!targetUser) {
-      return res.status(404).json({ error: `User with email "${email.trim()}" not found.` });
+      return res.status(404).json({ error: `User with email "${rawInput}" not found. Ensure they have registered on RupeeTrack.` });
     }
 
     const currentUserId = String(req.user._id || req.user.id);
