@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import HeroBalanceCard from '../components/HeroBalanceCard';
 import MoneySummaryCards from '../components/MoneySummaryCards';
 import BudgetWarningBanner from '../components/BudgetWarningBanner';
@@ -12,7 +12,10 @@ import {
   Trash2,
   Receipt,
   Calendar,
-  Layers
+  Layers,
+  User,
+  ChevronDown,
+  X
 } from 'lucide-react';
 import {
   formatINR,
@@ -53,11 +56,67 @@ export default function FamilyWorkspace({
   const isExceeding100 = Boolean(groupData?.isExceeding100);
   const expenses = useMemo(() => groupData?.expenses || [], [groupData]);
   const incomes = useMemo(() => groupData?.incomes || [], [groupData]);
-  const members = useMemo(() => currentGroup?.members || [], [currentGroup]);
+
+  // Selected member filter state (only for Family tab)
+  const [selectedMemberId, setSelectedMemberId] = useState('all');
+
+  // Reset member filter when switching groups
+  useEffect(() => {
+    setSelectedMemberId('all');
+  }, [selectedGroupId]);
+
+  // Aggregate all members from group definition and historical expenses
+  const members = useMemo(() => {
+    const list = [...(currentGroup?.members || [])];
+    expenses.forEach((exp) => {
+      const expUserId = String(exp.userId || exp.user_id || '');
+      if (expUserId && !list.some((m) => String(m.userId || m.id || m._id) === expUserId)) {
+        list.push({
+          userId: expUserId,
+          name: exp.userName || exp.user_name || 'Member',
+          username: exp.userUsername || exp.user_username || '',
+          role: 'member'
+        });
+      }
+    });
+    return list;
+  }, [currentGroup, expenses]);
+
+  const selectedMember = useMemo(() => {
+    if (!selectedMemberId || selectedMemberId === 'all') return null;
+    return members.find((m) => String(m.userId || m.id || m._id) === String(selectedMemberId));
+  }, [members, selectedMemberId]);
+
+  // Filter expenses based on selected group member
+  const filteredExpenses = useMemo(() => {
+    if (!selectedMemberId || selectedMemberId === 'all') {
+      return expenses;
+    }
+    const targetId = String(selectedMemberId);
+    const targetUsername = selectedMember?.username ? String(selectedMember.username).toLowerCase() : '';
+    const targetName = selectedMember?.name ? String(selectedMember.name).toLowerCase() : '';
+
+    return expenses.filter((item) => {
+      const itemUserId = String(item.userId || item.user_id || '');
+      if (itemUserId && itemUserId === targetId) return true;
+
+      const itemUsername = String(item.userUsername || item.user_username || '').toLowerCase();
+      if (targetUsername && itemUsername === targetUsername) return true;
+
+      const itemUserName = String(item.userName || item.user_name || '').toLowerCase();
+      if (targetName && itemUserName === targetName) return true;
+
+      return false;
+    });
+  }, [expenses, selectedMemberId, selectedMember]);
+
+  const filteredTotal = useMemo(() => {
+    return filteredExpenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+  }, [filteredExpenses]);
 
   const groupedDays = useMemo(() => {
-    return groupExpensesByDay(expenses);
-  }, [expenses]);
+    return groupExpensesByDay(filteredExpenses);
+  }, [filteredExpenses]);
 
   if (groups.length === 0) {
     return (
@@ -209,38 +268,135 @@ export default function FamilyWorkspace({
         </div>
       </div>
 
-      {/* Shared Household Transaction Feed */}
+      {/* Shared Household Transaction Feed with Member Filter Option */}
       <div className="space-y-4 pt-1">
-        <div className="flex items-center justify-between">
-          <div>
+        
+        {/* Header & Group Member Filter Control (Right Aligned in Header) */}
+        <div className="flex items-center justify-between gap-2.5">
+          <div className="min-w-0">
             <h3 className="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">
               Group Expenses
             </h3>
-            <span className="text-xs text-slate-400 dark:text-slate-400 font-medium">
-              {expenses.length} {isAllTime ? 'total entries across all time' : `entries for ${getMonthName(month)}`}
+            <span className="text-xs text-slate-400 dark:text-slate-400 font-medium block truncate">
+              {filteredExpenses.length}{' '}
+              {selectedMemberId !== 'all'
+                ? `entries by ${selectedMember?.name || 'Member'}`
+                : isAllTime
+                ? 'total entries across all time'
+                : `entries for ${getMonthName(month)}`}
             </span>
           </div>
+
+          {/* Group Member Filter Option (Circled in Family Tab) */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <div
+              className={`relative inline-flex items-center rounded-xl border transition-all ${
+                selectedMemberId !== 'all'
+                  ? 'bg-indigo-50/90 dark:bg-indigo-950/60 border-indigo-300 dark:border-indigo-700/80 shadow-sm ring-1 ring-indigo-500/20'
+                  : 'bg-white dark:bg-[#131926] hover:bg-slate-50 dark:hover:bg-[#1A2234] border-slate-200/90 dark:border-slate-700/80 shadow-sm'
+              }`}
+            >
+              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-indigo-500 dark:text-indigo-400">
+                <User className="w-3.5 h-3.5" />
+              </div>
+              <select
+                value={selectedMemberId}
+                onChange={(e) => setSelectedMemberId(e.target.value)}
+                className="pl-7 pr-7 py-1.5 bg-transparent text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer focus:outline-none appearance-none"
+                title="Filter expenses by group member"
+              >
+                <option value="all" className="dark:bg-[#131926] dark:text-white">
+                  All Members ({members.length})
+                </option>
+                {members.map((m) => {
+                  const mId = String(m.userId || m.id || m._id);
+                  const isSelf = String(user?._id || user?.id) === mId;
+                  return (
+                    <option key={mId} value={mId} className="dark:bg-[#131926] dark:text-white">
+                      {m.name || m.username || 'Member'}{isSelf ? ' (You)' : ''}
+                    </option>
+                  );
+                })}
+              </select>
+              <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-slate-400">
+                <ChevronDown className="w-3.5 h-3.5" />
+              </div>
+            </div>
+
+            {selectedMemberId !== 'all' && (
+              <button
+                type="button"
+                onClick={() => setSelectedMemberId('all')}
+                className="p-1.5 rounded-xl bg-slate-100 dark:bg-[#1A2234] hover:bg-rose-50 dark:hover:bg-rose-950/50 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-700 transition-colors"
+                title="Reset to all members"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Filter Indicator Banner when a specific member is filtered */}
+        {selectedMemberId !== 'all' && (
+          <div className="flex items-center justify-between px-3.5 py-2 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-800/50 text-xs animate-fadeIn">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shrink-0" />
+              <span className="text-indigo-800 dark:text-indigo-200 font-semibold truncate">
+                Filtered by: <strong className="font-black">{selectedMember?.name || 'Member'}</strong>
+              </span>
+            </div>
+            <div className="flex items-center gap-2.5 shrink-0">
+              <span className="font-extrabold text-indigo-900 dark:text-indigo-100">
+                {formatINR(filteredTotal)}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedMemberId('all')}
+                className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 underline"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
 
         {groupedDays.length === 0 ? (
           <div className="fintech-card p-8 sm:p-12 text-center space-y-3">
             <div className="w-14 h-14 rounded-3xl bg-slate-50 dark:bg-[#1A2234] border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-300 dark:text-slate-500 mx-auto shadow-inner">
               <Receipt className="w-7 h-7 stroke-[1.5]" />
             </div>
-            <h4 className="text-base font-bold text-slate-700 dark:text-slate-200">No Expenses Recorded</h4>
+            <h4 className="text-base font-bold text-slate-700 dark:text-slate-200">
+              {selectedMemberId !== 'all'
+                ? `No Expenses by ${selectedMember?.name || 'This Member'}`
+                : 'No Expenses Recorded'}
+            </h4>
             <p className="text-xs text-slate-400 dark:text-slate-400 max-w-sm mx-auto">
-              Any member can add shared household expenses for groceries, utilities, and dining.
+              {selectedMemberId !== 'all'
+                ? `No shared expenses found for ${selectedMember?.name || 'this member'} in ${isAllTime ? 'all time' : getMonthName(month)}.`
+                : 'Any member can add shared household expenses for groceries, utilities, and dining.'}
             </p>
-            <div className="flex items-center justify-center pt-1">
-              <button
-                type="button"
-                onClick={onOpenAddExpense}
-                className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-indigo-500 dark:to-cyan-500 text-white font-bold text-xs rounded-xl shadow-md transition-all inline-flex items-center gap-1.5 active:scale-95"
-              >
-                <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                <span>Add Expense</span>
-              </button>
-            </div>
+            {selectedMemberId !== 'all' ? (
+              <div className="flex items-center justify-center pt-1">
+                <button
+                  type="button"
+                  onClick={() => setSelectedMemberId('all')}
+                  className="px-4 py-2 bg-slate-100 dark:bg-[#1A2234] hover:bg-slate-200 dark:hover:bg-[#222C42] text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition-all"
+                >
+                  View All Member Expenses
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center pt-1">
+                <button
+                  type="button"
+                  onClick={onOpenAddExpense}
+                  className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-indigo-500 dark:to-cyan-500 text-white font-bold text-xs rounded-xl shadow-md transition-all inline-flex items-center gap-1.5 active:scale-95"
+                >
+                  <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>Add Expense</span>
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-6">
