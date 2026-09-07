@@ -15,7 +15,7 @@ import {
   Tag
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { formatDateTime, CATEGORY_CONFIG } from '../utils/formatters';
+import { formatDateTime, CATEGORY_CONFIG, getAppBaseUrl } from '../utils/formatters';
 
 export default function SplitGroupDetailModal({
   isOpen,
@@ -74,7 +74,7 @@ export default function SplitGroupDetailModal({
   }, [isOpen, onClose]);
 
   const inviteLink = typeof window !== 'undefined' && groupDetails?.inviteToken
-    ? `${window.location.origin}/join-split/${groupDetails.inviteToken}`
+    ? `${getAppBaseUrl()}/join-split/${groupDetails.inviteToken}`
     : '';
 
   const handleCopyLink = async () => {

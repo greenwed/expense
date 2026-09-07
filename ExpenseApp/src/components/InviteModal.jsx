@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Copy, Check, RefreshCw, Link as LinkIcon } from 'lucide-react';
+import { getAppBaseUrl } from '../utils/formatters';
 
 export default function InviteModal({ isOpen, onClose, group, onRegenerateToken }) {
   const [copied, setCopied] = useState(false);
@@ -7,7 +8,7 @@ export default function InviteModal({ isOpen, onClose, group, onRegenerateToken 
 
   if (!isOpen || !group) return null;
 
-  const inviteUrl = `${window.location.origin}/join/${group.inviteToken}`;
+  const inviteUrl = `${getAppBaseUrl()}/join/${group.inviteToken}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(inviteUrl);

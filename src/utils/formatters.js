@@ -128,3 +128,25 @@ export const CATEGORY_CONFIG = {
     icon: 'MoreHorizontal'
   }
 };
+
+/**
+ * Returns the public web app domain for invite links.
+ * In Android Capacitor or local environment, returns the canonical production URL.
+ */
+export function getAppBaseUrl() {
+  if (typeof window !== 'undefined') {
+    const origin = window.location.origin;
+    const hostname = window.location.hostname;
+    const isLocalOrCapacitor =
+      window.Capacitor?.isNativePlatform?.() ||
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      window.location.protocol === 'capacitor:';
+
+    if (!isLocalOrCapacitor && origin && origin !== 'null' && !origin.includes('localhost') && !origin.includes('127.0.0.1')) {
+      return origin;
+    }
+  }
+  return 'https://trackrupee.vercel.app';
+}
+

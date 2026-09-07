@@ -163,7 +163,7 @@ export default function UserGuideModal({ isOpen, onClose, onStartTour }) {
             <div className="p-3 rounded-2xl bg-cyan-50/70 dark:bg-cyan-950/50 border border-cyan-100 dark:border-cyan-800/40">
               <span className="font-bold text-cyan-950 dark:text-cyan-200 block mb-1">👥 1. Add Friends & Color-Coded Avatars:</span>
               <p className="text-xs text-cyan-900 dark:text-cyan-300">
-                Tap <strong className="text-cyan-950 dark:text-cyan-100">+ Add Friend</strong> to create unique invite links with 1-tap WhatsApp sharing, or search directly by RupeeTrack <strong>@username</strong>. Friends receive vibrant, deterministic avatars.
+                Tap <strong className="text-cyan-950 dark:text-cyan-100">+ Add Friend</strong> to create unique invite links with 1-tap WhatsApp sharing, or add directly by their registered <strong>Email ID</strong>. Friends receive vibrant, deterministic avatars.
               </p>
             </div>
             <div className="p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-800/40">

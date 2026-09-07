@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, UserPlus, Copy, Check, Share2, AtSign, Users, Sparkles } from 'lucide-react';
+import { X, UserPlus, Copy, Check, Share2, Mail, Users, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getAppBaseUrl } from '../utils/formatters';
 
 export default function AddFriendModal({ isOpen, onClose, onFriendAdded, existingFriends = [] }) {
   const { apiFetch, user } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [inviteToken, setInviteToken] = useState('');
-  const [usernameInput, setUsernameInput] = useState('');
+  const [emailInput, setEmailInput] = useState('');
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [submittingUsername, setSubmittingUsername] = useState(false);
+  const [submittingEmail, setSubmittingEmail] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -23,7 +24,7 @@ export default function AddFriendModal({ isOpen, onClose, onFriendAdded, existin
     if (isOpen) {
       setError('');
       setSuccessMsg('');
-      setUsernameInput('');
+      setEmailInput('');
       fetchInviteToken();
     }
   }, [isOpen]);
@@ -54,7 +55,7 @@ export default function AddFriendModal({ isOpen, onClose, onFriendAdded, existin
   };
 
   const inviteLink = typeof window !== 'undefined' && inviteToken
-    ? `${window.location.origin}/join-friend/${inviteToken}`
+    ? `${getAppBaseUrl()}/join-friend/${inviteToken}`
     : '';
 
   const handleCopyLink = async () => {
@@ -82,31 +83,31 @@ export default function AddFriendModal({ isOpen, onClose, onFriendAdded, existin
     }
   };
 
-  const handleAddByUsername = async (e) => {
+  const handleAddByEmail = async (e) => {
     e.preventDefault();
-    const cleanUsername = usernameInput.trim().replace(/^@/, '');
-    if (!cleanUsername) {
-      setError('Please enter a valid username.');
+    const cleanEmail = emailInput.trim().toLowerCase();
+    if (!cleanEmail) {
+      setError('Please enter a valid email address.');
       return;
     }
 
     try {
-      setSubmittingUsername(true);
+      setSubmittingEmail(true);
       setError('');
       setSuccessMsg('');
 
-      const data = await apiFetch('/api/split/friends/add-by-username', {
+      const data = await apiFetch('/api/split/friends/add-by-email', {
         method: 'POST',
-        body: JSON.stringify({ username: cleanUsername })
+        body: JSON.stringify({ email: cleanEmail })
       });
 
-      setSuccessMsg(data?.message || `Added @${cleanUsername} to your friends!`);
-      setUsernameInput('');
+      setSuccessMsg(data?.message || `Added ${data?.friend?.friendName || cleanEmail} to your friends!`);
+      setEmailInput('');
       if (onFriendAdded) onFriendAdded();
     } catch (err) {
       setError(err.message || 'Failed to add friend.');
     } finally {
-      setSubmittingUsername(false);
+      setSubmittingEmail(false);
     }
   };
 
@@ -211,32 +212,32 @@ export default function AddFriendModal({ isOpen, onClose, onFriendAdded, existin
             <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
           </div>
 
-          {/* Option 2: Add by Username */}
-          <form onSubmit={handleAddByUsername} className="space-y-3">
+          {/* Option 2: Add by Email ID */}
+          <form onSubmit={handleAddByEmail} className="space-y-3">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-              <AtSign className="w-3.5 h-3.5 text-indigo-500" />
-              <span>Add by Username</span>
+              <Mail className="w-3.5 h-3.5 text-indigo-500" />
+              <span>Add by Email ID</span>
             </label>
 
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-400 text-xs font-bold">
-                  @
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-400">
+                  <Mail className="w-4 h-4" />
                 </span>
                 <input
-                  type="text"
-                  value={usernameInput}
-                  onChange={(e) => setUsernameInput(e.target.value)}
-                  placeholder="friend_username"
-                  className="w-full pl-8 pr-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-200 dark:border-slate-700/80 text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                  type="email"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  placeholder="friend@example.com"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-200 dark:border-slate-700/80 text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
                 />
               </div>
               <button
                 type="submit"
-                disabled={submittingUsername || !usernameInput.trim()}
+                disabled={submittingEmail || !emailInput.trim()}
                 className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-extrabold text-xs rounded-2xl shadow-md shadow-indigo-500/20 active:scale-95 transition-all shrink-0"
               >
-                {submittingUsername ? 'Adding...' : 'Add'}
+                {submittingEmail ? 'Adding...' : 'Add'}
               </button>
             </div>
           </form>

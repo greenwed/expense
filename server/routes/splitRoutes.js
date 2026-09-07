@@ -216,17 +216,18 @@ router.post('/friends/accept/:inviteToken', async (req, res) => {
   }
 });
 
-// 5. POST /api/split/friends/add-by-username - Add friend by username
-router.post('/friends/add-by-username', async (req, res) => {
+// 5. POST /api/split/friends/add-by-email - Add friend by registered email ID
+router.post('/friends/add-by-email', async (req, res) => {
   try {
-    const { username } = req.body;
-    if (!username || typeof username !== 'string') {
-      return res.status(400).json({ error: 'Username is required.' });
+    const { email } = req.body;
+    if (!email || typeof email !== 'string' || !email.trim()) {
+      return res.status(400).json({ error: 'Email address is required.' });
     }
 
-    const targetUser = await UserModel.findByUsername(username.trim());
+    const cleanEmail = email.trim().toLowerCase();
+    const targetUser = await UserModel.findByEmail(cleanEmail) || await UserModel.findByUsernameOrEmail(cleanEmail);
     if (!targetUser) {
-      return res.status(404).json({ error: `User with username @${username} not found.` });
+      return res.status(404).json({ error: `User with email "${email.trim()}" not found.` });
     }
 
     const currentUserId = String(req.user._id || req.user.id);
@@ -243,6 +244,7 @@ router.post('/friends/add-by-username', async (req, res) => {
       type: 'friend_added',
       details: {
         friendName: targetUser.name,
+        friendEmail: targetUser.email,
         friendUsername: targetUser.username
       }
     });
@@ -252,6 +254,58 @@ router.post('/friends/add-by-username', async (req, res) => {
       friend: {
         friendId: targetUserId,
         friendName: targetUser.name,
+        friendEmail: targetUser.email,
+        friendUsername: targetUser.username
+      }
+    });
+  } catch (err) {
+    console.error('Add friend by email error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to add friend.' });
+  }
+});
+
+// 5b. POST /api/split/friends/add-by-username - Add friend by username or email (backwards compatibility)
+router.post('/friends/add-by-username', async (req, res) => {
+  try {
+    const { username, email } = req.body;
+    const identifier = (username || email || '').trim();
+    if (!identifier) {
+      return res.status(400).json({ error: 'Username or email is required.' });
+    }
+
+    let targetUser = await UserModel.findByUsername(identifier);
+    if (!targetUser) {
+      targetUser = await UserModel.findByEmail(identifier.toLowerCase()) || await UserModel.findByUsernameOrEmail(identifier);
+    }
+    if (!targetUser) {
+      return res.status(404).json({ error: `User with username @${identifier} not found.` });
+    }
+
+    const currentUserId = String(req.user._id || req.user.id);
+    const targetUserId = String(targetUser._id || targetUser.id);
+
+    if (currentUserId === targetUserId) {
+      return res.status(400).json({ error: 'You cannot add yourself as a friend.' });
+    }
+
+    await SplitFriendModel.addMutualFriend(req.user, targetUser);
+
+    await SplitActivityModel.log({
+      user: req.user,
+      type: 'friend_added',
+      details: {
+        friendName: targetUser.name,
+        friendEmail: targetUser.email,
+        friendUsername: targetUser.username
+      }
+    });
+
+    return res.json({
+      message: `Added ${targetUser.name} as a friend!`,
+      friend: {
+        friendId: targetUserId,
+        friendName: targetUser.name,
+        friendEmail: targetUser.email,
         friendUsername: targetUser.username
       }
     });

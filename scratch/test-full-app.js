@@ -327,6 +327,38 @@ async function runAllTests() {
     });
     assert(addSelf.status === 400, 'Adding self by username returns 400');
 
+    // 5.9 Add friend by Email ID (New Feature)
+    const addEveByEmail = await request('/split/friends/add-by-email', {
+      method: 'POST',
+      headers: daveHeaders,
+      body: { email: userEve.email }
+    });
+    assert(addEveByEmail.status === 200, 'Eve added as friend to Dave by registered Email ID');
+
+    // 5.10 Edge Case: Add friend with missing email -> 400
+    const addEmptyEmail = await request('/split/friends/add-by-email', {
+      method: 'POST',
+      headers: daveHeaders,
+      body: { email: '' }
+    });
+    assert(addEmptyEmail.status === 400, 'Adding with empty email returns 400');
+
+    // 5.11 Edge Case: Add non-existent email -> 404
+    const addFakeEmail = await request('/split/friends/add-by-email', {
+      method: 'POST',
+      headers: daveHeaders,
+      body: { email: 'non_existent_ghost_user@domain.com' }
+    });
+    assert(addFakeEmail.status === 404, 'Adding non-existent email returns 404');
+
+    // 5.12 Edge Case: Add self by email -> 400
+    const addSelfEmail = await request('/split/friends/add-by-email', {
+      method: 'POST',
+      headers: daveHeaders,
+      body: { email: userDave.email }
+    });
+    assert(addSelfEmail.status === 400, 'Adding self by email returns 400');
+
     // -------------------------------------------------------------
     // SECTION 6: Split Groups & Joining
     // -------------------------------------------------------------
