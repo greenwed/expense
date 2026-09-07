@@ -8,6 +8,7 @@ import { connectDB } from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import personalRoutes from './routes/personalRoutes.js';
 import familyRoutes from './routes/familyRoutes.js';
+import splitRoutes from './routes/splitRoutes.js';
 
 dotenv.config();
 
@@ -40,6 +41,7 @@ app.use(async (req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/personal', personalRoutes);
 app.use('/api/family', familyRoutes);
+app.use('/api/split', splitRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

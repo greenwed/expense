@@ -188,9 +188,76 @@ async function initPostgresSchema(pool) {
       updated_at TIMESTAMPTZ DEFAULT NOW(),
       UNIQUE(group_id, month)
     );
+
+    CREATE TABLE IF NOT EXISTS split_friends (
+      id VARCHAR(100) PRIMARY KEY,
+      user_id VARCHAR(100) NOT NULL,
+      friend_id VARCHAR(100) NOT NULL,
+      friend_name VARCHAR(255) NOT NULL,
+      friend_username VARCHAR(100) NOT NULL,
+      avatar_color VARCHAR(50) DEFAULT '#6366F1',
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(user_id, friend_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS split_invites (
+      id VARCHAR(100) PRIMARY KEY,
+      user_id VARCHAR(100) NOT NULL,
+      invite_token VARCHAR(100) UNIQUE NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS split_groups (
+      id VARCHAR(100) PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      created_by VARCHAR(100) NOT NULL,
+      members JSONB NOT NULL DEFAULT '[]'::jsonb,
+      invite_token VARCHAR(100) UNIQUE NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS split_expenses (
+      id VARCHAR(100) PRIMARY KEY,
+      group_id VARCHAR(100),
+      payer_id VARCHAR(100) NOT NULL,
+      payer_name VARCHAR(255) NOT NULL,
+      amount NUMERIC NOT NULL,
+      description TEXT NOT NULL,
+      category VARCHAR(50) NOT NULL DEFAULT 'Others',
+      date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      split_method VARCHAR(30) NOT NULL DEFAULT 'equal',
+      participants JSONB NOT NULL DEFAULT '[]'::jsonb,
+      created_by VARCHAR(100) NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS split_settlements (
+      id VARCHAR(100) PRIMARY KEY,
+      group_id VARCHAR(100),
+      payer_id VARCHAR(100) NOT NULL,
+      payer_name VARCHAR(255) NOT NULL,
+      payee_id VARCHAR(100) NOT NULL,
+      payee_name VARCHAR(255) NOT NULL,
+      amount NUMERIC NOT NULL,
+      date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      note TEXT DEFAULT 'Settled Up',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS split_activities (
+      id VARCHAR(100) PRIMARY KEY,
+      group_id VARCHAR(100),
+      user_id VARCHAR(100) NOT NULL,
+      user_name VARCHAR(255) NOT NULL,
+      type VARCHAR(50) NOT NULL,
+      details JSONB NOT NULL DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
   `;
   await pool.query(schemaSql);
-  console.log('⚡ Neon PostgreSQL tables (including personal_incomes & family_incomes) initialized.');
+  console.log('⚡ Neon PostgreSQL tables (including split tables) initialized.');
 }
 
 export function getPgPool() {

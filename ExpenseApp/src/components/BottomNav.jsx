@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, PieChart, Users, Settings, Plus } from 'lucide-react';
+import { Home, PieChart, Users, Scale, Plus } from 'lucide-react';
 
 export default function BottomNav({
   activeTab = 'home',
@@ -11,7 +11,7 @@ export default function BottomNav({
     { id: 'report', label: 'Report', icon: PieChart },
     { id: 'fab', isFab: true },
     { id: 'family', label: 'Family', icon: Users },
-    { id: 'settings', label: 'Settings', icon: Settings }
+    { id: 'split', label: 'Split', icon: Scale }
   ];
 
   return (

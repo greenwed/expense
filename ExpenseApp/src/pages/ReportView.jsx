@@ -12,7 +12,8 @@ import {
   Filter,
   RefreshCw,
   Users,
-  User
+  User,
+  Scale
 } from 'lucide-react';
 import CategoryPieChart from '../components/CategoryPieChart';
 import { useAuth } from '../context/AuthContext';
@@ -109,6 +110,12 @@ export default function ReportView({
         } else {
           url = `/api/personal/dashboard?month=${month}`;
         }
+      } else if (reportType === 'split') {
+        if (filterMode === 'custom') {
+          url = `/api/split/reports?startDate=${startDate}&endDate=${endDate}`;
+        } else {
+          url = `/api/split/reports?month=${month}`;
+        }
       } else {
         const targetGroup = activeGroupId || selectedGroupId || (groups[0]?.id || groups[0]?._id);
         if (!targetGroup) {
@@ -165,9 +172,23 @@ export default function ReportView({
     return Object.keys(CATEGORY_CONFIG).map((cat) => ({ category: cat, amount: 0, percentage: 0 }));
   }, [reportData]);
 
-  const totalSpent = Number(reportData?.totalSpent !== undefined ? reportData.totalSpent : reportData?.monthlySpent) || 0;
-  const totalIncome = Number(reportData?.totalIncome !== undefined ? reportData.totalIncome : reportData?.monthlyIncome) || 0;
-  const totalBalance = Number(reportData?.totalBalance !== undefined ? reportData.totalBalance : reportData?.remainingBalance) || 0;
+  const totalSpent = Number(
+    reportType === 'split'
+      ? (reportData?.totalUserShare !== undefined ? reportData.totalUserShare : reportData?.totalSplitVolume)
+      : (reportData?.totalSpent !== undefined ? reportData.totalSpent : reportData?.monthlySpent)
+  ) || 0;
+
+  const totalIncome = Number(
+    reportType === 'split'
+      ? (reportData?.totalOwedToYou || 0)
+      : (reportData?.totalIncome !== undefined ? reportData.totalIncome : reportData?.monthlyIncome)
+  ) || 0;
+
+  const totalBalance = Number(
+    reportType === 'split'
+      ? (reportData?.netBalance || 0)
+      : (reportData?.totalBalance !== undefined ? reportData.totalBalance : reportData?.remainingBalance)
+  ) || 0;
 
   // Find top category with highest spending
   const topCategory = useMemo(() => {
@@ -230,6 +251,18 @@ export default function ReportView({
             >
               <Users className="w-3.5 h-3.5" />
               <span>Family</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setReportType('split')}
+              className={`flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                reportType === 'split'
+                  ? 'bg-white dark:bg-[#1E2638] text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              <Scale className="w-3.5 h-3.5" />
+              <span>Split</span>
             </button>
           </div>
         </div>
@@ -402,7 +435,7 @@ export default function ReportView({
           </div>
           <div className="min-w-0">
             <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider block">
-              {filterMode === 'monthly' ? 'Month Spent' : 'Range Spent'}
+              {reportType === 'split' ? 'Your Split Share' : filterMode === 'monthly' ? 'Month Spent' : 'Range Spent'}
             </span>
             <span className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white block truncate">
               {formatINR(totalSpent)}
@@ -416,7 +449,7 @@ export default function ReportView({
           </div>
           <div className="min-w-0">
             <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider block">
-              {filterMode === 'monthly' ? 'Month Income' : 'Range Income'}
+              {reportType === 'split' ? 'You Are Owed' : filterMode === 'monthly' ? 'Month Income' : 'Range Income'}
             </span>
             <span className="text-sm sm:text-base font-extrabold text-emerald-600 dark:text-emerald-400 block truncate">
               {formatINR(totalIncome)}
@@ -430,9 +463,11 @@ export default function ReportView({
           </div>
           <div className="min-w-0">
             <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider block">
-              Total Balance
+              {reportType === 'split' ? 'Net Balance' : 'Total Balance'}
             </span>
-            <span className="text-sm sm:text-base font-extrabold text-indigo-600 dark:text-indigo-400 block truncate">
+            <span className={`text-sm sm:text-base font-extrabold block truncate ${
+              totalBalance >= 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-600 dark:text-rose-400'
+            }`}>
               {formatINR(totalBalance)}
             </span>
           </div>
@@ -461,16 +496,50 @@ export default function ReportView({
           <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Loading {filterMode === 'monthly' ? getMonthName(month) : 'selected range'} analytics...</span>
         </div>
       ) : (
-        <CategoryPieChart
-          categories={categories}
-          totalSpent={totalSpent}
-          expenses={reportData?.expenses || []}
-          title={
-            reportType === 'personal'
-              ? `Personal Expenses (${filterMode === 'monthly' ? getMonthName(month) : `${formatDateOnly(startDate)} - ${formatDateOnly(endDate)}`})`
-              : `Family Expenses (${filterMode === 'monthly' ? getMonthName(month) : `${formatDateOnly(startDate)} - ${formatDateOnly(endDate)}`})`
-          }
-        />
+        <div className="space-y-6">
+          <CategoryPieChart
+            categories={categories}
+            totalSpent={totalSpent}
+            expenses={reportData?.expenses || []}
+            title={
+              reportType === 'personal'
+                ? `Personal Expenses (${filterMode === 'monthly' ? getMonthName(month) : `${formatDateOnly(startDate)} - ${formatDateOnly(endDate)}`})`
+                : reportType === 'split'
+                ? `Split Expenses Breakdown (${filterMode === 'monthly' ? getMonthName(month) : `${formatDateOnly(startDate)} - ${formatDateOnly(endDate)}`})`
+                : `Family Expenses (${filterMode === 'monthly' ? getMonthName(month) : `${formatDateOnly(startDate)} - ${formatDateOnly(endDate)}`})`
+            }
+          />
+
+          {/* If Split Report: Show Spending by Split Group */}
+          {reportType === 'split' && reportData?.groupBreakdown && reportData.groupBreakdown.length > 0 && (
+            <div className="fintech-card p-5 sm:p-6 space-y-3">
+              <h3 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                <Users className="w-4 h-4 text-indigo-500" />
+                <span>Spending by Split Group</span>
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {reportData.groupBreakdown.map((gb, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between"
+                  >
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                        {gb.group}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {gb.percentage}% of your split spending
+                      </span>
+                    </div>
+                    <span className="text-sm font-black font-mono text-slate-900 dark:text-white">
+                      ₹{gb.amount.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
     </div>

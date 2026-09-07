@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { App as CapApp } from '@capacitor/app';
-import { StatusBar, Style } from '@capacitor/status-bar';
-import { SplashScreen } from '@capacitor/splash-screen';
 import { useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import BottomNav from './components/BottomNav';
 import PersonalWorkspace from './pages/PersonalWorkspace';
 import FamilyWorkspace from './pages/FamilyWorkspace';
+import SplitWorkspace from './pages/SplitWorkspace';
 import ReportView from './pages/ReportView';
 import SettingsView from './pages/SettingsView';
 import AuthPage from './pages/AuthPage';
@@ -66,73 +64,61 @@ export default function App() {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isMemberMgmtOpen, setIsMemberMgmtOpen] = useState(false);
 
-  // Check URL pathname for /join/:token
+  // Check URL pathname for /join/:token, /join-friend/:token, /join-split/:token
+  const [friendInviteToken, setFriendInviteToken] = useState(null);
+  const [splitGroupInviteToken, setSplitGroupInviteToken] = useState(null);
+
   useEffect(() => {
     const path = window.location.pathname;
-    if (path.startsWith('/join/')) {
+    if (path.startsWith('/join-friend/')) {
+      const token = path.replace('/join-friend/', '').split('/')[0];
+      if (token) setFriendInviteToken(token);
+    } else if (path.startsWith('/join-split/')) {
+      const token = path.replace('/join-split/', '').split('/')[0];
+      if (token) setSplitGroupInviteToken(token);
+    } else if (path.startsWith('/join/')) {
       const token = path.replace('/join/', '').split('/')[0];
       if (token) setInviteToken(token);
     }
   }, []);
 
-  // Native Android Hardware Back Button & Status Bar Handling
+  // Auto-accept friend invite if authenticated
   useEffect(() => {
-    // Hide splash screen on launch
-    SplashScreen.hide().catch(() => {});
+    if (user && friendInviteToken) {
+      apiFetch(`/api/split/friends/accept/${friendInviteToken}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message || 'Friend connected successfully!');
+          window.history.replaceState({}, '', '/');
+          setFriendInviteToken(null);
+          setActiveTab('split');
+        })
+        .catch(err => {
+          console.error('Failed to accept friend invite:', err);
+          window.history.replaceState({}, '', '/');
+          setFriendInviteToken(null);
+        });
+    }
+  }, [user, friendInviteToken, apiFetch]);
 
-    // Set Status Bar: clean white background, dark icons, and DO NOT overlay webview
-    try {
-      StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
-      StatusBar.setBackgroundColor({ color: '#FFFFFF' }).catch(() => {});
-      StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
-    } catch (e) {}
-
-    // Android Hardware Back Button Handler
-    const backListener = CapApp.addListener('backButton', () => {
-      // 1. Close any open modals first
-      if (isUserGuideOpen) { setIsUserGuideOpen(false); return; }
-      if (isQuickTourOpen) { setIsQuickTourOpen(false); return; }
-      if (isBudgetOpen) { setIsBudgetOpen(false); return; }
-      if (isExpenseOpen) { setIsExpenseOpen(false); return; }
-      if (isExpenseListOpen) { setIsExpenseListOpen(false); return; }
-      if (isIncomeOpen) { setIsIncomeOpen(false); return; }
-      if (isIncomeListOpen) { setIsIncomeListOpen(false); return; }
-      if (isQuickAddOpen) { setIsQuickAddOpen(false); return; }
-      if (isMonthOpen) { setIsMonthOpen(false); return; }
-      if (isCreateGroupOpen) { setIsCreateGroupOpen(false); return; }
-      if (isRenameGroupOpen) { setIsRenameGroupOpen(false); return; }
-      if (isInviteOpen) { setIsInviteOpen(false); return; }
-      if (isMemberMgmtOpen) { setIsMemberMgmtOpen(false); return; }
-
-      // 2. If not on Home tab, return to Home
-      if (activeTab !== 'home') {
-        setActiveTab('home');
-        return;
-      }
-
-      // 3. Minimize / Exit safely
-      CapApp.minimizeApp().catch(() => {});
-    });
-
-    return () => {
-      backListener.then(l => l.remove()).catch(() => {});
-    };
-  }, [
-    activeTab,
-    isUserGuideOpen,
-    isQuickTourOpen,
-    isBudgetOpen,
-    isExpenseOpen,
-    isExpenseListOpen,
-    isIncomeOpen,
-    isIncomeListOpen,
-    isQuickAddOpen,
-    isMonthOpen,
-    isCreateGroupOpen,
-    isRenameGroupOpen,
-    isInviteOpen,
-    isMemberMgmtOpen
-  ]);
+  // Auto-accept split group invite if authenticated
+  useEffect(() => {
+    if (user && splitGroupInviteToken) {
+      apiFetch(`/api/split/groups/join/${splitGroupInviteToken}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message || 'Joined split group successfully!');
+          window.history.replaceState({}, '', '/');
+          setSplitGroupInviteToken(null);
+          setActiveTab('split');
+        })
+        .catch(err => {
+          console.error('Failed to join split group:', err);
+          window.history.replaceState({}, '', '/');
+          setSplitGroupInviteToken(null);
+        });
+    }
+  }, [user, splitGroupInviteToken, apiFetch]);
 
   // 1. Fetch Personal Dashboard Data
   const fetchPersonalData = useCallback(async () => {
@@ -431,7 +417,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 selection:bg-indigo-500 selection:text-white transition-colors duration-200">
       
-      {/* Clean Desktop/Mobile Header */}
+      {/* Clean Desktop Header */}
       <Navbar
         activeTab={activeTab}
         onChangeTab={handleTabChange}
@@ -519,7 +505,12 @@ export default function App() {
             />
           )}
 
-          {/* TAB 4: SETTINGS */}
+          {/* TAB 4: SPLIT */}
+          {activeTab === 'split' && (
+            <SplitWorkspace />
+          )}
+
+          {/* TAB 5: SETTINGS (Accessed from top navbar profile icon) */}
           {activeTab === 'settings' && (
             <SettingsView
               onOpenAddIncome={() => {

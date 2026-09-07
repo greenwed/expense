@@ -4,6 +4,7 @@ import {
   Home,
   PieChart,
   Users,
+  Scale,
   Settings,
   Plus,
   TrendingUp,
@@ -27,7 +28,7 @@ export default function Navbar({
     { id: 'home', label: 'Home', icon: Home },
     { id: 'report', label: 'Report', icon: PieChart },
     { id: 'family', label: 'Family', icon: Users },
-    { id: 'settings', label: 'Settings', icon: Settings }
+    { id: 'split', label: 'Split', icon: Scale }
   ];
 
   return (

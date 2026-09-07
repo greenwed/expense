@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import BottomNav from './components/BottomNav';
 import PersonalWorkspace from './pages/PersonalWorkspace';
 import FamilyWorkspace from './pages/FamilyWorkspace';
+import SplitWorkspace from './pages/SplitWorkspace';
 import ReportView from './pages/ReportView';
 import SettingsView from './pages/SettingsView';
 import AuthPage from './pages/AuthPage';
@@ -63,14 +64,61 @@ export default function App() {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isMemberMgmtOpen, setIsMemberMgmtOpen] = useState(false);
 
-  // Check URL pathname for /join/:token
+  // Check URL pathname for /join/:token, /join-friend/:token, /join-split/:token
+  const [friendInviteToken, setFriendInviteToken] = useState(null);
+  const [splitGroupInviteToken, setSplitGroupInviteToken] = useState(null);
+
   useEffect(() => {
     const path = window.location.pathname;
-    if (path.startsWith('/join/')) {
+    if (path.startsWith('/join-friend/')) {
+      const token = path.replace('/join-friend/', '').split('/')[0];
+      if (token) setFriendInviteToken(token);
+    } else if (path.startsWith('/join-split/')) {
+      const token = path.replace('/join-split/', '').split('/')[0];
+      if (token) setSplitGroupInviteToken(token);
+    } else if (path.startsWith('/join/')) {
       const token = path.replace('/join/', '').split('/')[0];
       if (token) setInviteToken(token);
     }
   }, []);
+
+  // Auto-accept friend invite if authenticated
+  useEffect(() => {
+    if (user && friendInviteToken) {
+      apiFetch(`/api/split/friends/accept/${friendInviteToken}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message || 'Friend connected successfully!');
+          window.history.replaceState({}, '', '/');
+          setFriendInviteToken(null);
+          setActiveTab('split');
+        })
+        .catch(err => {
+          console.error('Failed to accept friend invite:', err);
+          window.history.replaceState({}, '', '/');
+          setFriendInviteToken(null);
+        });
+    }
+  }, [user, friendInviteToken, apiFetch]);
+
+  // Auto-accept split group invite if authenticated
+  useEffect(() => {
+    if (user && splitGroupInviteToken) {
+      apiFetch(`/api/split/groups/join/${splitGroupInviteToken}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message || 'Joined split group successfully!');
+          window.history.replaceState({}, '', '/');
+          setSplitGroupInviteToken(null);
+          setActiveTab('split');
+        })
+        .catch(err => {
+          console.error('Failed to join split group:', err);
+          window.history.replaceState({}, '', '/');
+          setSplitGroupInviteToken(null);
+        });
+    }
+  }, [user, splitGroupInviteToken, apiFetch]);
 
   // 1. Fetch Personal Dashboard Data
   const fetchPersonalData = useCallback(async () => {
@@ -457,7 +505,12 @@ export default function App() {
             />
           )}
 
-          {/* TAB 4: SETTINGS */}
+          {/* TAB 4: SPLIT */}
+          {activeTab === 'split' && (
+            <SplitWorkspace />
+          )}
+
+          {/* TAB 5: SETTINGS (Accessed from top navbar profile icon) */}
           {activeTab === 'settings' && (
             <SettingsView
               onOpenAddIncome={() => {
