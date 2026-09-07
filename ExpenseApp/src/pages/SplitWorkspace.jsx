@@ -97,18 +97,22 @@ export default function SplitWorkspace() {
     <div className="space-y-6 animate-fadeIn pb-24 lg:pb-8 max-w-5xl mx-auto">
       
       {/* ================= HERO BALANCE BANNER ================= */}
-      <div className="relative overflow-hidden rounded-[32px] p-6 sm:p-8 bg-gradient-to-br from-[#0F172A] via-[#1E1B4B] to-[#111827] text-white border border-indigo-900/40 shadow-2xl transition-all">
+      <div className="relative overflow-hidden rounded-[32px] p-6 sm:p-8 bg-gradient-to-br from-violet-600 via-indigo-600 to-indigo-700 dark:from-[#121828] dark:via-[#1A2238] dark:to-[#0F1422] dark:border dark:border-indigo-500/25 text-white shadow-2xl shadow-indigo-600/30 dark:shadow-black/50 transition-all">
+        {/* Decorative Ambient Glass Elements */}
+        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white/10 dark:bg-indigo-500/10 blur-2xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-56 h-56 rounded-full bg-indigo-900/30 dark:bg-cyan-500/10 blur-2xl pointer-events-none" />
+
         <div className="relative z-10 space-y-6">
           
           {/* Top Row: Title & Badges */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-extrabold tracking-wider uppercase border border-indigo-500/30">
+                <span className="text-[10px] font-extrabold text-indigo-100 dark:text-indigo-200 bg-white/15 dark:bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 dark:border-white/10 tracking-wider uppercase">
                   Split & Share
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight mt-1">
+              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-1">
                 Shared Expenses Hub
               </h2>
             </div>
@@ -122,7 +126,7 @@ export default function SplitWorkspace() {
                   setSelectedGroupForExpense(null);
                   setIsAddExpenseOpen(true);
                 }}
-                className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-lg shadow-indigo-500/30 flex items-center gap-1.5 active:scale-95 transition-all"
+                className="px-4 py-2.5 rounded-2xl bg-white text-indigo-700 hover:bg-white/90 dark:bg-gradient-to-r dark:from-indigo-500 dark:to-cyan-500 dark:text-white font-extrabold text-xs shadow-lg shadow-black/10 dark:shadow-indigo-500/30 flex items-center gap-1.5 active:scale-95 transition-all"
               >
                 <Plus className="w-4 h-4 stroke-[3]" />
                 <span>Add Expense</span>
@@ -133,7 +137,7 @@ export default function SplitWorkspace() {
                   setSettleTarget({ payerId: null, payeeId: null, amount: 0 });
                   setIsSettleUpOpen(true);
                 }}
-                className="px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/30 flex items-center gap-1.5 active:scale-95 transition-all"
+                className="px-4 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold text-xs shadow-lg shadow-emerald-900/20 flex items-center gap-1.5 active:scale-95 transition-all"
               >
                 <Check className="w-4 h-4 stroke-[3]" />
                 <span>Settle Up</span>
@@ -141,7 +145,7 @@ export default function SplitWorkspace() {
               <button
                 type="button"
                 onClick={() => setIsCreateGroupOpen(true)}
-                className="px-3.5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs border border-white/10 active:scale-95 transition-all flex items-center gap-1.5"
+                className="px-3.5 py-2.5 rounded-2xl bg-white/15 dark:bg-white/10 hover:bg-white/25 dark:hover:bg-white/15 text-white font-bold text-xs border border-white/20 dark:border-white/10 active:scale-95 transition-all flex items-center gap-1.5 backdrop-blur-md"
               >
                 <Users className="w-4 h-4" />
                 <span>+ Split</span>
@@ -149,7 +153,7 @@ export default function SplitWorkspace() {
               <button
                 type="button"
                 onClick={() => setIsAddFriendOpen(true)}
-                className="px-3.5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs border border-white/10 active:scale-95 transition-all flex items-center gap-1.5"
+                className="px-3.5 py-2.5 rounded-2xl bg-white/15 dark:bg-white/10 hover:bg-white/25 dark:hover:bg-white/15 text-white font-bold text-xs border border-white/20 dark:border-white/10 active:scale-95 transition-all flex items-center gap-1.5 backdrop-blur-md"
               >
                 <UserPlus className="w-4 h-4" />
                 <span>+ Friend</span>
@@ -160,51 +164,45 @@ export default function SplitWorkspace() {
           {/* Balance Cards Row */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
             {/* You are owed */}
-            <div className="p-4 rounded-2xl bg-white/5 border border-emerald-500/20 backdrop-blur-xs">
+            <div className="p-4 rounded-2xl bg-white/15 dark:bg-white/5 border border-white/20 dark:border-emerald-500/20 backdrop-blur-xs">
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                <div className="w-6 h-6 rounded-lg bg-emerald-400/20 text-emerald-300 dark:text-emerald-400 flex items-center justify-center">
                   <TrendingUp className="w-3.5 h-3.5 stroke-[2.5]" />
                 </div>
-                <span className="text-xs font-bold text-slate-300">You Are Owed</span>
+                <span className="text-xs font-bold text-indigo-100 dark:text-slate-300">You Are Owed</span>
               </div>
-              <span className="text-2xl font-black text-emerald-400 block font-mono">
+              <span className="text-2xl font-black text-white dark:text-emerald-400 block font-mono">
                 +₹{(summary?.totalOwedToYou || 0).toLocaleString('en-IN')}
               </span>
-              <span className="text-[10px] text-emerald-300/70">From friends & groups</span>
+              <span className="text-[10px] text-indigo-100/70 dark:text-emerald-300/70">From friends & groups</span>
             </div>
 
             {/* You owe */}
-            <div className="p-4 rounded-2xl bg-white/5 border border-rose-500/20 backdrop-blur-xs">
+            <div className="p-4 rounded-2xl bg-white/15 dark:bg-white/5 border border-white/20 dark:border-rose-500/20 backdrop-blur-xs">
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-6 h-6 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                <div className="w-6 h-6 rounded-lg bg-rose-400/20 text-rose-300 dark:text-rose-400 flex items-center justify-center">
                   <TrendingDown className="w-3.5 h-3.5 stroke-[2.5]" />
                 </div>
-                <span className="text-xs font-bold text-slate-300">You Owe</span>
+                <span className="text-xs font-bold text-indigo-100 dark:text-slate-300">You Owe</span>
               </div>
-              <span className="text-2xl font-black text-rose-400 block font-mono">
+              <span className="text-2xl font-black text-white dark:text-rose-400 block font-mono">
                 -₹{(summary?.totalYouOwe || 0).toLocaleString('en-IN')}
               </span>
-              <span className="text-[10px] text-rose-300/70">Debts to settle</span>
+              <span className="text-[10px] text-indigo-100/70 dark:text-rose-300/70">Debts to settle</span>
             </div>
 
             {/* Total Net Balance */}
-            <div className="p-4 rounded-2xl bg-white/5 border border-indigo-500/20 backdrop-blur-xs">
+            <div className="p-4 rounded-2xl bg-white/15 dark:bg-white/5 border border-white/20 dark:border-indigo-500/20 backdrop-blur-xs">
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-300 flex items-center justify-center">
+                <div className="w-6 h-6 rounded-lg bg-white/20 dark:bg-indigo-500/20 text-white dark:text-indigo-300 flex items-center justify-center">
                   <Scale className="w-3.5 h-3.5 stroke-[2.5]" />
                 </div>
-                <span className="text-xs font-bold text-slate-300">Net Balance</span>
+                <span className="text-xs font-bold text-indigo-100 dark:text-slate-300">Net Balance</span>
               </div>
-              <span className={`text-2xl font-black block font-mono ${
-                (summary?.netBalance || 0) > 0
-                  ? 'text-emerald-400'
-                  : (summary?.netBalance || 0) < 0
-                  ? 'text-rose-400'
-                  : 'text-slate-300'
-              }`}>
+              <span className="text-2xl font-black text-white block font-mono">
                 {(summary?.netBalance || 0) >= 0 ? '+' : '-'}₹{Math.abs(summary?.netBalance || 0).toLocaleString('en-IN')}
               </span>
-              <span className="text-[10px] text-slate-400">
+              <span className="text-[10px] text-indigo-100/70 dark:text-slate-400">
                 {(summary?.netBalance || 0) > 0 ? 'Overall in credit' : (summary?.netBalance || 0) < 0 ? 'Overall in debit' : 'Completely balanced'}
               </span>
             </div>
@@ -215,17 +213,17 @@ export default function SplitWorkspace() {
 
       {/* ================= SUB-TABS (GROUPS | FRIENDS | ACTIVITY) ================= */}
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-[#131926] rounded-2xl border border-slate-200/60 dark:border-slate-700/60">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-200/70 dark:bg-[#131926] rounded-2xl border border-transparent dark:border-slate-800">
           <button
             type="button"
             onClick={() => setActiveSubTab('groups')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               activeSubTab === 'groups'
-                ? 'bg-white dark:bg-[#1E2638] text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-[#1E2638] text-slate-900 dark:text-white shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
-            <Users className="w-3.5 h-3.5" />
+            <Users className="w-3.5 h-3.5 text-slate-400 dark:text-slate-400" />
             <span>Groups ({groups.length})</span>
           </button>
 
@@ -234,11 +232,11 @@ export default function SplitWorkspace() {
             onClick={() => setActiveSubTab('friends')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               activeSubTab === 'friends'
-                ? 'bg-white dark:bg-[#1E2638] text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-[#1E2638] text-slate-900 dark:text-white shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
-            <Users className="w-3.5 h-3.5" />
+            <Users className="w-3.5 h-3.5 text-slate-400 dark:text-slate-400" />
             <span>Friends ({friends.length})</span>
           </button>
 
@@ -247,11 +245,11 @@ export default function SplitWorkspace() {
             onClick={() => setActiveSubTab('activity')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               activeSubTab === 'activity'
-                ? 'bg-white dark:bg-[#1E2638] text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-[#1E2638] text-slate-900 dark:text-white shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
-            <Clock className="w-3.5 h-3.5" />
+            <Clock className="w-3.5 h-3.5 text-slate-400 dark:text-slate-400" />
             <span>Activity Log</span>
           </button>
         </div>
@@ -261,20 +259,20 @@ export default function SplitWorkspace() {
       {activeSubTab === 'groups' && (
         <div className="space-y-4">
           {groups.length === 0 ? (
-            <div className="p-10 text-center rounded-3xl bg-white dark:bg-[#131926] border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto">
-                <Users className="w-7 h-7 stroke-[1.5]" />
+            <div className="fintech-card p-8 sm:p-12 text-center rounded-3xl bg-white dark:bg-[#131926] border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
+              <div className="w-16 h-16 rounded-3xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mx-auto shadow-sm">
+                <Users className="w-8 h-8 stroke-[1.75]" />
               </div>
-              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+              <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">
                 No Split Groups Yet
               </h3>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                Create a split group for your apartment, road trip, dinner party, or project to track shared costs smoothly.
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+                Create a collaborative group to divide expenses, track shared balances, and settle debts together.
               </p>
               <button
                 type="button"
                 onClick={() => setIsCreateGroupOpen(true)}
-                className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs shadow-md shadow-indigo-500/20 active:scale-95 transition-all inline-flex items-center gap-2"
+                className="px-6 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-indigo-500 dark:to-cyan-500 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-xl shadow-indigo-500/25 transition-all inline-flex items-center justify-center gap-2 mx-auto active:scale-95"
               >
                 <Plus className="w-4 h-4 stroke-[3]" />
                 <span>Create Your First Split</span>
@@ -290,7 +288,7 @@ export default function SplitWorkspace() {
                   <div
                     key={gId}
                     onClick={() => setSelectedGroupDetail(g)}
-                    className="p-5 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200/80 dark:border-slate-800 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-700/80 transition-all cursor-pointer group space-y-4"
+                    className="p-5 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200/80 dark:border-slate-700/80 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-700/80 transition-all cursor-pointer group space-y-4"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -367,23 +365,23 @@ export default function SplitWorkspace() {
       {activeSubTab === 'friends' && (
         <div className="space-y-4">
           {friends.length === 0 ? (
-            <div className="p-10 text-center rounded-3xl bg-white dark:bg-[#131926] border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto">
-                <UserPlus className="w-7 h-7 stroke-[1.5]" />
+            <div className="fintech-card p-8 sm:p-12 text-center rounded-3xl bg-white dark:bg-[#131926] border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
+              <div className="w-16 h-16 rounded-3xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mx-auto shadow-sm">
+                <UserPlus className="w-8 h-8 stroke-[1.75]" />
               </div>
-              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+              <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">
                 No Friends Connected Yet
               </h3>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                Invite your friends via link or username to easily track who you split with and see who owes whom.
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+                Add friends by registered email address to track pairwise balances and settle debts seamlessly.
               </p>
               <button
                 type="button"
                 onClick={() => setIsAddFriendOpen(true)}
-                className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs shadow-md shadow-indigo-500/20 active:scale-95 transition-all inline-flex items-center gap-2"
+                className="px-6 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-indigo-500 dark:to-cyan-500 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-xl shadow-indigo-500/25 transition-all inline-flex items-center justify-center gap-2 mx-auto active:scale-95"
               >
-                <UserPlus className="w-4 h-4" />
-                <span>Invite Your First Friend</span>
+                <UserPlus className="w-4 h-4 stroke-[3]" />
+                <span>Add Your First Friend</span>
               </button>
             </div>
           ) : (
@@ -395,7 +393,7 @@ export default function SplitWorkspace() {
                 return (
                   <div
                     key={fId}
-                    className="p-4 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between gap-3 hover:border-slate-300 dark:hover:border-slate-700 transition-all"
+                    className="p-4 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center justify-between gap-3 hover:border-slate-300 dark:hover:border-slate-700 transition-all"
                   >
                     <div className="flex items-center gap-3.5 min-w-0">
                       {/* Color-coded Avatar */}
@@ -454,7 +452,7 @@ export default function SplitWorkspace() {
       {/* ================= TAB 3: ACTIVITY LOG ================= */}
       {activeSubTab === 'activity' && (
         <div className="space-y-4">
-          <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+          <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
             <h3 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
               <Clock className="w-4 h-4 text-indigo-500" />
               <span>Full Split History</span>

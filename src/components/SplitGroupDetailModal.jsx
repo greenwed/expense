@@ -201,7 +201,7 @@ export default function SplitGroupDetailModal({
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md animate-backdrop-fade">
       <div className="fixed inset-0" onClick={onClose} />
 
-      <div className="relative z-10 w-full max-w-lg bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-modal-pop">
+      <div className="relative z-10 w-full max-w-lg bg-white dark:bg-[#131926] border border-slate-200/80 dark:border-slate-700/80 rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-modal-pop">
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800 shrink-0">
@@ -311,7 +311,7 @@ export default function SplitGroupDetailModal({
                 onClose();
                 if (onOpenAddExpense) onOpenAddExpense(group.id || group._id);
               }}
-              className="py-2.5 px-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-indigo-500/20 active:scale-98 transition-all"
+              className="py-2.5 px-3 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-indigo-500 dark:to-cyan-500 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-500/25 active:scale-98 transition-all"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
               <span>Add Expense</span>

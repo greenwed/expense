@@ -226,7 +226,7 @@ export default function SettleUpModal({
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md animate-backdrop-fade">
       <div className="fixed inset-0" onClick={onClose} />
 
-      <div className="relative z-10 w-full max-w-md bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-modal-pop">
+      <div className="relative z-10 w-full max-w-md bg-white dark:bg-[#131926] border border-slate-200/80 dark:border-slate-700/80 rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-modal-pop">
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800 shrink-0">

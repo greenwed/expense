@@ -462,7 +462,7 @@ export default function AddSplitExpenseModal({
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md animate-backdrop-fade">
       <div className="fixed inset-0" onClick={onClose} />
 
-      <div className="relative z-10 w-full max-w-lg bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-modal-pop">
+      <div className="relative z-10 w-full max-w-lg bg-white dark:bg-[#131926] border border-slate-200/80 dark:border-slate-700/80 rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-modal-pop">
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800 shrink-0">
@@ -807,7 +807,7 @@ export default function AddSplitExpenseModal({
           <button
             type="submit"
             disabled={loading || !parsedAmount || !description.trim() || (splitMethod === 'exact' && !isExactValid) || (splitMethod === 'percentage' && !isPercentValid)}
-            className="w-full py-3.5 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 active:scale-98"
+            className="w-full py-3.5 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-indigo-500 dark:to-cyan-500 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 active:scale-98"
           >
             {editingExpense ? <Check className="w-4 h-4 stroke-[3]" /> : <Plus className="w-4 h-4 stroke-[3]" />}
             <span>{loading ? 'Saving...' : editingExpense ? 'Save Changes' : 'Add Split Expense'}</span>
