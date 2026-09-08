@@ -23,13 +23,17 @@ import CreateGroupModal from './components/CreateGroupModal';
 import RenameGroupModal from './components/RenameGroupModal';
 import InviteModal from './components/InviteModal';
 import MemberManagementModal from './components/MemberManagementModal';
+import ExitConfirmModal from './components/ExitConfirmModal';
+import { useBackHandler, useBackButton } from './context/BackHandlerContext';
 import { getCurrentMonthStr } from './utils/formatters';
 
 export default function App() {
   const { user, loading, apiFetch } = useAuth();
+  const { exitApp } = useBackHandler();
 
   // Navigation & Workspace State
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'report' | 'family' | 'settings'
+  const [isExitOpen, setIsExitOpen] = useState(false);
   const [month, setMonth] = useState(getCurrentMonthStr());
   const [isAllTime, setIsAllTime] = useState(false);
 
@@ -195,6 +199,81 @@ export default function App() {
       }
     }
   }, [user]);
+
+  // Native Android Hardware Back Button Handling & Lifecycle
+  useBackButton(() => {
+    // 1. If Exit confirm modal is open, close it
+    if (isExitOpen) {
+      setIsExitOpen(false);
+      return true;
+    }
+
+    // 2. If any App-level modals are open, close them in reverse hierarchy
+    if (isQuickTourOpen) {
+      setIsQuickTourOpen(false);
+      return true;
+    }
+    if (isUserGuideOpen) {
+      setIsUserGuideOpen(false);
+      return true;
+    }
+    if (isQuickAddOpen) {
+      setIsQuickAddOpen(false);
+      return true;
+    }
+    if (isExpenseOpen) {
+      setIsExpenseOpen(false);
+      setEditingExpense(null);
+      return true;
+    }
+    if (isExpenseListOpen) {
+      setIsExpenseListOpen(false);
+      return true;
+    }
+    if (isIncomeOpen) {
+      setIsIncomeOpen(false);
+      setEditingIncome(null);
+      return true;
+    }
+    if (isIncomeListOpen) {
+      setIsIncomeListOpen(false);
+      return true;
+    }
+    if (isMonthOpen) {
+      setIsMonthOpen(false);
+      return true;
+    }
+    if (isBudgetOpen) {
+      setIsBudgetOpen(false);
+      return true;
+    }
+    if (isMemberMgmtOpen) {
+      setIsMemberMgmtOpen(false);
+      return true;
+    }
+    if (isInviteOpen) {
+      setIsInviteOpen(false);
+      return true;
+    }
+    if (isRenameGroupOpen) {
+      setIsRenameGroupOpen(false);
+      return true;
+    }
+    if (isCreateGroupOpen) {
+      setIsCreateGroupOpen(false);
+      return true;
+    }
+
+    // 3. If on a sub-tab (family, split, report, settings), navigate back to Home
+    if (activeTab !== 'home') {
+      setActiveTab('home');
+      return true;
+    }
+
+    // 4. On Home screen with no open modals: trigger Exit Confirmation Popup!
+    setIsExitOpen(true);
+    return true;
+  }, true, 1);
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
@@ -672,6 +751,13 @@ export default function App() {
         currentUser={user}
         onUpdateRole={handleUpdateRole}
         onRemoveMember={handleRemoveMember}
+      />
+
+      {/* Android Native Exit App Confirmation Modal */}
+      <ExitConfirmModal
+        isOpen={isExitOpen}
+        onClose={() => setIsExitOpen(false)}
+        onConfirmExit={exitApp}
       />
 
     </div>

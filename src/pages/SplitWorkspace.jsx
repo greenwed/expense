@@ -25,6 +25,7 @@ import CreateSplitGroupModal from '../components/CreateSplitGroupModal';
 import AddFriendModal from '../components/AddFriendModal';
 import SettleUpModal from '../components/SettleUpModal';
 import SplitGroupDetailModal from '../components/SplitGroupDetailModal';
+import { useBackButton } from '../context/BackHandlerContext';
 
 export default function SplitWorkspace() {
   const { apiFetch, user } = useAuth();
@@ -47,6 +48,38 @@ export default function SplitWorkspace() {
   const [isSettleUpOpen, setIsSettleUpOpen] = useState(false);
   const [settleTarget, setSettleTarget] = useState({ payerId: null, payeeId: null, amount: 0 });
   const [selectedGroupDetail, setSelectedGroupDetail] = useState(null);
+
+  const isAnyModalOpen = Boolean(
+    selectedGroupDetail ||
+    isAddExpenseOpen ||
+    isCreateGroupOpen ||
+    isAddFriendOpen ||
+    isSettleUpOpen
+  );
+
+  useBackButton(() => {
+    if (isSettleUpOpen) {
+      setIsSettleUpOpen(false);
+      return true;
+    }
+    if (isAddExpenseOpen) {
+      setIsAddExpenseOpen(false);
+      setEditingExpense(null);
+      return true;
+    }
+    if (isAddFriendOpen) {
+      setIsAddFriendOpen(false);
+      return true;
+    }
+    if (isCreateGroupOpen) {
+      setIsCreateGroupOpen(false);
+      return true;
+    }
+    if (selectedGroupDetail) {
+      setSelectedGroupDetail(null);
+      return true;
+    }
+  }, isAnyModalOpen, 15);
 
   const fetchDashboardData = useCallback(async () => {
     try {

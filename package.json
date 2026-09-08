@@ -16,6 +16,8 @@
     "test:api": "node scratch/test-api.js"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/core": "^8.5.1",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
     "cors": "^2.8.6",

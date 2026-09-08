@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Plus, Sparkles, Check } from 'lucide-react';
 import { useCategories } from '../context/CategoryContext';
+import { useBackButton } from '../context/BackHandlerContext';
 import { CATEGORY_PALETTE, CATEGORY_ICONS } from '../utils/formatters';
 
 export default function AddCategoryModal({ isOpen, onClose, onCreated }) {
@@ -11,6 +12,12 @@ export default function AddCategoryModal({ isOpen, onClose, onCreated }) {
   const [customHex, setCustomHex] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Pressing back button closes this sub-modal first
+  useBackButton(() => {
+    onClose();
+    return true;
+  }, isOpen, 30);
 
   if (!isOpen) return null;
 

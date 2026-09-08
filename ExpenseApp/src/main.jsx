@@ -4,6 +4,7 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { CategoryProvider } from './context/CategoryContext';
+import { BackHandlerProvider } from './context/BackHandlerContext';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -11,7 +12,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <ThemeProvider>
       <AuthProvider>
         <CategoryProvider>
-          <App />
+          <BackHandlerProvider>
+            <App />
+          </BackHandlerProvider>
         </CategoryProvider>
       </AuthProvider>
     </ThemeProvider>

@@ -18,6 +18,7 @@ import {
   Tag
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useBackButton } from '../context/BackHandlerContext';
 import { formatDateTime, CATEGORY_CONFIG, getAppBaseUrl } from '../utils/formatters';
 
 export default function SplitGroupDetailModal({
@@ -49,6 +50,19 @@ export default function SplitGroupDetailModal({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useBackButton(() => {
+    if (isEditingName) {
+      setIsEditingName(false);
+      return true;
+    }
+    if (isAddingMember) {
+      setIsAddingMember(false);
+      return true;
+    }
+    onClose();
+    return true;
+  }, isOpen, 20);
 
   const currentUserId = String(user?._id || user?.id || '');
   const isCreator = String(groupDetails?.createdBy || group?.createdBy) === currentUserId;

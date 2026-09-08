@@ -18,10 +18,28 @@ import {
   Info,
   Smartphone
 } from 'lucide-react';
+import ExitConfirmModal from '../components/ExitConfirmModal';
+import { useBackHandler, useBackButton } from '../context/BackHandlerContext';
 
 export default function AuthPage({ onSuccess }) {
   const { login, setSession, getFullUrl } = useAuth();
+  const { exitApp } = useBackHandler();
+  const [isExitOpen, setIsExitOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('login'); // 'login' | 'register' | 'forgot_password' | 'forgot_username'
+
+  // Hardware back button navigation on auth screen
+  useBackButton(() => {
+    if (isExitOpen) {
+      setIsExitOpen(false);
+      return true;
+    }
+    if (activeTab !== 'login') {
+      setActiveTab('login');
+      return true;
+    }
+    setIsExitOpen(true);
+    return true;
+  }, true, 1);
 
   // Password Visibility States
   const [showLoginPassword, setShowLoginPassword] = useState(false);
@@ -841,6 +859,12 @@ export default function AuthPage({ onSuccess }) {
         )}
 
       </div>
+
+      <ExitConfirmModal
+        isOpen={isExitOpen}
+        onClose={() => setIsExitOpen(false)}
+        onConfirmExit={exitApp}
+      />
     </div>
   );
 }
