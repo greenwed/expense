@@ -97,6 +97,20 @@ export function CategoryProvider({ children }) {
     throw new Error('Failed to create category.');
   }, [apiFetch]);
 
+  const updateCategory = useCallback(async (id, { name, color, icon }) => {
+    const data = await apiFetch(`/api/personal/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ name, color, icon })
+    });
+    if (data && data.category) {
+      setCustomCategories(prev => {
+        return prev.map(c => (c.id === id ? data.category : c));
+      });
+      return data.category;
+    }
+    throw new Error('Failed to update category.');
+  }, [apiFetch]);
+
   const deleteCategory = useCallback(async (id) => {
     await apiFetch(`/api/personal/categories/${id}`, {
       method: 'DELETE'
@@ -123,13 +137,14 @@ export function CategoryProvider({ children }) {
     customCategories,
     loading,
     addCategory,
+    updateCategory,
     deleteCategory,
     getCategoryMeta,
     refreshCategories: fetchCategories,
     standardCategories: STANDARD_CATEGORIES,
     palette: CATEGORY_PALETTE,
     iconComponents: ICON_COMPONENTS
-  }), [categories, customCategories, loading, addCategory, deleteCategory, getCategoryMeta, fetchCategories]);
+  }), [categories, customCategories, loading, addCategory, updateCategory, deleteCategory, getCategoryMeta, fetchCategories]);
 
   return (
     <CategoryContext.Provider value={value}>

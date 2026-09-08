@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, Clock, Check, Plus } from 'lucide-react';
+import { X, Clock, Check, Plus, Pencil } from 'lucide-react';
 import { useCategories } from '../context/CategoryContext';
 import AddCategoryModal from './AddCategoryModal';
 
 export default function ExpenseModal({ isOpen, onClose, onSave, initialData = null, title = 'Add Expense' }) {
-  const { categories, getCategoryMeta } = useCategories();
+  const { categories, customCategories, getCategoryMeta } = useCategories();
   const [isAddCatOpen, setIsAddCatOpen] = useState(false);
+  const [categoryToEdit, setCategoryToEdit] = useState(null);
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Food');
   const [description, setDescription] = useState('');
@@ -152,14 +153,36 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialData = nu
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 Category *
               </label>
-              <button
-                type="button"
-                onClick={() => setIsAddCatOpen(true)}
-                className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>New Category</span>
-              </button>
+              <div className="flex items-center gap-2">
+                {getCategoryMeta(category).isCustom && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const customMatch = customCategories.find(c => c.name.toLowerCase() === category.toLowerCase());
+                      if (customMatch) {
+                        setCategoryToEdit(customMatch);
+                        setIsAddCatOpen(true);
+                      }
+                    }}
+                    className="text-[11px] font-bold text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 flex items-center gap-1 transition-colors"
+                    title="Edit selected category"
+                  >
+                    <Pencil className="w-3 h-3" />
+                    <span>Edit "{category}"</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCategoryToEdit(null);
+                    setIsAddCatOpen(true);
+                  }}
+                  className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>New Category</span>
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto p-1">
               {categories.map((cat) => {
@@ -257,11 +280,23 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialData = nu
 
       <AddCategoryModal
         isOpen={isAddCatOpen}
-        onClose={() => setIsAddCatOpen(false)}
+        categoryToEdit={categoryToEdit}
+        onClose={() => {
+          setIsAddCatOpen(false);
+          setCategoryToEdit(null);
+        }}
         onCreated={(newCat) => {
           if (newCat && newCat.name) {
             setCategory(newCat.name);
           }
+        }}
+        onUpdated={(updatedCat) => {
+          if (updatedCat && updatedCat.name) {
+            setCategory(updatedCat.name);
+          }
+        }}
+        onDeleted={() => {
+          setCategory('Food');
         }}
       />
     </div>

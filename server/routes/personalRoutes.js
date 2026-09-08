@@ -95,7 +95,64 @@ router.post('/categories', async (req, res) => {
   }
 });
 
-// 3. Delete custom category
+// 3. Edit custom category
+router.put('/categories/:id', async (req, res) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const { id } = req.params;
+    const { name, color, icon } = req.body;
+
+    const existing = await CustomCategoryModel.findById(id);
+    if (!existing) {
+      return res.status(404).json({ error: 'Category not found.' });
+    }
+
+    if (String(existing.userId) !== String(userId)) {
+      return res.status(403).json({ error: 'Not authorized to edit this category.' });
+    }
+
+    let trimmedName = existing.name;
+    if (name !== undefined) {
+      if (!name || typeof name !== 'string' || name.trim().length === 0) {
+        return res.status(400).json({ error: 'Category name cannot be empty.' });
+      }
+      trimmedName = name.trim();
+      if (trimmedName.length > 50) {
+        return res.status(400).json({ error: 'Category name cannot exceed 50 characters.' });
+      }
+
+      if (VALID_CATEGORIES.some(c => c.toLowerCase() === trimmedName.toLowerCase())) {
+        return res.status(400).json({ error: `"${trimmedName}" is already a standard category.` });
+      }
+
+      const duplicate = await CustomCategoryModel.findByName(userId, trimmedName);
+      if (duplicate && String(duplicate.id || duplicate._id) !== String(id)) {
+        return res.status(400).json({ error: `Category "${trimmedName}" already exists.` });
+      }
+    }
+
+    const updatedCategory = await CustomCategoryModel.update(id, userId, {
+      name: trimmedName,
+      color: color !== undefined ? String(color).trim() : undefined,
+      icon: icon !== undefined ? String(icon).trim() : undefined
+    });
+
+    // If category name was renamed, migrate all expenses using the old name
+    if (trimmedName.toLowerCase() !== existing.name.toLowerCase()) {
+      await PersonalExpenseModel.renameCategory(userId, existing.name, trimmedName);
+    }
+
+    return res.json({
+      message: 'Category updated successfully!',
+      category: updatedCategory
+    });
+  } catch (err) {
+    console.error('Update category error:', err);
+    return res.status(500).json({ error: 'Failed to update category.' });
+  }
+});
+
+// 4. Delete custom category
 router.delete('/categories/:id', async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
@@ -110,8 +167,14 @@ router.delete('/categories/:id', async (req, res) => {
       return res.status(403).json({ error: 'Not authorized to delete this category.' });
     }
 
+    // Reassign historical expenses tagged with this category to 'Others'
+    await PersonalExpenseModel.renameCategory(userId, existing.name, 'Others');
+
     await CustomCategoryModel.delete(id, userId);
-    return res.json({ message: 'Category deleted successfully!' });
+    return res.json({
+      message: `Category "${existing.name}" deleted successfully and expenses reassigned to "Others".`,
+      deletedId: id
+    });
   } catch (err) {
     console.error('Delete category error:', err);
     return res.status(500).json({ error: 'Failed to delete category.' });

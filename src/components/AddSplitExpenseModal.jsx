@@ -21,7 +21,8 @@ import {
   Film,
   ShoppingBag,
   Plane,
-  MoreHorizontal
+  MoreHorizontal,
+  Pencil
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCategories } from '../context/CategoryContext';
@@ -162,9 +163,10 @@ export default function AddSplitExpenseModal({
   editingExpense = null
 }) {
   const { apiFetch, user } = useAuth();
-  const { categories, getCategoryMeta } = useCategories();
+  const { categories, customCategories, getCategoryMeta } = useCategories();
   const [mounted, setMounted] = useState(false);
   const [isAddCatOpen, setIsAddCatOpen] = useState(false);
+  const [categoryToEdit, setCategoryToEdit] = useState(null);
 
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
@@ -575,14 +577,36 @@ export default function AddSplitExpenseModal({
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Category
                 </label>
-                <button
-                  type="button"
-                  onClick={() => setIsAddCatOpen(true)}
-                  className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>New</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  {getCategoryMeta(category).isCustom && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const customMatch = customCategories.find(c => c.name.toLowerCase() === category.toLowerCase());
+                        if (customMatch) {
+                          setCategoryToEdit(customMatch);
+                          setIsAddCatOpen(true);
+                        }
+                      }}
+                      className="text-[11px] font-bold text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 flex items-center gap-1 transition-colors"
+                      title="Edit selected category"
+                    >
+                      <Pencil className="w-3 h-3" />
+                      <span>Edit</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCategoryToEdit(null);
+                      setIsAddCatOpen(true);
+                    }}
+                    className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>New</span>
+                  </button>
+                </div>
               </div>
               <CustomDropdown
                 value={category}
@@ -835,11 +859,23 @@ export default function AddSplitExpenseModal({
 
       <AddCategoryModal
         isOpen={isAddCatOpen}
-        onClose={() => setIsAddCatOpen(false)}
+        categoryToEdit={categoryToEdit}
+        onClose={() => {
+          setIsAddCatOpen(false);
+          setCategoryToEdit(null);
+        }}
         onCreated={(newCat) => {
           if (newCat && newCat.name) {
             setCategory(newCat.name);
           }
+        }}
+        onUpdated={(updatedCat) => {
+          if (updatedCat && updatedCat.name) {
+            setCategory(updatedCat.name);
+          }
+        }}
+        onDeleted={() => {
+          setCategory('Food');
         }}
       />
     </div>,

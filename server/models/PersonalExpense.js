@@ -166,6 +166,23 @@ export const PersonalExpenseModel = {
 
     const count = expenseStore.delete(e => (e.id === id || e._id === id) && String(e.userId) === uIdStr);
     return count > 0;
+  },
+
+  async renameCategory(userId, oldCategory, newCategory) {
+    if (!oldCategory || !newCategory) return;
+    const uIdStr = String(userId);
+    const pool = getPgPool();
+    if (pool) {
+      await pool.query(
+        'UPDATE personal_expenses SET category = $1, updated_at = NOW() WHERE user_id = $2 AND LOWER(category) = LOWER($3)',
+        [newCategory, uIdStr, oldCategory]
+      );
+      return;
+    }
+    expenseStore.update(
+      e => String(e.userId) === uIdStr && String(e.category).toLowerCase() === oldCategory.toLowerCase(),
+      existing => ({ ...existing, category: newCategory, updatedAt: new Date().toISOString() })
+    );
   }
 };
 

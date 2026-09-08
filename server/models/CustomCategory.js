@@ -89,6 +89,58 @@ export const CustomCategoryModel = {
     return formatCategory(item);
   },
 
+  async update(id, userId, { name, color, icon }) {
+    const uId = String(userId);
+    const pool = getPgPool();
+    if (pool) {
+      const updates = [];
+      const values = [id, uId];
+      let idx = 3;
+
+      if (name !== undefined) {
+        updates.push(`name = $${idx++}`);
+        values.push(name.trim());
+      }
+      if (color !== undefined) {
+        updates.push(`color = $${idx++}`);
+        values.push(color.trim());
+      }
+      if (icon !== undefined) {
+        updates.push(`icon = $${idx++}`);
+        values.push(icon.trim());
+      }
+
+      if (updates.length === 0) {
+        return this.findById(id);
+      }
+
+      updates.push(`updated_at = NOW()`);
+      const query = `
+        UPDATE custom_categories
+        SET ${updates.join(', ')}
+        WHERE id = $1 AND user_id = $2
+        RETURNING *
+      `;
+      const res = await pool.query(query, values);
+      return res.rows.length > 0 ? formatCategory(res.rows[0]) : null;
+    }
+
+    const item = categoryStore.findOne(c => c.id === id && String(c.userId) === uId);
+    if (!item) return null;
+
+    const updated = categoryStore.update(
+      c => c.id === id && String(c.userId) === uId,
+      existing => ({
+        ...existing,
+        name: name !== undefined ? name.trim() : existing.name,
+        color: color !== undefined ? color.trim() : existing.color,
+        icon: icon !== undefined ? icon.trim() : existing.icon,
+        updatedAt: new Date().toISOString()
+      })
+    );
+    return updated ? formatCategory(updated) : null;
+  },
+
   async delete(id, userId) {
     const uId = String(userId);
     const pool = getPgPool();

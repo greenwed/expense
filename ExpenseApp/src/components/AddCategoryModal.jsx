@@ -1,19 +1,42 @@
-import React, { useState } from 'react';
-import { X, Plus, Sparkles, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Plus, Sparkles, Check, Pencil, Trash2 } from 'lucide-react';
 import { useCategories } from '../context/CategoryContext';
 import { useBackButton } from '../context/BackHandlerContext';
 import { CATEGORY_PALETTE, CATEGORY_ICONS } from '../utils/formatters';
 
-export default function AddCategoryModal({ isOpen, onClose, onCreated }) {
-  const { addCategory, iconComponents } = useCategories();
+export default function AddCategoryModal({
+  isOpen,
+  onClose,
+  onCreated,
+  onUpdated,
+  onDeleted,
+  categoryToEdit = null
+}) {
+  const { addCategory, updateCategory, deleteCategory, iconComponents } = useCategories();
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState(CATEGORY_PALETTE[0]);
   const [selectedIcon, setSelectedIcon] = useState('Tag');
   const [customHex, setCustomHex] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  // Pressing back button closes this sub-modal first
+  useEffect(() => {
+    if (categoryToEdit) {
+      setName(categoryToEdit.name || '');
+      setSelectedColor(categoryToEdit.color || CATEGORY_PALETTE[0]);
+      setSelectedIcon(categoryToEdit.icon || 'Tag');
+      setCustomHex(categoryToEdit.color || '');
+    } else {
+      setName('');
+      setSelectedColor(CATEGORY_PALETTE[0]);
+      setSelectedIcon('Tag');
+      setCustomHex('');
+    }
+    setError('');
+  }, [categoryToEdit, isOpen]);
+
+  // Pressing back button closes this modal first
   useBackButton(() => {
     onClose();
     return true;
@@ -36,19 +59,47 @@ export default function AddCategoryModal({ isOpen, onClose, onCreated }) {
 
     try {
       setLoading(true);
-      const newCat = await addCategory({
-        name: trimmedName,
-        color: activeColor,
-        icon: selectedIcon
-      });
-      setName('');
-      setCustomHex('');
-      if (onCreated) onCreated(newCat);
+      if (categoryToEdit) {
+        const catId = categoryToEdit.id || categoryToEdit._id;
+        const updated = await updateCategory(catId, {
+          name: trimmedName,
+          color: activeColor,
+          icon: selectedIcon
+        });
+        if (onUpdated) onUpdated(updated);
+      } else {
+        const newCat = await addCategory({
+          name: trimmedName,
+          color: activeColor,
+          icon: selectedIcon
+        });
+        if (onCreated) onCreated(newCat);
+      }
       onClose();
     } catch (err) {
-      setError(err.message || 'Failed to create category.');
+      setError(err.message || 'Failed to save category.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!categoryToEdit) return;
+    const catId = categoryToEdit.id || categoryToEdit._id;
+    const confirmMsg = `Are you sure you want to delete category "${categoryToEdit.name}"?\n\nAny existing expenses tagged with this category will be re-assigned to "Others".`;
+    if (!window.confirm(confirmMsg)) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      await deleteCategory(catId);
+      if (onDeleted) onDeleted(catId);
+      onClose();
+    } catch (err) {
+      setError(err.message || 'Failed to delete category.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -60,10 +111,21 @@ export default function AddCategoryModal({ isOpen, onClose, onCreated }) {
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800">
           <div>
             <h3 className="text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-              New Category
+              {categoryToEdit ? (
+                <>
+                  <Pencil className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  Edit Category
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  New Category
+                </>
+              )}
             </h3>
-            <span className="text-xs text-slate-400">Create a custom expense category</span>
+            <span className="text-xs text-slate-400">
+              {categoryToEdit ? 'Modify category name, color or icon' : 'Create a custom expense category'}
+            </span>
           </div>
           <button
             type="button"
@@ -200,27 +262,58 @@ export default function AddCategoryModal({ isOpen, onClose, onCreated }) {
 
           {/* Action Buttons */}
           <div className="flex items-center gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-3 px-4 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading || !name.trim()}
-              className="flex-1 py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  <Plus className="w-4 h-4" />
-                  Create Category
-                </>
-              )}
-            </button>
+            {categoryToEdit ? (
+              <>
+                <button
+                  type="button"
+                  disabled={loading || deleting}
+                  onClick={handleDelete}
+                  className="py-3 px-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 font-bold text-xs flex items-center justify-center gap-1.5 transition-all border border-rose-200 dark:border-rose-900/40 disabled:opacity-50"
+                  title="Delete category"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>{deleting ? 'Deleting...' : 'Delete'}</span>
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || deleting || !name.trim()}
+                  className="flex-1 py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Save Changes</span>
+                    </>
+                  )}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 py-3 px-4 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || !name.trim()}
+                  className="flex-1 py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      <span>Create Category</span>
+                    </>
+                  )}
+                </button>
+              </>
+            )}
           </div>
         </form>
       </div>

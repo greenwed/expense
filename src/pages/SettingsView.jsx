@@ -20,6 +20,7 @@ import {
   Download,
   Tag,
   Plus,
+  Pencil,
   Trash2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -33,6 +34,7 @@ export default function SettingsView({ onOpenBudgetModal, onOpenUserGuide, onOpe
   const { customCategories, deleteCategory, iconComponents } = useCategories();
 
   const [isAddCatOpen, setIsAddCatOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
   const [deletingCatId, setDeletingCatId] = useState(null);
 
   const [currentPass, setCurrentPass] = useState('');
@@ -261,7 +263,10 @@ export default function SettingsView({ onOpenBudgetModal, onOpenUserGuide, onOpe
           </h4>
           <button
             type="button"
-            onClick={() => setIsAddCatOpen(true)}
+            onClick={() => {
+              setEditingCategory(null);
+              setIsAddCatOpen(true);
+            }}
             className="px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 font-bold text-xs transition-colors border border-indigo-100 dark:border-indigo-800/60 flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -299,24 +304,40 @@ export default function SettingsView({ onOpenBudgetModal, onOpenUserGuide, onOpe
                     </span>
                   </div>
 
-                  <button
-                    type="button"
-                    disabled={isDeleting}
-                    onClick={async () => {
-                      try {
-                        setDeletingCatId(cat.id);
-                        await deleteCategory(cat.id);
-                      } catch (err) {
-                        alert(err.message || 'Failed to delete category');
-                      } finally {
-                        setDeletingCatId(null);
-                      }
-                    }}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-                    title="Delete category"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingCategory(cat);
+                        setIsAddCatOpen(true);
+                      }}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
+                      title="Edit category"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isDeleting}
+                      onClick={async () => {
+                        const confirmMsg = `Are you sure you want to delete category "${cat.name}"?\n\nAny existing expenses tagged with this category will be re-assigned to "Others".`;
+                        if (!window.confirm(confirmMsg)) return;
+
+                        try {
+                          setDeletingCatId(cat.id);
+                          await deleteCategory(cat.id);
+                        } catch (err) {
+                          alert(err.message || 'Failed to delete category');
+                        } finally {
+                          setDeletingCatId(null);
+                        }
+                      }}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50"
+                      title="Delete category"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -326,7 +347,11 @@ export default function SettingsView({ onOpenBudgetModal, onOpenUserGuide, onOpe
 
       <AddCategoryModal
         isOpen={isAddCatOpen}
-        onClose={() => setIsAddCatOpen(false)}
+        categoryToEdit={editingCategory}
+        onClose={() => {
+          setIsAddCatOpen(false);
+          setEditingCategory(null);
+        }}
       />
 
       {/* Help & User Guide */}

@@ -348,9 +348,10 @@ export class JsonStore {
     let updatedItem = null;
     const nextItems = items.map(item => {
       if (filterFn(item)) {
+        const patch = typeof updateData === 'function' ? updateData(item) : updateData;
         updatedItem = {
           ...item,
-          ...updateData,
+          ...patch,
           updatedAt: new Date().toISOString()
         };
         return updatedItem;

@@ -934,17 +934,61 @@ async function runAllTests() {
     assert(gamingBreakdown?.color === '#8B5CF6', 'Custom category preserves custom color in breakdown');
     assert(gamingBreakdown?.isCustom === true, 'Custom category flagged as isCustom in breakdown');
 
-    // 14.7 Delete custom category
+    // 14.7 Edit/Update custom category (rename name, color, and icon)
+    const updatedCatName = `Esports_${timestamp}`;
+    const updateCatRes = await request(`/personal/categories/${createdCatId}`, {
+      method: 'PUT',
+      headers: charlieHeaders,
+      body: {
+        name: updatedCatName,
+        color: '#EC4899',
+        icon: 'Music'
+      }
+    });
+    assert(updateCatRes.status === 200, 'PUT /personal/categories/:id returns 200');
+    assert(updateCatRes.data?.category?.name === updatedCatName, 'Category name updated');
+    assert(updateCatRes.data?.category?.color === '#EC4899', 'Category color updated');
+    assert(updateCatRes.data?.category?.icon === 'Music', 'Category icon updated');
+
+    // 14.8 Verify existing expenses automatically migrated to new category name
+    const dashAfterUpdate = await request('/personal/dashboard', { headers: charlieHeaders });
+    const oldBreakdown = dashAfterUpdate.data?.categoryBreakdown?.find(c => c.category === customCatName);
+    const newBreakdown = dashAfterUpdate.data?.categoryBreakdown?.find(c => c.category === updatedCatName);
+    assert(!oldBreakdown || oldBreakdown.amount === 0, 'Old category name has 0 amount in breakdown');
+    assert(!!newBreakdown && newBreakdown.amount >= 2500, 'Expenses successfully migrated to renamed category');
+    assert(newBreakdown.color === '#EC4899', 'Renamed category has updated color in dashboard breakdown');
+
+    // 14.9 Reject updating category to empty name or name colliding with standard categories
+    const emptyNameUpdate = await request(`/personal/categories/${createdCatId}`, {
+      method: 'PUT',
+      headers: charlieHeaders,
+      body: { name: '   ' }
+    });
+    assert(emptyNameUpdate.status === 400, 'Reject empty category name with 400');
+
+    const collisionUpdate = await request(`/personal/categories/${createdCatId}`, {
+      method: 'PUT',
+      headers: charlieHeaders,
+      body: { name: 'Food' }
+    });
+    assert(collisionUpdate.status === 400, 'Reject updating category to standard category name with 400');
+
+    // 14.10 Delete custom category
     const deleteCatRes = await request(`/personal/categories/${createdCatId}`, {
       method: 'DELETE',
       headers: charlieHeaders
     });
     assert(deleteCatRes.status === 200, 'DELETE /personal/categories/:id succeeds');
 
-    // 14.8 Verify custom category no longer in custom list
+    // 14.11 Verify custom category no longer in custom list
     const postDeleteCatsRes = await request('/personal/categories', { headers: charlieHeaders });
     const stillExists = postDeleteCatsRes.data?.custom?.some(c => (c.id || c._id) === createdCatId);
     assert(!stillExists, 'Deleted custom category is removed from categories list');
+
+    // 14.12 Verify expenses were safely reassigned to "Others" so metrics remain intact
+    const dashAfterDelete = await request('/personal/dashboard', { headers: charlieHeaders });
+    const othersBreakdown = dashAfterDelete.data?.categoryBreakdown?.find(c => c.category === 'Others');
+    assert(othersBreakdown?.amount >= 2500, 'Expenses from deleted category safely reassigned to Others');
 
     console.log('\n================================================================');
     console.log(`🎉 FULL-APP COMPREHENSIVE TEST SUITE COMPLETE!`);
