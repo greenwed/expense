@@ -101,6 +101,16 @@ export default function FamilyGroupSettingsModal({
     }
   }, [group?.name]);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, onClose]);
+
   if (!isOpen || !group || !mounted || typeof document === 'undefined') return null;
 
   const currentUserId = currentUser ? String(currentUser.userId || currentUser._id || currentUser.id || '') : '';
@@ -254,18 +264,6 @@ export default function FamilyGroupSettingsModal({
       setIsDeleting(false);
     }
   };
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
-    };
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [isOpen, onClose]);
-
-  if (typeof document === 'undefined') return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-backdrop-fade">

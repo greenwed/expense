@@ -804,7 +804,7 @@ export default function FamilyWorkspace({
       )}
 
       {/* Family Group Settings Modal */}
-      {mounted && (
+      {mounted && isGroupSettingsOpen && (
         <FamilyGroupSettingsModal
           isOpen={isGroupSettingsOpen}
           onClose={() => setIsGroupSettingsOpen(false)}
