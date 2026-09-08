@@ -20,6 +20,40 @@ import {
   AlertCircle
 } from 'lucide-react';
 
+class ModalErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error('FamilyGroupSettingsModal Error:', error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/60 flex items-center justify-center text-rose-600 dark:text-rose-400 mx-auto">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">Unable to display settings</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">An unexpected error occurred while rendering the settings dialog.</p>
+          <button
+            type="button"
+            onClick={this.props.onClose}
+            className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-500"
+          >
+            Close Settings
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function FamilyGroupSettingsModal({
   isOpen,
   onClose,
@@ -32,6 +66,7 @@ export default function FamilyGroupSettingsModal({
   onRegenerateToken,
   onDeleteGroup
 }) {
+  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState('members'); // 'members' | 'add_email' | 'invite' | 'general'
   const [groupNameInput, setGroupNameInput] = useState(group?.name || '');
   const [isRenaming, setIsRenaming] = useState(false);
@@ -56,15 +91,60 @@ export default function FamilyGroupSettingsModal({
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  if (!isOpen || !group) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  const currentUserId = String(currentUser?._id || currentUser?.id);
-  const members = group.members || [];
+  useEffect(() => {
+    if (group?.name) {
+      setGroupNameInput(group.name);
+    }
+  }, [group?.name]);
+
+  if (!isOpen || !group || !mounted || typeof document === 'undefined') return null;
+
+  const currentUserId = currentUser ? String(currentUser.userId || currentUser._id || currentUser.id || '') : '';
+  
+  const rawMembers = Array.isArray(group.members)
+    ? group.members
+    : typeof group.members === 'string'
+    ? (() => { try { return JSON.parse(group.members); } catch (e) { return []; } })()
+    : [];
+
+  const members = (Array.isArray(rawMembers) ? rawMembers : []).map((m, idx) => {
+    if (!m) return null;
+    if (typeof m === 'string') {
+      return {
+        userId: m,
+        id: m,
+        name: 'Member',
+        username: 'member',
+        role: 'member'
+      };
+    }
+    const userId = String(m.userId || m.id || m._id || m.user_id || `member_${idx}`);
+    const name = String(m.name || m.userName || m.user_name || m.username || 'Member');
+    const username = String(m.username || m.userUsername || m.user_username || m.name || 'user');
+    const role = String(m.role || 'member');
+    return {
+      ...m,
+      userId,
+      id: userId,
+      name,
+      username,
+      role
+    };
+  }).filter(Boolean);
+
   const currentMember = members.find(m => String(m.userId) === currentUserId);
-  const isAdmin = currentMember?.role === 'admin';
-  const isCreator = String(group.createdBy) === currentUserId;
+  const isCreator = Boolean(group.createdBy && String(group.createdBy) === currentUserId);
+  const isAdmin = currentMember?.role === 'admin' || isCreator;
 
-  const inviteUrl = `${window.location.origin}/family/join/${group.inviteToken}`;
+  const origin = typeof window !== 'undefined' && window.location && window.location.origin
+    ? window.location.origin
+    : '';
+  const inviteToken = group.inviteToken || group.invite_token || '';
+  const inviteUrl = inviteToken ? `${origin}/family/join/${inviteToken}` : `${origin}/family`;
 
   // Handle Group Rename
   const handleRename = async (e) => {
@@ -188,11 +268,15 @@ export default function FamilyGroupSettingsModal({
   if (typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md animate-backdrop-fade">
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-backdrop-fade">
       {/* Click backdrop to close */}
-      <div className="fixed inset-0 -z-10" onClick={onClose} />
+      <div 
+        className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md cursor-pointer" 
+        onClick={onClose} 
+      />
 
       <div className="relative z-10 bg-white dark:bg-[#111726] border-t sm:border border-slate-200/80 dark:border-slate-800 rounded-t-[32px] sm:rounded-[32px] w-full max-w-xl shadow-2xl overflow-hidden animate-modal-pop flex flex-col h-[85vh] sm:h-auto sm:max-h-[85vh]">
+        <ModalErrorBoundary onClose={onClose}>
         
         {/* Mobile drag handle indicator */}
         <div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto mt-3 mb-1 sm:hidden shrink-0" />
@@ -310,7 +394,10 @@ export default function FamilyGroupSettingsModal({
                   const isTargetAdmin = m.role === 'admin';
                   const isTargetMod = m.role === 'moderator';
                   const isBusy = loadingMemberId === m.userId;
-                  const isTargetCreator = String(group.createdBy) === String(m.userId);
+                  const isTargetCreator = Boolean(group.createdBy && String(group.createdBy) === String(m.userId));
+                  const displayName = m.name || 'Member';
+                  const displayInitial = displayName ? displayName.charAt(0).toUpperCase() : 'M';
+                  const displayUsername = m.username || 'user';
 
                   return (
                     <div
@@ -319,14 +406,14 @@ export default function FamilyGroupSettingsModal({
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-700 flex items-center justify-center font-black text-indigo-600 dark:text-indigo-400 shadow-sm shrink-0">
-                          {m.name ? m.name[0].toUpperCase() : 'M'}
+                          {displayInitial}
                         </div>
                         <div className="min-w-0">
                           <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white block truncate">
-                            {m.name} {isSelf && <span className="text-indigo-600 dark:text-indigo-400 text-xs font-semibold">(You)</span>}
+                            {displayName} {isSelf && <span className="text-indigo-600 dark:text-indigo-400 text-xs font-semibold">(You)</span>}
                           </span>
                           <span className="text-[11px] text-slate-400 dark:text-slate-400 font-mono block truncate">
-                            @{m.username}
+                            @{displayUsername}
                           </span>
                         </div>
                       </div>
@@ -371,7 +458,7 @@ export default function FamilyGroupSettingsModal({
 
                             <button
                               type="button"
-                              onClick={() => handleRemove(m.userId, m.name)}
+                              onClick={() => handleRemove(m.userId, displayName)}
                               disabled={isBusy}
                               title="Remove from group"
                               className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors"
@@ -385,7 +472,7 @@ export default function FamilyGroupSettingsModal({
                         {!isAdmin && isSelf && (
                           <button
                             type="button"
-                            onClick={() => handleRemove(m.userId, m.name)}
+                            onClick={() => handleRemove(m.userId, displayName)}
                             disabled={isBusy}
                             className="px-2.5 py-1 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-xs font-bold flex items-center gap-1 transition-colors"
                           >
@@ -638,6 +725,7 @@ export default function FamilyGroupSettingsModal({
 
         </div>
 
+        </ModalErrorBoundary>
       </div>
     </div>,
     document.body

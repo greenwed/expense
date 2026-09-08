@@ -360,7 +360,7 @@ export default function ReportView({
 
           {/* Family Group Selector if viewing family report */}
           {reportType === 'family' && groups.length > 1 && (
-            <div className="relative">
+            <div className="relative w-fit">
               <button
                 type="button"
                 onClick={() => setGroupDropdownOpen(prev => !prev)}
@@ -376,7 +376,7 @@ export default function ReportView({
               {groupDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-30" onClick={() => setGroupDropdownOpen(false)} />
-                  <div className="absolute right-0 top-full mt-1.5 z-40 min-w-[160px] max-h-48 overflow-y-auto rounded-2xl bg-white dark:bg-[#151C2C] border border-slate-200 dark:border-slate-700 shadow-xl p-1.5 space-y-1 animate-fadeIn">
+                  <div className="absolute left-0 top-full mt-1.5 z-40 min-w-[180px] max-h-48 overflow-y-auto rounded-2xl bg-white dark:bg-[#151C2C] border border-slate-200 dark:border-slate-700 shadow-xl p-1.5 space-y-1 animate-fadeIn">
                     {groups.map((g) => {
                       const gId = g.id || g._id;
                       const isSelected = String(gId) === String(activeGroupId || selectedGroupId);

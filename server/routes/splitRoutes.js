@@ -945,7 +945,8 @@ router.get('/reports', async (req, res) => {
 
     // Filter by date range or month
     const filteredExpenses = expenses.filter(e => {
-      const expDate = (e.date || e.createdAt).slice(0, 10);
+      const rawDate = e.date || e.createdAt;
+      const expDate = (rawDate instanceof Date ? rawDate.toISOString() : String(rawDate || '')).slice(0, 10);
       if (startDate && endDate) {
         return expDate >= startDate && expDate <= endDate;
       }

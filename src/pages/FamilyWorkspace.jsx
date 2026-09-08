@@ -804,18 +804,20 @@ export default function FamilyWorkspace({
       )}
 
       {/* Family Group Settings Modal */}
-      <FamilyGroupSettingsModal
-        isOpen={isGroupSettingsOpen}
-        onClose={() => setIsGroupSettingsOpen(false)}
-        group={currentGroup}
-        currentUser={user}
-        onUpdateGroupName={onUpdateGroupName || onOpenRenameGroup}
-        onAddMemberByEmail={onAddMemberByEmail}
-        onUpdateRole={onUpdateRole}
-        onRemoveMember={onRemoveMember}
-        onRegenerateToken={onRegenerateToken}
-        onDeleteGroup={onDeleteGroup}
-      />
+      {mounted && (
+        <FamilyGroupSettingsModal
+          isOpen={isGroupSettingsOpen}
+          onClose={() => setIsGroupSettingsOpen(false)}
+          group={{ ...(currentGroup || {}), members }}
+          currentUser={user}
+          onUpdateGroupName={onUpdateGroupName || onOpenRenameGroup}
+          onAddMemberByEmail={onAddMemberByEmail}
+          onUpdateRole={onUpdateRole}
+          onRemoveMember={onRemoveMember}
+          onRegenerateToken={onRegenerateToken}
+          onDeleteGroup={onDeleteGroup}
+        />
+      )}
 
     </div>
   );
