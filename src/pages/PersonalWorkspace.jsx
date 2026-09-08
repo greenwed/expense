@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import HeroBalanceCard from '../components/HeroBalanceCard';
-import MoneySummaryCards from '../components/MoneySummaryCards';
 import BudgetWarningBanner from '../components/BudgetWarningBanner';
 import {
   Search,
@@ -76,17 +75,8 @@ export default function PersonalWorkspace({
         percentSpent={percentSpent}
         isExceeding80={isExceeding80}
         isExceeding100={isExceeding100}
-      />
-
-      {/* 2. "Your Money" Dual Metric Cards (Symmetrical Incomes & Expenses Managers) */}
-      <MoneySummaryCards
-        totalIncome={monthlyIncome}
-        totalSpent={monthlySpent}
-        incomeCount={incomes.length}
-        expenseCount={expenses.length}
         onOpenManageIncome={onOpenManageIncome}
         onOpenManageExpenses={onOpenManageExpenses}
-        canManage={true}
       />
 
       {/* 3. Budget & Income Health Insight Banner */}

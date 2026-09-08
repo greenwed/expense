@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import HeroBalanceCard from '../components/HeroBalanceCard';
-import MoneySummaryCards from '../components/MoneySummaryCards';
 import BudgetWarningBanner from '../components/BudgetWarningBanner';
 import {
   Users,
@@ -256,17 +255,8 @@ export default function FamilyWorkspace({
         percentSpent={percentSpent}
         isExceeding80={isExceeding80}
         isExceeding100={isExceeding100}
-      />
-
-      {/* "Your Money" Dual Metric Cards (Group Month Income & Group Month Expenses) */}
-      <MoneySummaryCards
-        totalIncome={monthlyIncome}
-        totalSpent={monthlySpent}
-        incomeCount={incomes.length}
-        expenseCount={expenses.length}
         onOpenManageIncome={onOpenManageIncome}
         onOpenManageExpenses={onOpenManageExpenses}
-        canManage={true}
       />
 
       {/* Warning / Health Pill */}

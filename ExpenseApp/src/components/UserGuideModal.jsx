@@ -77,7 +77,7 @@ export default function UserGuideModal({ isOpen, onClose, onStartTour }) {
             </div>
           </div>
           <p>
-            Under the <strong className="text-slate-900 dark:text-white">"Your Money"</strong> section, click on the Income or Expense cards to view, search, edit, or delete existing entries at any time.
+            Click directly on the <strong className="text-slate-900 dark:text-white">Month Income</strong> or <strong className="text-slate-900 dark:text-white">Month Spent</strong> pill buttons on the balance card to view, search, edit, or delete existing entries at any time.
           </p>
         </div>
       )

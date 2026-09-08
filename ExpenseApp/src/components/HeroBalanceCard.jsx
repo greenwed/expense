@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, ArrowDownRight, TrendingUp, IndianRupee } from 'lucide-react';
+import { Bell, ArrowDownRight, TrendingUp, IndianRupee, ChevronRight } from 'lucide-react';
 import { formatINR } from '../utils/formatters';
 
 export default function HeroBalanceCard({
@@ -12,7 +12,9 @@ export default function HeroBalanceCard({
   totalSpent = 0,
   percentSpent = 0,
   isExceeding80 = false,
-  isExceeding100 = false
+  isExceeding100 = false,
+  onOpenManageIncome,
+  onOpenManageExpenses
 }) {
   const avatarLetter = (user?.name || user?.username || 'U')[0].toUpperCase();
   const displayBalance = totalBalance !== undefined ? totalBalance : remainingBalance;
@@ -80,17 +82,29 @@ export default function HeroBalanceCard({
           </h1>
         </div>
 
-        {/* Breakdown Stats */}
-        <div className="flex items-center gap-2 pt-2 text-xs font-semibold text-indigo-100 dark:text-slate-300 flex-wrap">
-          <span className="flex items-center gap-1">
-            <TrendingUp className="w-3.5 h-3.5 text-emerald-300 dark:text-emerald-400" />
-            <span>Month Income: {formatINR(displayIncome)}</span>
-          </span>
-          <span className="text-indigo-300 dark:text-slate-500">•</span>
-          <span className="flex items-center gap-1">
-            <ArrowDownRight className="w-3.5 h-3.5 text-rose-300 dark:text-rose-400" />
-            <span>Month Spent: {formatINR(displaySpent)}</span>
-          </span>
+        {/* Breakdown Stats / Quick Manage Pill Buttons */}
+        <div className="flex items-center gap-2 pt-2 text-xs font-semibold flex-wrap">
+          <button
+            type="button"
+            onClick={onOpenManageIncome}
+            className="group flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 active:bg-white/30 dark:bg-white/10 dark:hover:bg-white/15 dark:active:bg-white/20 border border-white/20 dark:border-white/15 backdrop-blur-md text-white transition-all cursor-pointer active:scale-95 shadow-sm select-none"
+            title="View and manage income entries"
+          >
+            <TrendingUp className="w-3.5 h-3.5 text-emerald-300 dark:text-emerald-400 shrink-0" />
+            <span className="font-bold">Month Income: {formatINR(displayIncome)}</span>
+            <ChevronRight className="w-3 h-3 text-indigo-200/80 dark:text-slate-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenManageExpenses}
+            className="group flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 active:bg-white/30 dark:bg-white/10 dark:hover:bg-white/15 dark:active:bg-white/20 border border-white/20 dark:border-white/15 backdrop-blur-md text-white transition-all cursor-pointer active:scale-95 shadow-sm select-none"
+            title="View and manage expense entries"
+          >
+            <ArrowDownRight className="w-3.5 h-3.5 text-rose-300 dark:text-rose-400 shrink-0" />
+            <span className="font-bold">Month Spent: {formatINR(displaySpent)}</span>
+            <ChevronRight className="w-3 h-3 text-indigo-200/80 dark:text-slate-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+          </button>
         </div>
       </div>
 
