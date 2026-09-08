@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import HeroBalanceCard from '../components/HeroBalanceCard';
 import BudgetWarningBanner from '../components/BudgetWarningBanner';
+import FamilyGroupSettingsModal from '../components/FamilyGroupSettingsModal';
 import {
   Users,
   Plus,
@@ -44,7 +45,13 @@ export default function FamilyWorkspace({
   onOpenManageExpenses,
   onOpenAddExpense,
   onOpenEditExpense,
-  onDeleteExpense
+  onDeleteExpense,
+  onDeleteGroup,
+  onAddMemberByEmail,
+  onUpdateRole,
+  onRemoveMember,
+  onRegenerateToken,
+  onUpdateGroupName
 }) {
   const currentGroup = groups.find((g) => (g.id || g._id) === selectedGroupId);
   const userRole = currentGroup?.currentUserRole || groupData?.currentUserRole || 'member';
@@ -78,6 +85,7 @@ export default function FamilyWorkspace({
   // Custom themed popups state (replaces native OS dialog on Android/Web)
   const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [isGroupSettingsOpen, setIsGroupSettingsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -90,13 +98,14 @@ export default function FamilyWorkspace({
       if (e.key === 'Escape') {
         setIsMemberModalOpen(false);
         setIsGroupModalOpen(false);
+        setIsGroupSettingsOpen(false);
       }
     };
-    if (isMemberModalOpen || isGroupModalOpen) {
+    if (isMemberModalOpen || isGroupModalOpen || isGroupSettingsOpen) {
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [isMemberModalOpen, isGroupModalOpen]);
+  }, [isMemberModalOpen, isGroupModalOpen, isGroupSettingsOpen]);
 
   // Reset member and category filter when switching groups
   useEffect(() => {
@@ -192,29 +201,41 @@ export default function FamilyWorkspace({
       
       {/* Group Selector & Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#131926] p-4 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm transition-colors">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-base shadow-sm">
-            <Users className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsGroupModalOpen(true)}
-                className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5 text-left transition-all hover:opacity-80 active:scale-98 cursor-pointer"
-                title="View or switch family groups"
-              >
-                <span>{currentGroup?.name || 'Family Hub'}</span>
-                <ChevronDown className="w-4 h-4 text-slate-400" />
-              </button>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                {userRole}
+        <div className="flex items-center justify-between w-full sm:w-auto">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-base shadow-sm shrink-0">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsGroupModalOpen(true)}
+                  className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5 text-left transition-all hover:opacity-80 active:scale-98 cursor-pointer"
+                  title="View or switch family groups"
+                >
+                  <span>{currentGroup?.name || 'Family Hub'}</span>
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                </button>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                  {userRole}
+                </span>
+              </div>
+              <span className="text-xs text-slate-400 dark:text-slate-400">
+                {members.length} member{members.length !== 1 ? 's' : ''} in this group
               </span>
             </div>
-            <span className="text-xs text-slate-400 dark:text-slate-400">
-              {members.length} member{members.length !== 1 ? 's' : ''} in this group
-            </span>
           </div>
+
+          {/* Group Settings Button (Top Right where red circle was marked!) */}
+          <button
+            type="button"
+            onClick={() => setIsGroupSettingsOpen(true)}
+            className="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-[#1A2234] dark:hover:bg-[#222C42] text-slate-700 dark:text-slate-200 flex items-center justify-center transition-all cursor-pointer active:scale-95 border border-slate-200/60 dark:border-slate-700/60 shadow-sm shrink-0 sm:hidden"
+            title="Group Settings"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Group Actions */}
@@ -237,11 +258,20 @@ export default function FamilyWorkspace({
           </button>
           <button
             type="button"
-            onClick={onOpenMemberManagement}
+            onClick={() => setIsGroupSettingsOpen(true)}
             className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-[#1A2234] hover:bg-slate-200 dark:hover:bg-[#222C42] text-slate-700 dark:text-slate-200 font-bold text-xs shrink-0 flex items-center gap-1.5 transition-colors border border-slate-200/60 dark:border-slate-700/60"
           >
             <Settings className="w-3.5 h-3.5" />
-            <span>Members</span>
+            <span>Settings</span>
+          </button>
+          {/* Desktop Settings Button */}
+          <button
+            type="button"
+            onClick={() => setIsGroupSettingsOpen(true)}
+            className="hidden sm:flex w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#1A2234] hover:bg-slate-200 dark:hover:bg-[#222C42] text-slate-700 dark:text-slate-200 items-center justify-center transition-colors border border-slate-200/60 dark:border-slate-700/60 shrink-0"
+            title="Group Settings"
+          >
+            <Settings className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -800,6 +830,20 @@ export default function FamilyWorkspace({
         </div>,
         document.body
       )}
+
+      {/* Family Group Settings Modal */}
+      <FamilyGroupSettingsModal
+        isOpen={isGroupSettingsOpen}
+        onClose={() => setIsGroupSettingsOpen(false)}
+        group={currentGroup}
+        currentUser={user}
+        onUpdateGroupName={onUpdateGroupName || onOpenRenameGroup}
+        onAddMemberByEmail={onAddMemberByEmail}
+        onUpdateRole={onUpdateRole}
+        onRemoveMember={onRemoveMember}
+        onRegenerateToken={onRegenerateToken}
+        onDeleteGroup={onDeleteGroup}
+      />
 
     </div>
   );

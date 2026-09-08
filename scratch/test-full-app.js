@@ -1136,6 +1136,71 @@ async function runAllTests() {
     const famOthersBreakdown = famDashAfterDelete.data?.categoryBreakdown?.find(c => c.category === 'Others');
     assert(famOthersBreakdown?.amount >= 3200, 'Family expenses safely reassigned to "Others"');
 
+    // -------------------------------------------------------------
+    // SECTION 16: Family Group Settings & Management (Email Add, Creator Protection, Cascading Deletion)
+    // -------------------------------------------------------------
+    console.log('\n--- SECTION 16: Family Group Settings & Management ---');
+
+    // 16.1 Admin adds member by registered Email ID
+    const addEveFamByEmail = await request(`/family/groups/${famGroupId}/members/email`, {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: { email: userEve.email, role: 'member' }
+    });
+    assert(addEveFamByEmail.status === 200, 'Admin successfully added Eve to family group by email');
+    assert(addEveFamByEmail.data?.group?.members?.some(m => String(m.userId) === String(eveUser.id || eveUser._id)), 'Eve is in family group members list');
+
+    // 16.2 Adding unregistered / nonexistent email returns 404
+    const addNonexistent = await request(`/family/groups/${famGroupId}/members/email`, {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: { email: 'nonexistent_user_xyz@test.com', role: 'member' }
+    });
+    assert(addNonexistent.status === 404, 'Adding nonexistent email returns 404');
+
+    // 16.3 Adding an already-existing member returns 400
+    const addDuplicateMember = await request(`/family/groups/${famGroupId}/members/email`, {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: { email: userEve.email, role: 'member' }
+    });
+    assert(addDuplicateMember.status === 400, 'Adding already-existing group member returns 400');
+
+    // 16.4 Non-admin calling add by email returns 403
+    const nonAdminAddByEmail = await request(`/family/groups/${famGroupId}/members/email`, {
+      method: 'POST',
+      headers: daveHeaders, // Dave is a member, not admin
+      body: { email: userFrank.email, role: 'member' }
+    });
+    assert(nonAdminAddByEmail.status === 403, 'Non-admin cannot add members by email (403 Forbidden)');
+
+    // 16.5 Group creator cannot be removed from group (returns 400)
+    const removeCreatorRes = await request(`/family/groups/${famGroupId}/members/${charlieUser.id || charlieUser._id}`, {
+      method: 'DELETE',
+      headers: charlieHeaders
+    });
+    assert(removeCreatorRes.status === 400, 'Attempting to remove group creator returns 400 with helpful message');
+
+    // 16.6 Non-admin deleting group returns 403
+    const nonAdminDeleteGroup = await request(`/family/groups/${famGroupId}`, {
+      method: 'DELETE',
+      headers: daveHeaders
+    });
+    assert(nonAdminDeleteGroup.status === 403, 'Non-admin deleting group returns 403 Forbidden');
+
+    // 16.7 Admin deleting group succeeds with 200 (cascades group, expenses, incomes, custom categories)
+    const adminDeleteGroup = await request(`/family/groups/${famGroup2Id}`, {
+      method: 'DELETE',
+      headers: daveHeaders // Dave is admin of famGroup2Id
+    });
+    assert(adminDeleteGroup.status === 200, 'Admin deleted family group with 200 OK');
+
+    // 16.8 Verify deleted group is no longer accessible (returns 404)
+    const getDeletedGroup = await request(`/family/groups/${famGroup2Id}/dashboard`, {
+      headers: daveHeaders
+    });
+    assert(getDeletedGroup.status === 404, 'Accessing deleted group returns 404 Not Found');
+
     console.log('\n================================================================');
     console.log(`🎉 FULL-APP COMPREHENSIVE TEST SUITE COMPLETE!`);
     console.log(`   Passed: ${passedCount} tests`);

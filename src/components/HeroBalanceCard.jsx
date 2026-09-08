@@ -82,29 +82,65 @@ export default function HeroBalanceCard({
           </h1>
         </div>
 
-        {/* Breakdown Stats / Quick Manage Pill Buttons */}
-        <div className="flex items-center gap-2 pt-2 text-xs font-semibold flex-wrap">
-          <button
-            type="button"
+        {/* Dual Metric Cards inside Hero Card (Symmetrical Income & Expense Managers) */}
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 pt-3 sm:pt-4">
+          
+          {/* Card 1: Month Income Box */}
+          <div
             onClick={onOpenManageIncome}
-            className="group flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 active:bg-white/30 dark:bg-white/10 dark:hover:bg-white/15 dark:active:bg-white/20 border border-white/20 dark:border-white/15 backdrop-blur-md text-white transition-all cursor-pointer active:scale-95 shadow-sm select-none"
+            className="group relative overflow-hidden rounded-2xl p-3 sm:p-4 bg-white/10 hover:bg-white/20 active:bg-white/25 dark:bg-white/5 dark:hover:bg-white/10 dark:active:bg-white/15 border border-white/20 dark:border-white/10 backdrop-blur-md transition-all duration-200 cursor-pointer active:scale-[0.98] shadow-sm flex flex-col justify-between"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpenManageIncome && onOpenManageIncome()}
             title="View and manage income entries"
           >
-            <TrendingUp className="w-3.5 h-3.5 text-emerald-300 dark:text-emerald-400 shrink-0" />
-            <span className="font-bold">Month Income: {formatINR(displayIncome)}</span>
-            <ChevronRight className="w-3 h-3 text-indigo-200/80 dark:text-slate-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
-          </button>
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-400/20 dark:bg-emerald-500/20 border border-emerald-300/30 dark:border-emerald-400/30 flex items-center justify-center text-emerald-300 dark:text-emerald-400 shadow-inner">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-400/20 dark:bg-emerald-500/20 text-emerald-200 dark:text-emerald-300 border border-emerald-400/30 flex items-center gap-0.5 group-hover:bg-emerald-400/30 transition-colors">
+                Manage
+                <ChevronRight className="w-2.5 h-2.5 opacity-80 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </div>
+            <div>
+              <span className="text-[11px] sm:text-xs font-semibold text-indigo-100/80 dark:text-indigo-200/80 block mb-0.5">
+                Month Income
+              </span>
+              <span className="text-base sm:text-xl font-black text-white tracking-tight block truncate">
+                {formatINR(displayIncome)}
+              </span>
+            </div>
+          </div>
 
-          <button
-            type="button"
+          {/* Card 2: Month Spent Box */}
+          <div
             onClick={onOpenManageExpenses}
-            className="group flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 active:bg-white/30 dark:bg-white/10 dark:hover:bg-white/15 dark:active:bg-white/20 border border-white/20 dark:border-white/15 backdrop-blur-md text-white transition-all cursor-pointer active:scale-95 shadow-sm select-none"
+            className="group relative overflow-hidden rounded-2xl p-3 sm:p-4 bg-white/10 hover:bg-white/20 active:bg-white/25 dark:bg-white/5 dark:hover:bg-white/10 dark:active:bg-white/15 border border-white/20 dark:border-white/10 backdrop-blur-md transition-all duration-200 cursor-pointer active:scale-[0.98] shadow-sm flex flex-col justify-between"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpenManageExpenses && onOpenManageExpenses()}
             title="View and manage expense entries"
           >
-            <ArrowDownRight className="w-3.5 h-3.5 text-rose-300 dark:text-rose-400 shrink-0" />
-            <span className="font-bold">Month Spent: {formatINR(displaySpent)}</span>
-            <ChevronRight className="w-3 h-3 text-indigo-200/80 dark:text-slate-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
-          </button>
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-rose-400/20 dark:bg-rose-500/20 border border-rose-300/30 dark:border-rose-400/30 flex items-center justify-center text-rose-300 dark:text-rose-400 shadow-inner">
+                <ArrowDownRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-400/20 dark:bg-rose-500/20 text-rose-200 dark:text-rose-300 border border-rose-400/30 flex items-center gap-0.5 group-hover:bg-rose-400/30 transition-colors">
+                Manage
+                <ChevronRight className="w-2.5 h-2.5 opacity-80 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </div>
+            <div>
+              <span className="text-[11px] sm:text-xs font-semibold text-indigo-100/80 dark:text-indigo-200/80 block mb-0.5">
+                Month Spent
+              </span>
+              <span className="text-base sm:text-xl font-black text-white tracking-tight block truncate">
+                {formatINR(displaySpent)}
+              </span>
+            </div>
+          </div>
+
         </div>
       </div>
 

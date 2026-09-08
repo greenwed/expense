@@ -200,6 +200,16 @@ export const FamilyExpenseModel = {
       e => String(e.groupId) === gIdStr && String(e.category).toLowerCase() === oldCategory.toLowerCase(),
       { category: newCategory }
     );
+  },
+
+  async deleteByGroupId(groupId) {
+    const gIdStr = String(groupId);
+    const pool = getPgPool();
+    if (pool) {
+      await pool.query('DELETE FROM family_expenses WHERE group_id = $1', [gIdStr]);
+      return true;
+    }
+    return familyExpenseStore.delete(e => String(e.groupId) === gIdStr);
   }
 };
 

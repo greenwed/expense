@@ -4,6 +4,7 @@ import FamilyGroupModel from '../models/FamilyGroup.js';
 import FamilyIncomeModel from '../models/FamilyIncome.js';
 import FamilyExpenseModel from '../models/FamilyExpense.js';
 import CustomCategoryModel from '../models/CustomCategory.js';
+import UserModel from '../models/User.js';
 import { VALID_CATEGORIES } from '../models/PersonalExpense.js';
 
 const DEFAULT_CATEGORY_COLORS = {
@@ -548,6 +549,10 @@ router.delete('/groups/:groupId/members/:targetUserId', requireGroupMember, asyn
     const currentUserId = String(req.user._id || req.user.id);
     const isSelfLeaving = currentUserId === String(targetUserId);
 
+    if (String(req.group.createdBy) === String(targetUserId)) {
+      return res.status(400).json({ error: 'The group creator cannot be removed from the group. You can delete the group instead.' });
+    }
+
     if (!isSelfLeaving && req.userRole !== 'admin') {
       return res.status(403).json({ error: 'Only admins can remove other members from the group.' });
     }
@@ -560,6 +565,57 @@ router.delete('/groups/:groupId/members/:targetUserId', requireGroupMember, asyn
   } catch (err) {
     console.error('Remove member error:', err);
     return res.status(500).json({ error: 'Failed to remove member.' });
+  }
+});
+
+// 17a. Add Member to Group by Email (Admin only)
+router.post('/groups/:groupId/members/email', requireGroupMember, requireRoles(['admin']), async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { email, role = 'member' } = req.body;
+
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({ error: 'Please provide a valid email address.' });
+    }
+
+    if (!['admin', 'moderator', 'member'].includes(role)) {
+      return res.status(400).json({ error: "Role must be 'admin', 'moderator', or 'member'." });
+    }
+
+    const targetUser = await UserModel.findByEmail(email.trim());
+    if (!targetUser) {
+      return res.status(404).json({ error: `No registered user found with email "${email.trim()}".` });
+    }
+
+    const targetUserId = String(targetUser._id || targetUser.id);
+    const isAlreadyMember = (req.group.members || []).some(m => String(m.userId) === targetUserId);
+    if (isAlreadyMember) {
+      return res.status(400).json({ error: `${targetUser.name || targetUser.username} is already a member of this group.` });
+    }
+
+    const updatedGroup = await FamilyGroupModel.addMember(groupId, targetUser, role);
+    return res.status(200).json({
+      message: `${targetUser.name || targetUser.username} added to the group successfully!`,
+      group: updatedGroup
+    });
+  } catch (err) {
+    console.error('Add member by email error:', err);
+    return res.status(500).json({ error: 'Failed to add member to group.' });
+  }
+});
+
+// 17b. Delete Family Group (Admin only)
+router.delete('/groups/:groupId', requireGroupMember, requireRoles(['admin']), async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    await FamilyExpenseModel.deleteByGroupId(groupId);
+    await FamilyIncomeModel.deleteByGroupId(groupId);
+    await CustomCategoryModel.deleteByGroupId(groupId);
+    await FamilyGroupModel.delete(groupId);
+    return res.json({ message: 'Family group deleted successfully!' });
+  } catch (err) {
+    console.error('Delete family group error:', err);
+    return res.status(500).json({ error: 'Failed to delete family group.' });
   }
 });
 

@@ -213,6 +213,16 @@ export const CustomCategoryModel = {
       c.id === id && (gId ? String(c.groupId) === gId : String(c.userId) === uId)
     );
     return count > 0;
+  },
+
+  async deleteByGroupId(groupId) {
+    const gId = String(groupId);
+    const pool = getPgPool();
+    if (pool) {
+      await pool.query('DELETE FROM custom_categories WHERE group_id = $1', [gId]);
+      return true;
+    }
+    return categoryStore.delete(c => String(c.groupId) === gId);
   }
 };
 

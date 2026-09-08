@@ -458,6 +458,30 @@ export default function App() {
     await fetchFamilyData();
   };
 
+  const handleAddFamilyMemberByEmail = async (email, role) => {
+    const res = await apiFetch(`/api/family/groups/${selectedGroupId}/members/email`, {
+      method: 'POST',
+      body: { email, role }
+    });
+    await fetchGroups();
+    await fetchFamilyData();
+    return res;
+  };
+
+  const handleDeleteFamilyGroup = async (groupId) => {
+    const targetId = groupId || selectedGroupId;
+    await apiFetch(`/api/family/groups/${targetId}`, {
+      method: 'DELETE'
+    });
+    const updated = groups.filter((g) => (g.id || g._id) !== targetId);
+    setGroups(updated);
+    if (selectedGroupId === targetId) {
+      setSelectedGroupId(updated.length > 0 ? (updated[0].id || updated[0]._id) : null);
+    }
+    await fetchGroups();
+    await fetchFamilyData();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] text-slate-400">
@@ -579,6 +603,12 @@ export default function App() {
                 setIsExpenseOpen(true);
               }}
               onDeleteExpense={handleDeleteExpense}
+              onDeleteGroup={handleDeleteFamilyGroup}
+              onAddMemberByEmail={handleAddFamilyMemberByEmail}
+              onUpdateRole={handleUpdateRole}
+              onRemoveMember={handleRemoveMember}
+              onRegenerateToken={handleRegenerateToken}
+              onUpdateGroupName={handleRenameGroup}
             />
           )}
 

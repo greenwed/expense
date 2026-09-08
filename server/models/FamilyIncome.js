@@ -178,6 +178,16 @@ export const FamilyIncomeModel = {
       e => (e.id === iIdStr || e._id === iIdStr) && String(e.groupId) === gIdStr
     );
     return count > 0;
+  },
+
+  async deleteByGroupId(groupId) {
+    const gIdStr = String(groupId);
+    const pool = getPgPool();
+    if (pool) {
+      await pool.query('DELETE FROM family_incomes WHERE group_id = $1', [gIdStr]);
+      return true;
+    }
+    return familyIncomeStore.delete(i => String(i.groupId) === gIdStr);
   }
 };
 

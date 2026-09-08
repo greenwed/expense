@@ -185,6 +185,16 @@ export const FamilyGroupModel = {
     }
 
     return groupStore.update(g => g.id === gIdStr || g._id === gIdStr, { members });
+  },
+
+  async delete(groupId) {
+    const gIdStr = String(groupId);
+    const pool = getPgPool();
+    if (pool) {
+      await pool.query('DELETE FROM family_groups WHERE id = $1', [gIdStr]);
+      return true;
+    }
+    return groupStore.delete(g => g.id === gIdStr || g._id === gIdStr);
   }
 };
 
