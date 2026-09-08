@@ -19,6 +19,7 @@ import {
   groupExpensesByDay,
   getMonthName
 } from '../utils/formatters';
+import { useCategories } from '../context/CategoryContext';
 
 export default function PersonalWorkspace({
   user,
@@ -33,6 +34,7 @@ export default function PersonalWorkspace({
   onOpenEditExpense,
   onDeleteExpense
 }) {
+  const { categories: allAvailableCategories, getCategoryMeta } = useCategories();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
@@ -171,8 +173,8 @@ export default function PersonalWorkspace({
             >
               All
             </button>
-            {Object.keys(CATEGORY_CONFIG).map((catKey) => {
-              const conf = CATEGORY_CONFIG[catKey];
+            {allAvailableCategories.map((catKey) => {
+              const conf = getCategoryMeta(catKey);
               const isSelected = selectedCategory === catKey;
               return (
                 <button
@@ -241,7 +243,8 @@ export default function PersonalWorkspace({
                 {/* Day Cards */}
                 <div className="fintech-card divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
                   {items.map((item) => {
-                    const conf = CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.Others;
+                    const conf = getCategoryMeta(item.category);
+                    const Icon = conf.IconComponent || Tag;
                     return (
                       <div
                         key={item.id || item._id}
@@ -255,7 +258,7 @@ export default function PersonalWorkspace({
                               color: conf.color
                             }}
                           >
-                            <Tag className="w-4 h-4" />
+                            <Icon className="w-4 h-4" />
                           </div>
                           <div className="min-w-0">
                             <span className="text-sm font-bold text-slate-900 dark:text-white block truncate">
@@ -282,7 +285,7 @@ export default function PersonalWorkspace({
                             -{formatINR(item.amount)}
                           </span>
 
-                          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                          <div className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center gap-1">
                             <button
                               type="button"
                               onClick={() => onOpenEditExpense(item)}

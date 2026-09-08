@@ -669,7 +669,13 @@ export default function App() {
         }}
         initialData={editingExpense}
         onSave={handleSaveExpense}
-        title={editingExpense ? 'Edit Expense Entry' : 'Add Expense Entry'}
+        title={
+          isFamilyContext
+            ? (editingExpense ? 'Edit Family Expense' : 'Add Family Expense')
+            : (editingExpense ? 'Edit Expense Entry' : 'Add Expense Entry')
+        }
+        groupId={isFamilyContext ? selectedGroupId : null}
+        groupName={isFamilyContext ? groups.find((g) => (g.id || g._id) === selectedGroupId)?.name : null}
       />
 
       {/* Expense List Manager Modal (Manage Personal/Family Expenses with Add / Edit / Delete) */}
@@ -688,6 +694,7 @@ export default function App() {
         }}
         onDeleteExpense={handleDeleteExpense}
         isFamily={isFamilyContext}
+        groupId={isFamilyContext ? selectedGroupId : null}
         canManage={true}
       />
 

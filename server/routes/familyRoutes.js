@@ -3,7 +3,26 @@ import { authenticateToken, requireGroupMember, requireRoles } from '../middlewa
 import FamilyGroupModel from '../models/FamilyGroup.js';
 import FamilyIncomeModel from '../models/FamilyIncome.js';
 import FamilyExpenseModel from '../models/FamilyExpense.js';
+import CustomCategoryModel from '../models/CustomCategory.js';
 import { VALID_CATEGORIES } from '../models/PersonalExpense.js';
+
+const DEFAULT_CATEGORY_COLORS = {
+  Food: '#0EA5E9',
+  Shopping: '#F97316',
+  Entertainment: '#8B5CF6',
+  Medical: '#10B981',
+  Transport: '#6366F1',
+  Others: '#F43F5E'
+};
+
+const DEFAULT_CATEGORY_ICONS = {
+  Food: 'Utensils',
+  Shopping: 'ShoppingBag',
+  Entertainment: 'Film',
+  Medical: 'HeartPulse',
+  Transport: 'Car',
+  Others: 'MoreHorizontal'
+};
 
 const router = express.Router();
 
@@ -193,11 +212,15 @@ router.get('/groups/:groupId/dashboard', requireGroupMember, async (req, res) =>
     }
 
     // 3. Compute period metrics
+    const groupCustomCats = await CustomCategoryModel.findByGroupId(groupId);
     const monthlyIncome = periodIncomes.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0);
     let monthlySpent = 0;
     const categoryTotals = {};
     VALID_CATEGORIES.forEach(cat => {
       categoryTotals[cat] = 0;
+    });
+    groupCustomCats.forEach(c => {
+      categoryTotals[c.name] = 0;
     });
 
     periodExpenses.forEach(exp => {
@@ -208,13 +231,17 @@ router.get('/groups/:groupId/dashboard', requireGroupMember, async (req, res) =>
     });
 
     const categoryBreakdown = Object.entries(categoryTotals)
-      .filter(([cat, amt]) => VALID_CATEGORIES.includes(cat) || amt > 0)
+      .filter(([cat, amt]) => VALID_CATEGORIES.includes(cat) || groupCustomCats.some(c => c.name === cat) || amt > 0)
       .map(([cat, amt]) => {
         const pct = monthlySpent > 0 ? Number(((amt / monthlySpent) * 100).toFixed(1)) : 0;
+        const customMatch = groupCustomCats.find(c => c.name.toLowerCase() === cat.toLowerCase());
         return {
           category: cat,
           amount: amt,
-          percentage: pct
+          percentage: pct,
+          color: customMatch ? customMatch.color : (DEFAULT_CATEGORY_COLORS[cat] || DEFAULT_CATEGORY_COLORS.Others),
+          icon: customMatch ? customMatch.icon : (DEFAULT_CATEGORY_ICONS[cat] || DEFAULT_CATEGORY_ICONS.Others),
+          isCustom: !!customMatch
         };
       });
 
@@ -533,6 +560,155 @@ router.delete('/groups/:groupId/members/:targetUserId', requireGroupMember, asyn
   } catch (err) {
     console.error('Remove member error:', err);
     return res.status(500).json({ error: 'Failed to remove member.' });
+  }
+});
+
+// 18. Get Group Categories (Standard + Group Custom)
+router.get('/groups/:groupId/categories', requireGroupMember, async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const custom = await CustomCategoryModel.findByGroupId(groupId);
+    return res.json({
+      standard: VALID_CATEGORIES.map(cat => ({
+        name: cat,
+        color: DEFAULT_CATEGORY_COLORS[cat] || '#8B5CF6',
+        icon: DEFAULT_CATEGORY_ICONS[cat] || 'Tag',
+        isCustom: false
+      })),
+      custom: custom.map(c => ({
+        ...c,
+        isCustom: true
+      }))
+    });
+  } catch (err) {
+    console.error('Fetch group categories error:', err);
+    return res.status(500).json({ error: 'Failed to fetch group categories.' });
+  }
+});
+
+// 19. Create Group Category (Shared within the group)
+router.post('/groups/:groupId/categories', requireGroupMember, async (req, res) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const { groupId } = req.params;
+    const { name, color, icon } = req.body;
+
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return res.status(400).json({ error: 'Category name is required.' });
+    }
+
+    const trimmedName = name.trim();
+    if (trimmedName.length > 50) {
+      return res.status(400).json({ error: 'Category name cannot exceed 50 characters.' });
+    }
+
+    if (VALID_CATEGORIES.some(c => c.toLowerCase() === trimmedName.toLowerCase())) {
+      return res.status(400).json({ error: `"${trimmedName}" is already a standard category.` });
+    }
+
+    // Check duplicate in this group (case-insensitive)
+    const duplicate = await CustomCategoryModel.findByNameInGroup(groupId, trimmedName);
+    if (duplicate) {
+      return res.status(400).json({ error: `Category "${trimmedName}" is already present in this group.` });
+    }
+
+    const cleanColor = color && typeof color === 'string' && color.trim().length > 0 ? color.trim() : '#6366F1';
+    const cleanIcon = icon && typeof icon === 'string' && icon.trim().length > 0 ? icon.trim() : 'Tag';
+
+    const category = await CustomCategoryModel.create({
+      userId,
+      groupId,
+      name: trimmedName,
+      color: cleanColor,
+      icon: cleanIcon
+    });
+
+    return res.status(201).json({
+      message: 'Category added to group successfully!',
+      category
+    });
+  } catch (err) {
+    console.error('Create group category error:', err);
+    return res.status(500).json({ error: 'Failed to create group category.' });
+  }
+});
+
+// 20. Update Group Category (Shared within the group)
+router.put('/groups/:groupId/categories/:id', requireGroupMember, async (req, res) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const { groupId, id } = req.params;
+    const { name, color, icon } = req.body;
+
+    const existing = await CustomCategoryModel.findById(id);
+    if (!existing || String(existing.groupId) !== String(groupId)) {
+      return res.status(404).json({ error: 'Group category not found.' });
+    }
+
+    let trimmedName = existing.name;
+    if (name !== undefined) {
+      if (!name || typeof name !== 'string' || name.trim().length === 0) {
+        return res.status(400).json({ error: 'Category name cannot be empty.' });
+      }
+      trimmedName = name.trim();
+      if (trimmedName.length > 50) {
+        return res.status(400).json({ error: 'Category name cannot exceed 50 characters.' });
+      }
+
+      if (VALID_CATEGORIES.some(c => c.toLowerCase() === trimmedName.toLowerCase())) {
+        return res.status(400).json({ error: `"${trimmedName}" is already a standard category.` });
+      }
+
+      const duplicate = await CustomCategoryModel.findByNameInGroup(groupId, trimmedName);
+      if (duplicate && String(duplicate.id || duplicate._id) !== String(id)) {
+        return res.status(400).json({ error: `Category "${trimmedName}" is already present in this group.` });
+      }
+    }
+
+    const updatedCategory = await CustomCategoryModel.update(id, userId, {
+      name: trimmedName,
+      color: color !== undefined ? String(color).trim() : undefined,
+      icon: icon !== undefined ? String(icon).trim() : undefined,
+      groupId
+    });
+
+    // If category name was renamed, migrate all group expenses using the old name
+    if (trimmedName.toLowerCase() !== existing.name.toLowerCase()) {
+      await FamilyExpenseModel.renameCategory(groupId, existing.name, trimmedName);
+    }
+
+    return res.json({
+      message: 'Group category updated successfully!',
+      category: updatedCategory
+    });
+  } catch (err) {
+    console.error('Update group category error:', err);
+    return res.status(500).json({ error: 'Failed to update group category.' });
+  }
+});
+
+// 21. Delete Group Category (Shared within the group)
+router.delete('/groups/:groupId/categories/:id', requireGroupMember, async (req, res) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const { groupId, id } = req.params;
+
+    const existing = await CustomCategoryModel.findById(id);
+    if (!existing || String(existing.groupId) !== String(groupId)) {
+      return res.status(404).json({ error: 'Group category not found.' });
+    }
+
+    // Reassign historical group expenses tagged with this category to 'Others'
+    await FamilyExpenseModel.renameCategory(groupId, existing.name, 'Others');
+
+    await CustomCategoryModel.delete(id, userId, { groupId });
+
+    return res.json({
+      message: 'Group category deleted successfully!'
+    });
+  } catch (err) {
+    console.error('Delete group category error:', err);
+    return res.status(500).json({ error: 'Failed to delete group category.' });
   }
 });
 

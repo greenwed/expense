@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, ArrowDownRight, Plus, Edit2, Trash2, Tag, Receipt } from 'lucide-react';
 import { formatINR, formatDateTime, getMonthName, CATEGORY_CONFIG } from '../utils/formatters';
+import { useCategories } from '../context/CategoryContext';
 
 export default function ExpenseListModal({
   isOpen,
@@ -11,8 +12,10 @@ export default function ExpenseListModal({
   onOpenEditExpense,
   onDeleteExpense,
   isFamily = false,
+  groupId = null,
   canManage = true
 }) {
+  const { getCategoryMeta } = useCategories();
   if (!isOpen) return null;
 
   const totalSpent = expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
@@ -75,7 +78,8 @@ export default function ExpenseListModal({
             </div>
           ) : (
             expenses.map((item) => {
-              const conf = CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.Others;
+              const conf = getCategoryMeta(item.category, isFamily ? groupId : null);
+              const Icon = conf.IconComponent || Tag;
               return (
                 <div
                   key={item.id || item._id}
@@ -89,7 +93,7 @@ export default function ExpenseListModal({
                         color: conf.color
                       }}
                     >
-                      <Tag className="w-4 h-4" />
+                      <Icon className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
                       <span className="text-sm font-bold text-slate-900 dark:text-white block truncate">

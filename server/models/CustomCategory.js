@@ -8,6 +8,7 @@ function formatCategory(row) {
   return {
     id: row.id || row._id,
     userId: String(row.user_id || row.userId),
+    groupId: row.group_id ? String(row.group_id) : (row.groupId ? String(row.groupId) : null),
     name: row.name,
     color: row.color,
     icon: row.icon || 'Tag',
@@ -22,13 +23,29 @@ export const CustomCategoryModel = {
     const pool = getPgPool();
     if (pool) {
       const res = await pool.query(
-        'SELECT * FROM custom_categories WHERE user_id = $1 ORDER BY created_at ASC',
+        'SELECT * FROM custom_categories WHERE user_id = $1 AND group_id IS NULL ORDER BY created_at ASC',
         [uId]
       );
       return res.rows.map(formatCategory);
     }
     return categoryStore
-      .find(c => String(c.userId) === uId)
+      .find(c => String(c.userId) === uId && !c.groupId)
+      .map(formatCategory);
+  },
+
+  async findByGroupId(groupId) {
+    if (!groupId) return [];
+    const gId = String(groupId);
+    const pool = getPgPool();
+    if (pool) {
+      const res = await pool.query(
+        'SELECT * FROM custom_categories WHERE group_id = $1 ORDER BY created_at ASC',
+        [gId]
+      );
+      return res.rows.map(formatCategory);
+    }
+    return categoryStore
+      .find(c => String(c.groupId) === gId)
       .map(formatCategory);
   },
 
@@ -39,13 +56,31 @@ export const CustomCategoryModel = {
     const pool = getPgPool();
     if (pool) {
       const res = await pool.query(
-        'SELECT * FROM custom_categories WHERE user_id = $1 AND LOWER(name) = LOWER($2) LIMIT 1',
+        'SELECT * FROM custom_categories WHERE user_id = $1 AND group_id IS NULL AND LOWER(name) = LOWER($2) LIMIT 1',
         [uId, trimmed]
       );
       return res.rows.length > 0 ? formatCategory(res.rows[0]) : null;
     }
     const item = categoryStore.findOne(
-      c => String(c.userId) === uId && String(c.name).toLowerCase() === trimmed.toLowerCase()
+      c => String(c.userId) === uId && !c.groupId && String(c.name).toLowerCase() === trimmed.toLowerCase()
+    );
+    return item ? formatCategory(item) : null;
+  },
+
+  async findByNameInGroup(groupId, name) {
+    if (!groupId || !name) return null;
+    const gId = String(groupId);
+    const trimmed = name.trim();
+    const pool = getPgPool();
+    if (pool) {
+      const res = await pool.query(
+        'SELECT * FROM custom_categories WHERE group_id = $1 AND LOWER(name) = LOWER($2) LIMIT 1',
+        [gId, trimmed]
+      );
+      return res.rows.length > 0 ? formatCategory(res.rows[0]) : null;
+    }
+    const item = categoryStore.findOne(
+      c => String(c.groupId) === gId && String(c.name).toLowerCase() === trimmed.toLowerCase()
     );
     return item ? formatCategory(item) : null;
   },
@@ -61,9 +96,10 @@ export const CustomCategoryModel = {
     return item ? formatCategory(item) : null;
   },
 
-  async create({ userId, name, color, icon = 'Tag' }) {
+  async create({ userId, groupId = null, name, color, icon = 'Tag' }) {
     const id = `cat_${uuidv4().replace(/-/g, '').slice(0, 16)}`;
     const uId = String(userId);
+    const gId = groupId ? String(groupId) : null;
     const trimmedName = name.trim();
     const cleanColor = color || '#6366F1';
     const cleanIcon = icon || 'Tag';
@@ -71,10 +107,10 @@ export const CustomCategoryModel = {
 
     if (pool) {
       const res = await pool.query(
-        `INSERT INTO custom_categories (id, user_id, name, color, icon, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+        `INSERT INTO custom_categories (id, user_id, group_id, name, color, icon, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
          RETURNING *`,
-        [id, uId, trimmedName, cleanColor, cleanIcon]
+        [id, uId, gId, trimmedName, cleanColor, cleanIcon]
       );
       return formatCategory(res.rows[0]);
     }
@@ -82,6 +118,7 @@ export const CustomCategoryModel = {
     const item = categoryStore.insert({
       id,
       userId: uId,
+      groupId: gId,
       name: trimmedName,
       color: cleanColor,
       icon: cleanIcon
@@ -89,13 +126,14 @@ export const CustomCategoryModel = {
     return formatCategory(item);
   },
 
-  async update(id, userId, { name, color, icon }) {
+  async update(id, userId, { name, color, icon, groupId = null }) {
     const uId = String(userId);
+    const gId = groupId ? String(groupId) : null;
     const pool = getPgPool();
     if (pool) {
       const updates = [];
-      const values = [id, uId];
-      let idx = 3;
+      const values = [id];
+      let idx = 2;
 
       if (name !== undefined) {
         updates.push(`name = $${idx++}`);
@@ -115,21 +153,32 @@ export const CustomCategoryModel = {
       }
 
       updates.push(`updated_at = NOW()`);
+      let whereClause = `WHERE id = $1`;
+      if (gId) {
+        whereClause += ` AND group_id = $${idx++}`;
+        values.push(gId);
+      } else {
+        whereClause += ` AND user_id = $${idx++}`;
+        values.push(uId);
+      }
+
       const query = `
         UPDATE custom_categories
         SET ${updates.join(', ')}
-        WHERE id = $1 AND user_id = $2
+        ${whereClause}
         RETURNING *
       `;
       const res = await pool.query(query, values);
       return res.rows.length > 0 ? formatCategory(res.rows[0]) : null;
     }
 
-    const item = categoryStore.findOne(c => c.id === id && String(c.userId) === uId);
+    const item = categoryStore.findOne(c =>
+      c.id === id && (gId ? String(c.groupId) === gId : String(c.userId) === uId)
+    );
     if (!item) return null;
 
     const updated = categoryStore.update(
-      c => c.id === id && String(c.userId) === uId,
+      c => c.id === id && (gId ? String(c.groupId) === gId : String(c.userId) === uId),
       existing => ({
         ...existing,
         name: name !== undefined ? name.trim() : existing.name,
@@ -141,18 +190,28 @@ export const CustomCategoryModel = {
     return updated ? formatCategory(updated) : null;
   },
 
-  async delete(id, userId) {
+  async delete(id, userId, { groupId = null } = {}) {
     const uId = String(userId);
+    const gId = groupId ? String(groupId) : null;
     const pool = getPgPool();
     if (pool) {
-      const res = await pool.query(
-        'DELETE FROM custom_categories WHERE id = $1 AND user_id = $2 RETURNING id',
-        [id, uId]
-      );
+      let query = 'DELETE FROM custom_categories WHERE id = $1';
+      const values = [id];
+      if (gId) {
+        query += ' AND group_id = $2';
+        values.push(gId);
+      } else {
+        query += ' AND user_id = $2';
+        values.push(uId);
+      }
+      query += ' RETURNING id';
+      const res = await pool.query(query, values);
       return res.rowCount > 0;
     }
 
-    const count = categoryStore.delete(c => c.id === id && String(c.userId) === uId);
+    const count = categoryStore.delete(c =>
+      c.id === id && (gId ? String(c.groupId) === gId : String(c.userId) === uId)
+    );
     return count > 0;
   }
 };

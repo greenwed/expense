@@ -32,7 +32,7 @@ export default function ReportView({
   selectedGroupId
 }) {
   const { apiFetch } = useAuth();
-  const { getCategoryMeta } = useCategories();
+  const { getCategoryMeta, fetchGroupCategories } = useCategories();
 
   // Report Scope: 'personal' | 'family' (Keeps user on the Report page!)
   const [reportType, setReportType] = useState('personal');
@@ -149,6 +149,15 @@ export default function ReportView({
     fetchReportData();
   }, [fetchReportData]);
 
+  useEffect(() => {
+    if (reportType === 'family') {
+      const targetGroup = activeGroupId || selectedGroupId || (groups[0]?.id || groups[0]?._id);
+      if (targetGroup && fetchGroupCategories) {
+        fetchGroupCategories(targetGroup);
+      }
+    }
+  }, [reportType, activeGroupId, selectedGroupId, groups, fetchGroupCategories]);
+
   // Robust category breakdown extraction preserving custom categories and colors
   const categories = useMemo(() => {
     let rawList = [];
@@ -176,8 +185,10 @@ export default function ReportView({
       rawList = Object.keys(CATEGORY_CONFIG).map((cat) => ({ category: cat, amount: 0, percentage: 0 }));
     }
 
+    const targetGroup = reportType === 'family' ? (activeGroupId || selectedGroupId || (groups[0]?.id || groups[0]?._id)) : null;
+
     return rawList.map((item) => {
-      const meta = getCategoryMeta(item.category);
+      const meta = getCategoryMeta(item.category, targetGroup);
       return {
         ...item,
         color: item.color || meta.color,
@@ -186,7 +197,7 @@ export default function ReportView({
         barColor: meta.barColor
       };
     });
-  }, [reportData, getCategoryMeta]);
+  }, [reportData, getCategoryMeta, reportType, activeGroupId, selectedGroupId, groups]);
 
   const totalSpent = Number(
     reportType === 'split'

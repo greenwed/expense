@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Sparkles, Check, Pencil, Trash2 } from 'lucide-react';
+import { X, Plus, Sparkles, Check, Pencil, Trash2, AlertCircle } from 'lucide-react';
 import { useCategories } from '../context/CategoryContext';
 import { useBackButton } from '../context/BackHandlerContext';
 import { CATEGORY_PALETTE, CATEGORY_ICONS } from '../utils/formatters';
@@ -10,7 +10,9 @@ export default function AddCategoryModal({
   onCreated,
   onUpdated,
   onDeleted,
-  categoryToEdit = null
+  categoryToEdit = null,
+  groupId = null,
+  groupName = null
 }) {
   const { addCategory, updateCategory, deleteCategory, iconComponents } = useCategories();
   const [name, setName] = useState('');
@@ -64,14 +66,16 @@ export default function AddCategoryModal({
         const updated = await updateCategory(catId, {
           name: trimmedName,
           color: activeColor,
-          icon: selectedIcon
+          icon: selectedIcon,
+          groupId
         });
         if (onUpdated) onUpdated(updated);
       } else {
         const newCat = await addCategory({
           name: trimmedName,
           color: activeColor,
-          icon: selectedIcon
+          icon: selectedIcon,
+          groupId
         });
         if (onCreated) onCreated(newCat);
       }
@@ -93,7 +97,7 @@ export default function AddCategoryModal({
 
     try {
       setDeleting(true);
-      await deleteCategory(catId);
+      await deleteCategory(catId, groupId);
       if (onDeleted) onDeleted(catId);
       onClose();
     } catch (err) {
@@ -114,17 +118,19 @@ export default function AddCategoryModal({
               {categoryToEdit ? (
                 <>
                   <Pencil className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                  Edit Category
+                  {groupId ? 'Edit Group Category' : 'Edit Category'}
                 </>
               ) : (
                 <>
                   <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                  New Category
+                  {groupId ? `New Category for ${groupName || 'Group'}` : 'New Category'}
                 </>
               )}
             </h3>
             <span className="text-xs text-slate-400">
-              {categoryToEdit ? 'Modify category name, color or icon' : 'Create a custom expense category'}
+              {groupId
+                ? 'Shared with all members of this group'
+                : (categoryToEdit ? 'Modify category name, color or icon' : 'Create a custom expense category')}
             </span>
           </div>
           <button
@@ -139,8 +145,9 @@ export default function AddCategoryModal({
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {error && (
-            <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-semibold">
-              {error}
+            <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 

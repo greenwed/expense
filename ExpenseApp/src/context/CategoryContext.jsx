@@ -58,6 +58,7 @@ const CategoryContext = createContext(null);
 export function CategoryProvider({ children }) {
   const { user, apiFetch } = useAuth();
   const [customCategories, setCustomCategories] = useState([]);
+  const [groupCategoriesMap, setGroupCategoriesMap] = useState({});
   const [loading, setLoading] = useState(false);
 
   const fetchCategories = useCallback(async () => {
@@ -78,11 +79,58 @@ export function CategoryProvider({ children }) {
     }
   }, [user, apiFetch]);
 
+  const fetchGroupCategories = useCallback(async (groupId) => {
+    if (!groupId || !user) return;
+    try {
+      const res = await apiFetch(`/api/family/groups/${groupId}/categories`);
+      if (res && res.custom && Array.isArray(res.custom)) {
+        setGroupCategoriesMap(prev => ({
+          ...prev,
+          [groupId]: res.custom
+        }));
+      }
+    } catch (err) {
+      console.error(`Failed to load categories for group ${groupId}:`, err);
+    }
+  }, [user, apiFetch]);
+
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
 
-  const addCategory = useCallback(async ({ name, color, icon }) => {
+  const getCustomCategories = useCallback((groupId = null) => {
+    if (groupId && groupCategoriesMap[groupId]) {
+      return groupCategoriesMap[groupId];
+    }
+    return customCategories;
+  }, [groupCategoriesMap, customCategories]);
+
+  const getCategoryList = useCallback((groupId = null) => {
+    const list = getCustomCategories(groupId);
+    const customNames = list.map(c => c.name);
+    return [...STANDARD_CATEGORIES, ...customNames];
+  }, [getCustomCategories]);
+
+  const addCategory = useCallback(async ({ name, color, icon, groupId = null }) => {
+    if (groupId) {
+      const data = await apiFetch(`/api/family/groups/${groupId}/categories`, {
+        method: 'POST',
+        body: JSON.stringify({ name, color, icon })
+      });
+      if (data && data.category) {
+        setGroupCategoriesMap(prev => {
+          const currentList = prev[groupId] || [];
+          const filtered = currentList.filter(c => c.id !== data.category.id);
+          return {
+            ...prev,
+            [groupId]: [...filtered, data.category]
+          };
+        });
+        return data.category;
+      }
+      throw new Error('Failed to create group category.');
+    }
+
     const data = await apiFetch('/api/personal/categories', {
       method: 'POST',
       body: JSON.stringify({ name, color, icon })
@@ -97,7 +145,25 @@ export function CategoryProvider({ children }) {
     throw new Error('Failed to create category.');
   }, [apiFetch]);
 
-  const updateCategory = useCallback(async (id, { name, color, icon }) => {
+  const updateCategory = useCallback(async (id, { name, color, icon, groupId = null }) => {
+    if (groupId) {
+      const data = await apiFetch(`/api/family/groups/${groupId}/categories/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ name, color, icon })
+      });
+      if (data && data.category) {
+        setGroupCategoriesMap(prev => {
+          const currentList = prev[groupId] || [];
+          return {
+            ...prev,
+            [groupId]: currentList.map(c => (c.id === id ? data.category : c))
+          };
+        });
+        return data.category;
+      }
+      throw new Error('Failed to update group category.');
+    }
+
     const data = await apiFetch(`/api/personal/categories/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ name, color, icon })
@@ -111,7 +177,21 @@ export function CategoryProvider({ children }) {
     throw new Error('Failed to update category.');
   }, [apiFetch]);
 
-  const deleteCategory = useCallback(async (id) => {
+  const deleteCategory = useCallback(async (id, groupId = null) => {
+    if (groupId) {
+      await apiFetch(`/api/family/groups/${groupId}/categories/${id}`, {
+        method: 'DELETE'
+      });
+      setGroupCategoriesMap(prev => {
+        const currentList = prev[groupId] || [];
+        return {
+          ...prev,
+          [groupId]: currentList.filter(c => c.id !== id)
+        };
+      });
+      return;
+    }
+
     await apiFetch(`/api/personal/categories/${id}`, {
       method: 'DELETE'
     });
@@ -123,18 +203,25 @@ export function CategoryProvider({ children }) {
     return [...STANDARD_CATEGORIES, ...customNames];
   }, [customCategories]);
 
-  const getCategoryMeta = useCallback((catName) => {
-    const conf = getCategoryConfig(catName, customCategories);
+  const getCategoryMeta = useCallback((catName, groupId = null) => {
+    const activeList = groupId && groupCategoriesMap[groupId]
+      ? groupCategoriesMap[groupId]
+      : customCategories;
+    const conf = getCategoryConfig(catName, activeList);
     const IconComponent = ICON_COMPONENTS[conf.icon] || Tag;
     return {
       ...conf,
       IconComponent
     };
-  }, [customCategories]);
+  }, [groupCategoriesMap, customCategories]);
 
   const value = useMemo(() => ({
     categories,
     customCategories,
+    groupCategoriesMap,
+    getCategoryList,
+    getCustomCategories,
+    fetchGroupCategories,
     loading,
     addCategory,
     updateCategory,
@@ -144,7 +231,20 @@ export function CategoryProvider({ children }) {
     standardCategories: STANDARD_CATEGORIES,
     palette: CATEGORY_PALETTE,
     iconComponents: ICON_COMPONENTS
-  }), [categories, customCategories, loading, addCategory, updateCategory, deleteCategory, getCategoryMeta, fetchCategories]);
+  }), [
+    categories,
+    customCategories,
+    groupCategoriesMap,
+    getCategoryList,
+    getCustomCategories,
+    fetchGroupCategories,
+    loading,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    getCategoryMeta,
+    fetchCategories
+  ]);
 
   return (
     <CategoryContext.Provider value={value}>

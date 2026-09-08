@@ -259,15 +259,23 @@ async function initPostgresSchema(pool) {
     CREATE TABLE IF NOT EXISTS custom_categories (
       id VARCHAR(100) PRIMARY KEY,
       user_id VARCHAR(100) NOT NULL,
+      group_id VARCHAR(100),
       name VARCHAR(50) NOT NULL,
       color VARCHAR(20) NOT NULL,
       icon VARCHAR(50) DEFAULT 'Tag',
       created_at TIMESTAMPTZ DEFAULT NOW(),
-      updated_at TIMESTAMPTZ DEFAULT NOW(),
-      UNIQUE(user_id, name)
+      updated_at TIMESTAMPTZ DEFAULT NOW()
     );
 
+    DO $$ 
+    BEGIN 
+      IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='custom_categories' AND column_name='group_id') THEN
+        ALTER TABLE custom_categories ADD COLUMN group_id VARCHAR(100);
+      END IF;
+    END $$;
+
     CREATE INDEX IF NOT EXISTS idx_custom_categories_user_id ON custom_categories(user_id);
+    CREATE INDEX IF NOT EXISTS idx_custom_categories_group_id ON custom_categories(group_id);
   `;
   await pool.query(schemaSql);
   console.log('⚡ Neon PostgreSQL tables (including split & custom category tables) initialized.');

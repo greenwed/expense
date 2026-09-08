@@ -3,8 +3,16 @@ import { X, Clock, Check, Plus, Pencil } from 'lucide-react';
 import { useCategories } from '../context/CategoryContext';
 import AddCategoryModal from './AddCategoryModal';
 
-export default function ExpenseModal({ isOpen, onClose, onSave, initialData = null, title = 'Add Expense' }) {
-  const { categories, customCategories, getCategoryMeta } = useCategories();
+export default function ExpenseModal({
+  isOpen,
+  onClose,
+  onSave,
+  initialData = null,
+  title = 'Add Expense',
+  groupId = null,
+  groupName = null
+}) {
+  const { getCategoryList, getCustomCategories, getCategoryMeta, fetchGroupCategories } = useCategories();
   const [isAddCatOpen, setIsAddCatOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState(null);
   const [amount, setAmount] = useState('');
@@ -13,6 +21,15 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialData = nu
   const [dateTime, setDateTime] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && groupId) {
+      fetchGroupCategories(groupId);
+    }
+  }, [isOpen, groupId, fetchGroupCategories]);
+
+  const activeCategories = getCategoryList(groupId);
+  const activeCustomCategories = getCustomCategories(groupId);
 
   useEffect(() => {
     if (initialData) {
@@ -154,11 +171,11 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialData = nu
                 Category *
               </label>
               <div className="flex items-center gap-2">
-                {getCategoryMeta(category).isCustom && (
+                {getCategoryMeta(category, groupId).isCustom && (
                   <button
                     type="button"
                     onClick={() => {
-                      const customMatch = customCategories.find(c => c.name.toLowerCase() === category.toLowerCase());
+                      const customMatch = activeCustomCategories.find(c => c.name.toLowerCase() === category.toLowerCase());
                       if (customMatch) {
                         setCategoryToEdit(customMatch);
                         setIsAddCatOpen(true);
@@ -185,8 +202,8 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialData = nu
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto p-1">
-              {categories.map((cat) => {
-                const conf = getCategoryMeta(cat);
+              {activeCategories.map((cat) => {
+                const conf = getCategoryMeta(cat, groupId);
                 const Icon = conf.IconComponent;
                 const isSelected = category === cat;
                 return (
@@ -281,6 +298,8 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialData = nu
       <AddCategoryModal
         isOpen={isAddCatOpen}
         categoryToEdit={categoryToEdit}
+        groupId={groupId}
+        groupName={groupName}
         onClose={() => {
           setIsAddCatOpen(false);
           setCategoryToEdit(null);

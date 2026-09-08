@@ -26,6 +26,7 @@ import {
   groupExpensesByDay,
   getMonthName
 } from '../utils/formatters';
+import { useCategories } from '../context/CategoryContext';
 
 export default function FamilyWorkspace({
   user,
@@ -59,8 +60,21 @@ export default function FamilyWorkspace({
   const expenses = useMemo(() => groupData?.expenses || [], [groupData]);
   const incomes = useMemo(() => groupData?.incomes || [], [groupData]);
 
+  const { getCategoryList, getCategoryMeta, fetchGroupCategories } = useCategories();
+
   // Selected member filter state (only for Family tab)
   const [selectedMemberId, setSelectedMemberId] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+
+  useEffect(() => {
+    if (selectedGroupId) {
+      fetchGroupCategories(selectedGroupId);
+    }
+  }, [selectedGroupId, fetchGroupCategories]);
+
+  const groupCategoryList = useMemo(() => {
+    return getCategoryList(selectedGroupId);
+  }, [getCategoryList, selectedGroupId]);
   
   // Custom themed popups state (replaces native OS dialog on Android/Web)
   const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
@@ -85,9 +99,10 @@ export default function FamilyWorkspace({
     }
   }, [isMemberModalOpen, isGroupModalOpen]);
 
-  // Reset member filter when switching groups
+  // Reset member and category filter when switching groups
   useEffect(() => {
     setSelectedMemberId('all');
+    setSelectedCategory('all');
   }, [selectedGroupId]);
 
   // Aggregate all members from group definition and historical expenses
@@ -112,28 +127,34 @@ export default function FamilyWorkspace({
     return members.find((m) => String(m.userId || m.id || m._id) === String(selectedMemberId));
   }, [members, selectedMemberId]);
 
-  // Filter expenses based on selected group member
+  // Filter expenses based on selected group member and category
   const filteredExpenses = useMemo(() => {
-    if (!selectedMemberId || selectedMemberId === 'all') {
-      return expenses;
+    let result = expenses;
+    if (selectedMemberId && selectedMemberId !== 'all') {
+      const targetId = String(selectedMemberId);
+      const targetUsername = selectedMember?.username ? String(selectedMember.username).toLowerCase() : '';
+      const targetName = selectedMember?.name ? String(selectedMember.name).toLowerCase() : '';
+
+      result = result.filter((item) => {
+        const itemUserId = String(item.userId || item.user_id || '');
+        if (itemUserId && itemUserId === targetId) return true;
+
+        const itemUsername = String(item.userUsername || item.user_username || '').toLowerCase();
+        if (targetUsername && itemUsername === targetUsername) return true;
+
+        const itemUserName = String(item.userName || item.user_name || '').toLowerCase();
+        if (targetName && itemUserName === targetName) return true;
+
+        return false;
+      });
     }
-    const targetId = String(selectedMemberId);
-    const targetUsername = selectedMember?.username ? String(selectedMember.username).toLowerCase() : '';
-    const targetName = selectedMember?.name ? String(selectedMember.name).toLowerCase() : '';
 
-    return expenses.filter((item) => {
-      const itemUserId = String(item.userId || item.user_id || '');
-      if (itemUserId && itemUserId === targetId) return true;
+    if (selectedCategory && selectedCategory !== 'all') {
+      result = result.filter(item => item.category === selectedCategory);
+    }
 
-      const itemUsername = String(item.userUsername || item.user_username || '').toLowerCase();
-      if (targetUsername && itemUsername === targetUsername) return true;
-
-      const itemUserName = String(item.userName || item.user_name || '').toLowerCase();
-      if (targetName && itemUserName === targetName) return true;
-
-      return false;
-    });
-  }, [expenses, selectedMemberId, selectedMember]);
+    return result;
+  }, [expenses, selectedMemberId, selectedMember, selectedCategory]);
 
   const filteredTotal = useMemo(() => {
     return filteredExpenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
@@ -344,6 +365,46 @@ export default function FamilyWorkspace({
           </div>
         </div>
 
+        {/* Group Category Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+          <button
+            type="button"
+            onClick={() => setSelectedCategory('all')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
+              selectedCategory === 'all'
+                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
+                : 'bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#1E2638]'
+            }`}
+          >
+            All
+          </button>
+          {groupCategoryList.map((catKey) => {
+            const conf = getCategoryMeta(catKey, selectedGroupId);
+            const isSelected = selectedCategory === catKey;
+            return (
+              <button
+                type="button"
+                key={catKey}
+                onClick={() => setSelectedCategory(catKey)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${
+                  isSelected
+                    ? 'text-white shadow-sm'
+                    : 'bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#1E2638]'
+                }`}
+                style={{
+                  backgroundColor: isSelected ? conf.color : undefined
+                }}
+              >
+                <span
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: isSelected ? '#FFFFFF' : conf.color }}
+                />
+                <span>{conf.name}</span>
+              </button>
+            );
+          })}
+        </div>
+
         {/* Filter Indicator Banner when a specific member is filtered */}
         {selectedMemberId !== 'all' && (
           <div className="flex items-center justify-between px-3.5 py-2 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-800/50 text-xs animate-fadeIn">
@@ -417,7 +478,8 @@ export default function FamilyWorkspace({
 
                 <div className="fintech-card divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
                   {items.map((item) => {
-                    const conf = CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.Others;
+                    const conf = getCategoryMeta(item.category, selectedGroupId);
+                    const Icon = conf.IconComponent || Tag;
                     return (
                       <div
                         key={item.id || item._id}
@@ -431,7 +493,7 @@ export default function FamilyWorkspace({
                               color: conf.color
                             }}
                           >
-                            <Tag className="w-4 h-4" />
+                            <Icon className="w-4 h-4" />
                           </div>
                           <div className="min-w-0">
                             <span className="text-sm font-bold text-slate-900 dark:text-white block truncate">
@@ -460,7 +522,7 @@ export default function FamilyWorkspace({
                           </span>
 
                           {canManage && (
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                            <div className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center gap-1">
                               <button
                                 type="button"
                                 onClick={() => onOpenEditExpense(item)}

@@ -183,6 +183,23 @@ export const FamilyExpenseModel = {
       e => (e.id === eIdStr || e._id === eIdStr) && String(e.groupId) === gIdStr
     );
     return count > 0;
+  },
+
+  async renameCategory(groupId, oldCategory, newCategory) {
+    if (!oldCategory || !newCategory) return;
+    const gIdStr = String(groupId);
+    const pool = getPgPool();
+    if (pool) {
+      await pool.query(
+        'UPDATE family_expenses SET category = $1, updated_at = NOW() WHERE group_id = $2 AND LOWER(category) = LOWER($3)',
+        [newCategory, gIdStr, oldCategory]
+      );
+      return;
+    }
+    familyExpenseStore.update(
+      e => String(e.groupId) === gIdStr && String(e.category).toLowerCase() === oldCategory.toLowerCase(),
+      { category: newCategory }
+    );
   }
 };
 

@@ -990,6 +990,152 @@ async function runAllTests() {
     const othersBreakdown = dashAfterDelete.data?.categoryBreakdown?.find(c => c.category === 'Others');
     assert(othersBreakdown?.amount >= 2500, 'Expenses from deleted category safely reassigned to Others');
 
+    // -------------------------------------------------------------
+    // SECTION 15: Group-Specific Custom Categories & Cross-User Sharing
+    // -------------------------------------------------------------
+    console.log('\n--- SECTION 15: Group Categories Flow & Scope Isolation ---');
+
+    // 15.1 Charlie fetches categories for famGroupId (should only have standard categories initially)
+    const initialFamCats = await request(`/family/groups/${famGroupId}/categories`, { headers: charlieHeaders });
+    assert(initialFamCats.status === 200, 'GET /family/groups/:groupId/categories succeeds');
+    assert(Array.isArray(initialFamCats.data?.standard), 'Standard categories array present');
+    assert(Array.isArray(initialFamCats.data?.custom), 'Custom categories array present');
+
+    // 15.2 Charlie creates group category "Bills"
+    const createFamCatRes = await request(`/family/groups/${famGroupId}/categories`, {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: {
+        name: 'Bills',
+        color: '#3B82F6',
+        icon: 'Zap'
+      }
+    });
+    assert(createFamCatRes.status === 201, 'POST /family/groups/:groupId/categories creates group category "Bills"');
+    const famCat = createFamCatRes.data?.category;
+    const famCatId = famCat?.id || famCat?._id;
+    assert(famCat?.name === 'Bills', 'Group category name is Bills');
+    assert(famCat?.color === '#3B82F6', 'Group category color is #3B82F6');
+    assert(String(famCat?.groupId) === String(famGroupId), 'Group category has correct groupId');
+
+    // 15.3 Dave (member of famGroupId) fetches categories and sees "Bills"
+    const daveFamCats = await request(`/family/groups/${famGroupId}/categories`, { headers: daveHeaders });
+    assert(daveFamCats.status === 200, 'Dave fetches family group categories');
+    const daveFoundBills = daveFamCats.data?.custom?.find(c => c.name === 'Bills');
+    assert(!!daveFoundBills, 'Dave can see category "Bills" created by Charlie in the group');
+    assert(daveFoundBills?.color === '#3B82F6', 'Category metadata preserved for Dave');
+
+    // 15.4 Dave attempts to create duplicate category "Bills" (or "bills") in the same group -> Rejected with 400
+    const dupFamCatRes = await request(`/family/groups/${famGroupId}/categories`, {
+      method: 'POST',
+      headers: daveHeaders,
+      body: {
+        name: 'bills',
+        color: '#10B981',
+        icon: 'CreditCard'
+      }
+    });
+    assert(dupFamCatRes.status === 400, 'Duplicate category "bills" in same group rejected with 400');
+    assert(
+      dupFamCatRes.data?.error?.includes('already present in this group'),
+      'Duplicate error message contains "already present in this group"'
+    );
+
+    // 15.5 Non-member Eve cannot view or add categories to famGroupId
+    const eveCatAccess = await request(`/family/groups/${famGroupId}/categories`, { headers: eveHeaders });
+    assert(eveCatAccess.status === 403, 'Non-member Eve blocked from fetching group categories (403)');
+
+    // 15.6 Independent flow: Create a second family group and verify "Bills" can be created there without conflict
+    const famGroup2 = await request('/family/groups', {
+      method: 'POST',
+      headers: daveHeaders,
+      body: { name: 'Dave Vacation Group' }
+    });
+    assert(famGroup2.status === 201, 'Second family group created by Dave');
+    const famGroup2Id = famGroup2.data.group.id || famGroup2.data.group._id;
+
+    const group2BillsRes = await request(`/family/groups/${famGroup2Id}/categories`, {
+      method: 'POST',
+      headers: daveHeaders,
+      body: {
+        name: 'Bills',
+        color: '#8B5CF6',
+        icon: 'Receipt'
+      }
+    });
+    assert(group2BillsRes.status === 201, 'Category "Bills" can be created in a different family group without conflict');
+
+    // 15.7 Personal categories independent from group categories: Charlie creates personal "Bills" without conflict
+    const personalBillsRes = await request('/personal/categories', {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: {
+        name: 'Bills',
+        color: '#F59E0B',
+        icon: 'FileText'
+      }
+    });
+    assert(personalBillsRes.status === 201, 'Personal category "Bills" can be created independently from group categories');
+
+    // 15.8 Add family expense in famGroupId using group category "Bills"
+    const famExpWithBills = await request(`/family/groups/${famGroupId}/expenses`, {
+      method: 'POST',
+      headers: daveHeaders,
+      body: {
+        amount: 3200,
+        category: 'Bills',
+        description: 'Electricity & Internet Bill',
+        date: new Date().toISOString()
+      }
+    });
+    assert(famExpWithBills.status === 201, 'Family expense created with group category "Bills"');
+
+    // 15.9 Verify dashboard returns "Bills" with custom color, icon, and isCustom flag
+    const famDashWithBills = await request(`/family/groups/${famGroupId}/dashboard`, { headers: charlieHeaders });
+    assert(famDashWithBills.status === 200, 'Family dashboard fetched');
+    const billsInDash = famDashWithBills.data?.categoryBreakdown?.find(c => c.category === 'Bills');
+    assert(!!billsInDash && billsInDash.amount >= 3200, 'Category "Bills" reflected in dashboard breakdown');
+    assert(billsInDash?.color === '#3B82F6', 'Category "Bills" preserves custom color in dashboard');
+    assert(billsInDash?.isCustom === true, 'Category "Bills" is marked as isCustom');
+
+    // 15.10 Rename group category "Bills" to "Household_Bills" and verify cascading update
+    const updateFamCatRes = await request(`/family/groups/${famGroupId}/categories/${famCatId}`, {
+      method: 'PUT',
+      headers: charlieHeaders,
+      body: {
+        name: 'Household_Bills',
+        color: '#10B981',
+        icon: 'Home'
+      }
+    });
+    assert(updateFamCatRes.status === 200, 'PUT /family/groups/:groupId/categories/:id updates category');
+    assert(updateFamCatRes.data?.category?.name === 'Household_Bills', 'Category renamed to Household_Bills');
+
+    // 15.11 Verify dashboard breakdown reflects renamed category and migrated expenses
+    const famDashAfterRename = await request(`/family/groups/${famGroupId}/dashboard`, { headers: charlieHeaders });
+    const oldBillsBreakdown = famDashAfterRename.data?.categoryBreakdown?.find(c => c.category === 'Bills');
+    const newBillsBreakdown = famDashAfterRename.data?.categoryBreakdown?.find(c => c.category === 'Household_Bills');
+    assert(!oldBillsBreakdown || oldBillsBreakdown.amount === 0, 'Old category "Bills" has 0 amount');
+    assert(!!newBillsBreakdown && newBillsBreakdown.amount >= 3200, 'Expenses successfully migrated to "Household_Bills"');
+    assert(newBillsBreakdown?.color === '#10B981', 'Renamed category has updated color #10B981 in dashboard');
+
+    // 15.12 Delete group category
+    const deleteFamCatRes = await request(`/family/groups/${famGroupId}/categories/${famCatId}`, {
+      method: 'DELETE',
+      headers: charlieHeaders
+    });
+    assert(deleteFamCatRes.status === 200, 'DELETE /family/groups/:groupId/categories/:id succeeds');
+
+    // 15.13 Category no longer in group categories list
+    const postDelFamCats = await request(`/family/groups/${famGroupId}/categories`, { headers: daveHeaders });
+    const billsStillThere = postDelFamCats.data?.custom?.some(c => (c.id || c._id) === famCatId);
+    assert(!billsStillThere, 'Deleted group category is removed from group category list');
+
+    // 15.14 Historical family expenses safely reassigned to "Others"
+    const famDashAfterDelete = await request(`/family/groups/${famGroupId}/dashboard`, { headers: charlieHeaders });
+    const famOthersBreakdown = famDashAfterDelete.data?.categoryBreakdown?.find(c => c.category === 'Others');
+    assert(famOthersBreakdown?.amount >= 3200, 'Family expenses safely reassigned to "Others"');
+
     console.log('\n================================================================');
     console.log(`🎉 FULL-APP COMPREHENSIVE TEST SUITE COMPLETE!`);
     console.log(`   Passed: ${passedCount} tests`);
