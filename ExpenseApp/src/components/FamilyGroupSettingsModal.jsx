@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Settings,
@@ -174,14 +175,32 @@ export default function FamilyGroupSettingsModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md animate-backdrop-fade">
-      <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-[32px] w-full max-w-xl shadow-2xl overflow-hidden animate-modal-pop flex flex-col max-h-[90vh]">
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, onClose]);
+
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md animate-backdrop-fade">
+      {/* Click backdrop to close */}
+      <div className="fixed inset-0 -z-10" onClick={onClose} />
+
+      <div className="relative z-10 bg-white dark:bg-[#111726] border-t sm:border border-slate-200/80 dark:border-slate-800 rounded-t-[32px] sm:rounded-[32px] w-full max-w-xl shadow-2xl overflow-hidden animate-modal-pop flex flex-col h-[85vh] sm:h-auto sm:max-h-[85vh]">
         
+        {/* Mobile drag handle indicator */}
+        <div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto mt-3 mb-1 sm:hidden shrink-0" />
+
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 sm:py-5 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm shrink-0">
               <Settings className="w-5 h-5" />
             </div>
             <div>
@@ -620,6 +639,7 @@ export default function FamilyGroupSettingsModal({
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

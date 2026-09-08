@@ -230,9 +230,9 @@ export default function ReportView({
       {/* Top Header Bar */}
       <div className="flex flex-col gap-4">
         
-        {/* Title Row */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        {/* Title Row & Scope Switcher */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
               onClick={onBackToHome}
@@ -241,11 +241,11 @@ export default function ReportView({
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <div>
-              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            <div className="min-w-0">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
                 Report & Analytics
               </h2>
-              <span className="text-xs text-slate-400 dark:text-slate-400 font-medium">
+              <span className="text-xs text-slate-400 dark:text-slate-400 font-medium block truncate">
                 {filterMode === 'monthly'
                   ? `Report for ${getMonthName(month)}`
                   : `Custom range: ${formatDateOnly(startDate)} - ${formatDateOnly(endDate)}`}
@@ -253,12 +253,12 @@ export default function ReportView({
             </div>
           </div>
 
-          {/* Personal vs Family Scope Switcher */}
-          <div className="flex bg-slate-200/70 dark:bg-[#131926] p-1 rounded-2xl border dark:border-slate-800">
+          {/* Personal vs Family vs Split Scope Switcher */}
+          <div className="grid grid-cols-3 sm:flex bg-slate-100 dark:bg-[#131926] p-1 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm w-full sm:w-auto shrink-0">
             <button
               type="button"
               onClick={() => setReportType('personal')}
-              className={`flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+              className={`flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-1.5 text-xs font-bold rounded-xl transition-all ${
                 reportType === 'personal'
                   ? 'bg-white dark:bg-[#1E2638] text-slate-900 dark:text-white shadow-sm'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
@@ -270,7 +270,7 @@ export default function ReportView({
             <button
               type="button"
               onClick={() => setReportType('family')}
-              className={`flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+              className={`flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-1.5 text-xs font-bold rounded-xl transition-all ${
                 reportType === 'family'
                   ? 'bg-white dark:bg-[#1E2638] text-slate-900 dark:text-white shadow-sm'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
@@ -282,7 +282,7 @@ export default function ReportView({
             <button
               type="button"
               onClick={() => setReportType('split')}
-              className={`flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+              className={`flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-1.5 text-xs font-bold rounded-xl transition-all ${
                 reportType === 'split'
                   ? 'bg-white dark:bg-[#1E2638] text-indigo-600 dark:text-indigo-400 shadow-sm'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
