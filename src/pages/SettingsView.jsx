@@ -17,14 +17,23 @@ import {
   Moon,
   Laptop,
   Smartphone,
-  Download
+  Download,
+  Tag,
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useCategories } from '../context/CategoryContext';
+import AddCategoryModal from '../components/AddCategoryModal';
 
 export default function SettingsView({ onOpenBudgetModal, onOpenUserGuide, onOpenQuickTour }) {
   const { user, logout, getFullUrl } = useAuth();
   const { theme, setTheme, isDark } = useTheme();
+  const { customCategories, deleteCategory, iconComponents } = useCategories();
+
+  const [isAddCatOpen, setIsAddCatOpen] = useState(false);
+  const [deletingCatId, setDeletingCatId] = useState(null);
 
   const [currentPass, setCurrentPass] = useState('');
   const [newPass, setNewPass] = useState('');
@@ -242,6 +251,83 @@ export default function SettingsView({ onOpenBudgetModal, onOpenUserGuide, onOpe
           </div>
         </div>
       </div>
+
+      {/* Custom Categories Management */}
+      <div className="fintech-card p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <Tag className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <span>Custom Categories</span>
+          </h4>
+          <button
+            type="button"
+            onClick={() => setIsAddCatOpen(true)}
+            className="px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 font-bold text-xs transition-colors border border-indigo-100 dark:border-indigo-800/60 flex items-center gap-1.5"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Category</span>
+          </button>
+        </div>
+
+        <p className="text-xs text-slate-400 dark:text-slate-400">
+          Create custom expense tags with your preferred color palette and icon for tracking and reports.
+        </p>
+
+        {customCategories.length === 0 ? (
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-200/60 dark:border-slate-700/60 text-center text-xs text-slate-400">
+            No custom categories created yet. Click <strong className="text-indigo-600 dark:text-indigo-400">New Category</strong> to add your first one!
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+            {customCategories.map((cat) => {
+              const IconComp = iconComponents[cat.icon] || Tag;
+              const isDeleting = deletingCatId === cat.id;
+              return (
+                <div
+                  key={cat.id}
+                  className="p-3 rounded-2xl bg-slate-50/80 dark:bg-[#1A2234] border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between gap-3 shadow-2xs"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0"
+                      style={{ backgroundColor: cat.color || '#6366F1' }}
+                    >
+                      <IconComp className="w-4 h-4" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                      {cat.name}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={async () => {
+                      try {
+                        setDeletingCatId(cat.id);
+                        await deleteCategory(cat.id);
+                      } catch (err) {
+                        alert(err.message || 'Failed to delete category');
+                      } finally {
+                        setDeletingCatId(null);
+                      }
+                    }}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                    title="Delete category"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <AddCategoryModal
+        isOpen={isAddCatOpen}
+        onClose={() => setIsAddCatOpen(false)}
+      />
 
       {/* Help & User Guide */}
       <div className="fintech-card p-6 space-y-4">

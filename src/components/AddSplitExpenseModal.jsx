@@ -24,6 +24,8 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useCategories } from '../context/CategoryContext';
+import AddCategoryModal from './AddCategoryModal';
 import { CATEGORY_CONFIG } from '../utils/formatters';
 
 const CATEGORIES = [
@@ -160,7 +162,9 @@ export default function AddSplitExpenseModal({
   editingExpense = null
 }) {
   const { apiFetch, user } = useAuth();
+  const { categories, getCategoryMeta } = useCategories();
   const [mounted, setMounted] = useState(false);
+  const [isAddCatOpen, setIsAddCatOpen] = useState(false);
 
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
@@ -351,13 +355,16 @@ export default function AddSplitExpenseModal({
   }, [eligibleMembers, currentUserId]);
 
   const categoryOptions = useMemo(() => {
-    return CATEGORIES.map(cat => ({
-      value: cat,
-      label: cat,
-      icon: ICON_MAP[cat] || MoreHorizontal,
-      color: CATEGORY_COLORS[cat] || '#8B5CF6'
-    }));
-  }, []);
+    return categories.map(cat => {
+      const meta = getCategoryMeta(cat);
+      return {
+        value: cat,
+        label: cat,
+        icon: meta.IconComponent || MoreHorizontal,
+        color: meta.color || '#8B5CF6'
+      };
+    });
+  }, [categories, getCategoryMeta]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -564,9 +571,19 @@ export default function AddSplitExpenseModal({
           {/* Category & Date Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Category
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Category
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsAddCatOpen(true)}
+                  className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>New</span>
+                </button>
+              </div>
               <CustomDropdown
                 value={category}
                 onChange={setCategory}
@@ -815,6 +832,16 @@ export default function AddSplitExpenseModal({
         </form>
 
       </div>
+
+      <AddCategoryModal
+        isOpen={isAddCatOpen}
+        onClose={() => setIsAddCatOpen(false)}
+        onCreated={(newCat) => {
+          if (newCat && newCat.name) {
+            setCategory(newCat.name);
+          }
+        }}
+      />
     </div>,
     document.body
   );

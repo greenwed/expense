@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { formatINR, formatDateTime, CATEGORY_CONFIG } from '../utils/formatters';
 import { useTheme } from '../context/ThemeContext';
+import { useCategories } from '../context/CategoryContext';
 
 const ICON_MAP = {
   Food: Utensils,
@@ -30,6 +31,7 @@ export default function CategoryPieChart({
   title = 'Expenses Report'
 }) {
   const { isDark } = useTheme();
+  const { getCategoryMeta, iconComponents } = useCategories();
 
   // Accordion state: only one category open at a time
   const [expandedCategory, setExpandedCategory] = useState(null);
@@ -39,11 +41,15 @@ export default function CategoryPieChart({
   };
 
   const chartData = categories
-    .map((c) => ({
-      ...c,
-      amount: Number(c.amount) || 0,
-      percentage: Number(c.percentage) || 0
-    }))
+    .map((c) => {
+      const meta = getCategoryMeta ? getCategoryMeta(c.category) : (CATEGORY_CONFIG[c.category] || CATEGORY_CONFIG.Others);
+      return {
+        ...c,
+        amount: Number(c.amount) || 0,
+        percentage: Number(c.percentage) || 0,
+        color: c.color || meta.color
+      };
+    })
     .filter((c) => c.amount > 0);
 
   const numTotalSpent = Number(totalSpent) || chartData.reduce((acc, c) => acc + c.amount, 0);
@@ -99,7 +105,7 @@ export default function CategoryPieChart({
                       <div className="flex items-center gap-1.5 mb-1">
                         <span
                           className="w-2.5 h-2.5 rounded-full"
-                          style={{ backgroundColor: data.fill }}
+                          style={{ backgroundColor: data.color || data.fill }}
                         />
                         <span className="font-bold">{data.category}</span>
                       </div>
@@ -126,12 +132,11 @@ export default function CategoryPieChart({
               className="cursor-pointer"
             >
               {chartData.map((entry, index) => {
-                const conf = CATEGORY_CONFIG[entry.category] || CATEGORY_CONFIG.Others;
                 const isSelected = expandedCategory === entry.category;
                 return (
                   <Cell 
                     key={`cell-${index}`} 
-                    fill={conf.color} 
+                    fill={entry.color} 
                     stroke={isSelected ? (isDark ? "#818CF8" : "#4F46E5") : (isDark ? "#131926" : "#FFFFFF")} 
                     strokeWidth={isSelected ? 3 : 2} 
                   />
@@ -160,8 +165,10 @@ export default function CategoryPieChart({
         </div>
 
         {categories.map((item) => {
-          const conf = CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.Others;
-          const Icon = ICON_MAP[item.category] || MoreHorizontal;
+          const conf = getCategoryMeta ? getCategoryMeta(item.category) : (CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.Others);
+          const itemColor = item.color || conf.color;
+          const Icon = (item.icon && iconComponents?.[item.icon]) || conf.IconComponent || ICON_MAP[item.category] || MoreHorizontal;
+          const categoryName = item.category || conf.name;
           const amount = Number(item.amount) || 0;
           const percentage = Number(item.percentage) || 0;
           const hasSpending = amount > 0;
@@ -185,19 +192,19 @@ export default function CategoryPieChart({
                 onClick={() => toggleCategory(item.category)}
                 className="w-full text-left p-3.5 sm:p-4 focus:outline-none transition-colors select-none cursor-pointer"
                 aria-expanded={isExpanded}
-                title={`Click to ${isExpanded ? 'close' : 'view'} ${conf.name} expenses`}
+                title={`Click to ${isExpanded ? 'close' : 'view'} ${categoryName} expenses`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3 min-w-0">
                     <div
                       className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm shrink-0"
-                      style={{ backgroundColor: `${conf.color}15`, color: conf.color }}
+                      style={{ backgroundColor: `${itemColor}15`, color: itemColor }}
                     >
                       <Icon className="w-5 h-5" />
                     </div>
                     <div className="min-w-0">
                       <span className="text-sm font-bold text-slate-900 dark:text-white block leading-tight truncate">
-                        {conf.name}
+                        {categoryName}
                       </span>
                       <span className="text-xs text-slate-400 dark:text-slate-400 font-medium">
                         {percentage}% of total
@@ -230,7 +237,7 @@ export default function CategoryPieChart({
                     className="h-full rounded-full transition-all duration-500"
                     style={{
                       width: `${Math.min(100, Math.max(0, percentage))}%`,
-                      backgroundColor: conf.color
+                      backgroundColor: itemColor
                     }}
                   />
                 </div>
@@ -250,7 +257,7 @@ export default function CategoryPieChart({
 
                   {itemExpenses.length === 0 ? (
                     <div className="p-3 text-center text-xs text-slate-400 dark:text-slate-500 rounded-xl bg-white/60 dark:bg-[#131926]/60 border border-slate-100 dark:border-slate-800/80">
-                      No expense entries found in {conf.name} for this period.
+                      No expense entries found in {categoryName} for this period.
                     </div>
                   ) : (
                     <div className="space-y-1.5 max-h-72 overflow-y-auto pr-0.5 divide-y-0">

@@ -203,19 +203,20 @@ router.get('/groups/:groupId/dashboard', requireGroupMember, async (req, res) =>
     periodExpenses.forEach(exp => {
       const amt = Number(exp.amount) || 0;
       monthlySpent += amt;
-      const cat = VALID_CATEGORIES.includes(exp.category) ? exp.category : 'Others';
+      const cat = exp.category || 'Others';
       categoryTotals[cat] = (categoryTotals[cat] || 0) + amt;
     });
 
-    const categoryBreakdown = VALID_CATEGORIES.map(cat => {
-      const amt = categoryTotals[cat] || 0;
-      const pct = monthlySpent > 0 ? Number(((amt / monthlySpent) * 100).toFixed(1)) : 0;
-      return {
-        category: cat,
-        amount: amt,
-        percentage: pct
-      };
-    });
+    const categoryBreakdown = Object.entries(categoryTotals)
+      .filter(([cat, amt]) => VALID_CATEGORIES.includes(cat) || amt > 0)
+      .map(([cat, amt]) => {
+        const pct = monthlySpent > 0 ? Number(((amt / monthlySpent) * 100).toFixed(1)) : 0;
+        return {
+          category: cat,
+          amount: amt,
+          percentage: pct
+        };
+      });
 
     const percentSpent = monthlyIncome > 0 ? Number(((monthlySpent / monthlyIncome) * 100).toFixed(1)) : 0;
     const isExceeding80 = monthlyIncome > 0 && monthlySpent >= 0.8 * monthlyIncome;
@@ -395,9 +396,9 @@ router.post('/groups/:groupId/expenses', requireGroupMember, async (req, res) =>
       return res.status(400).json({ error: 'Expense amount must be greater than 0.' });
     }
 
-    if (!category || !VALID_CATEGORIES.includes(category)) {
+    if (!category || typeof category !== 'string' || category.trim().length === 0 || category.trim().length > 50) {
       return res.status(400).json({
-        error: `Category must be one of: ${VALID_CATEGORIES.join(', ')}`
+        error: 'Category must be a non-empty name up to 50 characters.'
       });
     }
 
@@ -409,7 +410,7 @@ router.post('/groups/:groupId/expenses', requireGroupMember, async (req, res) =>
       groupId,
       user: req.user,
       amount: Number(amount),
-      category,
+      category: category.trim(),
       description: description.trim(),
       date: date ? new Date(date) : new Date()
     });
@@ -443,9 +444,9 @@ router.put('/groups/:groupId/expenses/:expenseId', requireGroupMember, requireRo
       return res.status(400).json({ error: 'Expense amount must be greater than 0.' });
     }
 
-    if (category !== undefined && !VALID_CATEGORIES.includes(category)) {
+    if (category !== undefined && (!category || typeof category !== 'string' || category.trim().length === 0 || category.trim().length > 50)) {
       return res.status(400).json({
-        error: `Category must be one of: ${VALID_CATEGORIES.join(', ')}`
+        error: 'Category must be a non-empty name up to 50 characters.'
       });
     }
 
@@ -455,7 +456,7 @@ router.put('/groups/:groupId/expenses/:expenseId', requireGroupMember, requireRo
 
     const updated = await FamilyExpenseModel.update(expenseId, groupId, {
       amount,
-      category,
+      category: category ? category.trim() : undefined,
       description: description ? description.trim() : undefined,
       date
     });

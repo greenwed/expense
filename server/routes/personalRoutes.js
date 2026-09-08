@@ -2,6 +2,25 @@ import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import PersonalIncomeModel from '../models/PersonalIncome.js';
 import PersonalExpenseModel, { VALID_CATEGORIES } from '../models/PersonalExpense.js';
+import CustomCategoryModel from '../models/CustomCategory.js';
+
+const DEFAULT_CATEGORY_COLORS = {
+  Food: '#0EA5E9',
+  Shopping: '#F97316',
+  Entertainment: '#8B5CF6',
+  Medical: '#10B981',
+  Transport: '#6366F1',
+  Others: '#F43F5E'
+};
+
+const DEFAULT_CATEGORY_ICONS = {
+  Food: 'Utensils',
+  Shopping: 'ShoppingBag',
+  Entertainment: 'Film',
+  Medical: 'HeartPulse',
+  Transport: 'Car',
+  Others: 'MoreHorizontal'
+};
 
 const router = express.Router();
 
@@ -11,6 +30,93 @@ function getCurrentMonth() {
 }
 
 router.use(authenticateToken);
+
+// Categories Endpoints
+// 1. Get all available categories (standard + custom)
+router.get('/categories', async (req, res) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const custom = await CustomCategoryModel.findByUserId(userId);
+    return res.json({
+      standard: VALID_CATEGORIES.map(cat => ({
+        name: cat,
+        color: DEFAULT_CATEGORY_COLORS[cat] || '#8B5CF6',
+        icon: DEFAULT_CATEGORY_ICONS[cat] || 'Tag',
+        isCustom: false
+      })),
+      custom
+    });
+  } catch (err) {
+    console.error('Get categories error:', err);
+    return res.status(500).json({ error: 'Failed to fetch categories.' });
+  }
+});
+
+// 2. Create custom category
+router.post('/categories', async (req, res) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const { name, color, icon } = req.body;
+
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return res.status(400).json({ error: 'Category name is required.' });
+    }
+    const trimmedName = name.trim();
+    if (trimmedName.length > 50) {
+      return res.status(400).json({ error: 'Category name cannot exceed 50 characters.' });
+    }
+
+    if (VALID_CATEGORIES.some(c => c.toLowerCase() === trimmedName.toLowerCase())) {
+      return res.status(400).json({ error: `"${trimmedName}" is already a standard category.` });
+    }
+
+    const existing = await CustomCategoryModel.findByName(userId, trimmedName);
+    if (existing) {
+      return res.status(400).json({ error: `Category "${trimmedName}" already exists.` });
+    }
+
+    const cleanColor = (color && typeof color === 'string' && color.trim()) ? color.trim() : '#6366F1';
+    const cleanIcon = (icon && typeof icon === 'string' && icon.trim()) ? icon.trim() : 'Tag';
+
+    const category = await CustomCategoryModel.create({
+      userId,
+      name: trimmedName,
+      color: cleanColor,
+      icon: cleanIcon
+    });
+
+    return res.status(201).json({
+      message: 'Category created successfully!',
+      category
+    });
+  } catch (err) {
+    console.error('Create category error:', err);
+    return res.status(500).json({ error: 'Failed to create category.' });
+  }
+});
+
+// 3. Delete custom category
+router.delete('/categories/:id', async (req, res) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const { id } = req.params;
+
+    const existing = await CustomCategoryModel.findById(id);
+    if (!existing) {
+      return res.status(404).json({ error: 'Category not found.' });
+    }
+
+    if (String(existing.userId) !== String(userId)) {
+      return res.status(403).json({ error: 'Not authorized to delete this category.' });
+    }
+
+    await CustomCategoryModel.delete(id, userId);
+    return res.json({ message: 'Category deleted successfully!' });
+  } catch (err) {
+    console.error('Delete category error:', err);
+    return res.status(500).json({ error: 'Failed to delete category.' });
+  }
+});
 
 // Dashboard / Report summary
 // ONLY USER CAN ADD OR DELETE INCOME AND EXPENSE. NO AUTOMATIC INSERTION.
@@ -53,29 +159,38 @@ router.get('/dashboard', async (req, res) => {
     }
 
     // 3. Compute period metrics (strictly what user added, 0 if nothing added)
+    const customCats = await CustomCategoryModel.findByUserId(userId);
     const monthlyIncome = periodIncomes.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0);
     let monthlySpent = 0;
     const categoryTotals = {};
     VALID_CATEGORIES.forEach(cat => {
       categoryTotals[cat] = 0;
     });
+    customCats.forEach(c => {
+      categoryTotals[c.name] = 0;
+    });
 
     periodExpenses.forEach(exp => {
       const amt = Number(exp.amount) || 0;
       monthlySpent += amt;
-      const cat = VALID_CATEGORIES.includes(exp.category) ? exp.category : 'Others';
+      const cat = exp.category || 'Others';
       categoryTotals[cat] = (categoryTotals[cat] || 0) + amt;
     });
 
-    const categoryBreakdown = VALID_CATEGORIES.map(cat => {
-      const amt = categoryTotals[cat] || 0;
-      const pct = monthlySpent > 0 ? Number(((amt / monthlySpent) * 100).toFixed(1)) : 0;
-      return {
-        category: cat,
-        amount: amt,
-        percentage: pct
-      };
-    });
+    const categoryBreakdown = Object.entries(categoryTotals)
+      .filter(([cat, amt]) => VALID_CATEGORIES.includes(cat) || customCats.some(c => c.name === cat) || amt > 0)
+      .map(([cat, amt]) => {
+        const pct = monthlySpent > 0 ? Number(((amt / monthlySpent) * 100).toFixed(1)) : 0;
+        const customMatch = customCats.find(c => c.name.toLowerCase() === cat.toLowerCase());
+        return {
+          category: cat,
+          amount: amt,
+          percentage: pct,
+          color: customMatch?.color || DEFAULT_CATEGORY_COLORS[cat] || '#8B5CF6',
+          icon: customMatch?.icon || DEFAULT_CATEGORY_ICONS[cat] || 'Tag',
+          isCustom: Boolean(customMatch)
+        };
+      });
 
     const percentSpent = monthlyIncome > 0 ? Number(((monthlySpent / monthlyIncome) * 100).toFixed(1)) : 0;
     const isExceeding80 = monthlyIncome > 0 && monthlySpent >= 0.8 * monthlyIncome;
@@ -261,9 +376,9 @@ router.post('/expenses', async (req, res) => {
       return res.status(400).json({ error: 'Expense amount must be greater than 0.' });
     }
 
-    if (!category || !VALID_CATEGORIES.includes(category)) {
+    if (!category || typeof category !== 'string' || category.trim().length === 0 || category.trim().length > 50) {
       return res.status(400).json({
-        error: `Category must be one of: ${VALID_CATEGORIES.join(', ')}`
+        error: 'Category must be a non-empty name up to 50 characters.'
       });
     }
 
@@ -274,7 +389,7 @@ router.post('/expenses', async (req, res) => {
     const expense = await PersonalExpenseModel.create({
       userId,
       amount: Number(amount),
-      category,
+      category: category.trim(),
       description: description.trim(),
       date: date ? new Date(date) : new Date()
     });
@@ -309,9 +424,9 @@ router.put('/expenses/:id', async (req, res) => {
       return res.status(400).json({ error: 'Expense amount must be greater than 0.' });
     }
 
-    if (category !== undefined && !VALID_CATEGORIES.includes(category)) {
+    if (category !== undefined && (!category || typeof category !== 'string' || category.trim().length === 0 || category.trim().length > 50)) {
       return res.status(400).json({
-        error: `Category must be one of: ${VALID_CATEGORIES.join(', ')}`
+        error: 'Category must be a non-empty name up to 50 characters.'
       });
     }
 
@@ -321,7 +436,7 @@ router.put('/expenses/:id', async (req, res) => {
 
     const updated = await PersonalExpenseModel.update(id, userId, {
       amount,
-      category,
+      category: category ? category.trim() : undefined,
       description: description ? description.trim() : undefined,
       date
     });

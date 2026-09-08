@@ -859,6 +859,93 @@ async function runAllTests() {
     const apiDownloadRes = await fetch(`http://localhost:${TEST_PORT}/api/app/download-apk`);
     assert(apiDownloadRes.status === 200, '/api/app/download-apk route responds with 200');
 
+    // -------------------------------------------------------------
+    // SECTION 14: Custom Categories & Reports Dynamic Aggregation
+    // -------------------------------------------------------------
+    console.log('\n--- SECTION 14: Custom Categories & Reports Dynamic Aggregation ---');
+    
+    // 14.1 Get categories - returns standard list and custom list
+    const getCatsRes = await request('/personal/categories', { headers: charlieHeaders });
+    assert(getCatsRes.status === 200, 'GET /personal/categories returns 200');
+    assert(Array.isArray(getCatsRes.data?.standard) && getCatsRes.data.standard.length > 0, 'Standard categories returned with colors and icons');
+    assert(Array.isArray(getCatsRes.data?.custom), 'Custom categories array returned');
+
+    // 14.2 Create a custom category with custom color & icon
+    const customCatName = `Gaming_${timestamp}`;
+    const createCatRes = await request('/personal/categories', {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: {
+        name: customCatName,
+        color: '#8B5CF6',
+        icon: 'Gamepad2'
+      }
+    });
+    assert(createCatRes.status === 201, 'POST /personal/categories creates custom category with 201');
+    assert(createCatRes.data?.category?.name === customCatName, 'Created category has correct name');
+    assert(createCatRes.data?.category?.color === '#8B5CF6', 'Created category has custom color');
+    assert(createCatRes.data?.category?.icon === 'Gamepad2', 'Created category has custom icon');
+    const createdCatId = createCatRes.data?.category?.id || createCatRes.data?.category?._id;
+
+    // 14.3 Reject duplicate category name
+    const dupCatRes = await request('/personal/categories', {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: {
+        name: customCatName,
+        color: '#EC4899',
+        icon: 'Sparkles'
+      }
+    });
+    assert(dupCatRes.status === 400, 'Reject duplicate custom category with 400');
+
+    // 14.4 Reject category name colliding with standard categories
+    const stdCollisionRes = await request('/personal/categories', {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: {
+        name: 'Food',
+        color: '#10B981',
+        icon: 'ShoppingCart'
+      }
+    });
+    assert(stdCollisionRes.status === 400, 'Reject custom category colliding with standard category');
+
+    // 14.5 Add personal expense tagged with custom category
+    const addCustomExpRes = await request('/personal/expenses', {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: {
+        amount: 2500,
+        category: customCatName,
+        description: 'New mechanical keyboard',
+        date: new Date().toISOString()
+      }
+    });
+    assert(addCustomExpRes.status === 201, 'Add expense with custom category succeeds');
+    assert(addCustomExpRes.data?.expense?.category === customCatName, 'Expense category matches custom category');
+
+    // 14.6 Check dashboard category breakdown includes custom category with custom color (not Others)
+    const dashRes = await request('/personal/dashboard', { headers: charlieHeaders });
+    assert(dashRes.status === 200, 'GET /personal/dashboard succeeds');
+    const gamingBreakdown = dashRes.data?.categoryBreakdown?.find(c => c.category === customCatName);
+    assert(!!gamingBreakdown, 'Custom category is present in dashboard category breakdown');
+    assert(gamingBreakdown?.amount >= 2500, 'Custom category breakdown has correct amount');
+    assert(gamingBreakdown?.color === '#8B5CF6', 'Custom category preserves custom color in breakdown');
+    assert(gamingBreakdown?.isCustom === true, 'Custom category flagged as isCustom in breakdown');
+
+    // 14.7 Delete custom category
+    const deleteCatRes = await request(`/personal/categories/${createdCatId}`, {
+      method: 'DELETE',
+      headers: charlieHeaders
+    });
+    assert(deleteCatRes.status === 200, 'DELETE /personal/categories/:id succeeds');
+
+    // 14.8 Verify custom category no longer in custom list
+    const postDeleteCatsRes = await request('/personal/categories', { headers: charlieHeaders });
+    const stillExists = postDeleteCatsRes.data?.custom?.some(c => (c.id || c._id) === createdCatId);
+    assert(!stillExists, 'Deleted custom category is removed from categories list');
+
     console.log('\n================================================================');
     console.log(`🎉 FULL-APP COMPREHENSIVE TEST SUITE COMPLETE!`);
     console.log(`   Passed: ${passedCount} tests`);

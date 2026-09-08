@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import CategoryPieChart from '../components/CategoryPieChart';
 import { useAuth } from '../context/AuthContext';
+import { useCategories } from '../context/CategoryContext';
 import { formatINR, getMonthName, CATEGORY_CONFIG, formatDateOnly } from '../utils/formatters';
 
 export default function ReportView({
@@ -31,6 +32,7 @@ export default function ReportView({
   selectedGroupId
 }) {
   const { apiFetch } = useAuth();
+  const { getCategoryMeta } = useCategories();
 
   // Report Scope: 'personal' | 'family' (Keeps user on the Report page!)
   const [reportType, setReportType] = useState('personal');
@@ -147,32 +149,44 @@ export default function ReportView({
     fetchReportData();
   }, [fetchReportData]);
 
-  // Robust category breakdown extraction
+  // Robust category breakdown extraction preserving custom categories and colors
   const categories = useMemo(() => {
+    let rawList = [];
     if (reportData?.categories && Array.isArray(reportData.categories) && reportData.categories.length > 0) {
-      return reportData.categories;
-    }
-    if (reportData?.categoryBreakdown && Array.isArray(reportData.categoryBreakdown) && reportData.categoryBreakdown.length > 0) {
-      return reportData.categoryBreakdown;
-    }
-    if (reportData?.expenses && Array.isArray(reportData.expenses)) {
+      rawList = reportData.categories;
+    } else if (reportData?.categoryBreakdown && Array.isArray(reportData.categoryBreakdown) && reportData.categoryBreakdown.length > 0) {
+      rawList = reportData.categoryBreakdown;
+    } else if (reportData?.expenses && Array.isArray(reportData.expenses)) {
       const totals = {};
-      Object.keys(CATEGORY_CONFIG).forEach((cat) => { totals[cat] = 0; });
       let total = 0;
       reportData.expenses.forEach((e) => {
         const amt = Number(e.amount) || 0;
         total += amt;
-        const cat = CATEGORY_CONFIG[e.category] ? e.category : 'Others';
+        const cat = e.category || 'Others';
         totals[cat] = (totals[cat] || 0) + amt;
       });
-      return Object.keys(CATEGORY_CONFIG).map((cat) => ({
+      rawList = Object.entries(totals).map(([cat, amt]) => ({
         category: cat,
-        amount: totals[cat] || 0,
-        percentage: total > 0 ? Number(((totals[cat] / total) * 100).toFixed(1)) : 0
+        amount: amt,
+        percentage: total > 0 ? Number(((amt / total) * 100).toFixed(1)) : 0
       }));
     }
-    return Object.keys(CATEGORY_CONFIG).map((cat) => ({ category: cat, amount: 0, percentage: 0 }));
-  }, [reportData]);
+
+    if (rawList.length === 0) {
+      rawList = Object.keys(CATEGORY_CONFIG).map((cat) => ({ category: cat, amount: 0, percentage: 0 }));
+    }
+
+    return rawList.map((item) => {
+      const meta = getCategoryMeta(item.category);
+      return {
+        ...item,
+        color: item.color || meta.color,
+        icon: item.icon || meta.icon,
+        bgColor: meta.bgColor,
+        barColor: meta.barColor
+      };
+    });
+  }, [reportData, getCategoryMeta]);
 
   const totalSpent = Number(
     reportType === 'split'

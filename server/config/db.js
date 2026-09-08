@@ -255,9 +255,22 @@ async function initPostgresSchema(pool) {
       details JSONB NOT NULL DEFAULT '{}'::jsonb,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS custom_categories (
+      id VARCHAR(100) PRIMARY KEY,
+      user_id VARCHAR(100) NOT NULL,
+      name VARCHAR(50) NOT NULL,
+      color VARCHAR(20) NOT NULL,
+      icon VARCHAR(50) DEFAULT 'Tag',
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(user_id, name)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_custom_categories_user_id ON custom_categories(user_id);
   `;
   await pool.query(schemaSql);
-  console.log('⚡ Neon PostgreSQL tables (including split tables) initialized.');
+  console.log('⚡ Neon PostgreSQL tables (including split & custom category tables) initialized.');
 }
 
 export function getPgPool() {

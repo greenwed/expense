@@ -1,19 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, Clock, Check, Utensils, ShoppingBag, Film, HeartPulse, Car, MoreHorizontal } from 'lucide-react';
-import { CATEGORY_CONFIG } from '../utils/formatters';
-
-const CATEGORIES = ['Food', 'Shopping', 'Entertainment', 'Medical', 'Transport', 'Others'];
-
-const ICON_MAP = {
-  Food: Utensils,
-  Shopping: ShoppingBag,
-  Entertainment: Film,
-  Medical: HeartPulse,
-  Transport: Car,
-  Others: MoreHorizontal
-};
+import { X, Clock, Check, Plus } from 'lucide-react';
+import { useCategories } from '../context/CategoryContext';
+import AddCategoryModal from './AddCategoryModal';
 
 export default function ExpenseModal({ isOpen, onClose, onSave, initialData = null, title = 'Add Expense' }) {
+  const { categories, getCategoryMeta } = useCategories();
+  const [isAddCatOpen, setIsAddCatOpen] = useState(false);
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Food');
   const [description, setDescription] = useState('');
@@ -156,13 +148,23 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialData = nu
 
           {/* Category Selector */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-              Category *
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {CATEGORIES.map((cat) => {
-                const conf = CATEGORY_CONFIG[cat];
-                const Icon = ICON_MAP[cat];
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                Category *
+              </label>
+              <button
+                type="button"
+                onClick={() => setIsAddCatOpen(true)}
+                className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>New Category</span>
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto p-1">
+              {categories.map((cat) => {
+                const conf = getCategoryMeta(cat);
+                const Icon = conf.IconComponent;
                 const isSelected = category === cat;
                 return (
                   <button
@@ -171,7 +173,7 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialData = nu
                     onClick={() => setCategory(cat)}
                     className={`py-2.5 px-3 rounded-2xl border text-xs font-bold flex items-center justify-center gap-2 transition-all ${
                       isSelected
-                        ? 'border-indigo-600 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 shadow-sm'
+                        ? 'border-indigo-600 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 shadow-sm ring-1 ring-indigo-500/20'
                         : 'border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-[#1A2234] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#222C42]'
                     }`}
                   >
@@ -180,6 +182,16 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialData = nu
                   </button>
                 );
               })}
+
+              {/* Add New Category Chip */}
+              <button
+                type="button"
+                onClick={() => setIsAddCatOpen(true)}
+                className="py-2.5 px-3 rounded-2xl border border-dashed border-indigo-300 dark:border-indigo-700 bg-indigo-50/40 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+              >
+                <Plus className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">+ New</span>
+              </button>
             </div>
           </div>
 
@@ -241,8 +253,17 @@ export default function ExpenseModal({ isOpen, onClose, onSave, initialData = nu
             </button>
           </div>
         </form>
-
       </div>
+
+      <AddCategoryModal
+        isOpen={isAddCatOpen}
+        onClose={() => setIsAddCatOpen(false)}
+        onCreated={(newCat) => {
+          if (newCat && newCat.name) {
+            setCategory(newCat.name);
+          }
+        }}
+      />
     </div>
   );
 }

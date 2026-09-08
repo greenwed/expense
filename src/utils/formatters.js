@@ -129,6 +129,79 @@ export const CATEGORY_CONFIG = {
   }
 };
 
+export const CATEGORY_PALETTE = [
+  '#0EA5E9', // Sky Blue
+  '#3B82F6', // Blue
+  '#6366F1', // Indigo
+  '#8B5CF6', // Purple
+  '#EC4899', // Pink
+  '#F43F5E', // Rose
+  '#EF4444', // Red
+  '#F97316', // Orange
+  '#F59E0B', // Amber
+  '#EAB308', // Yellow
+  '#10B981', // Emerald
+  '#14B8A6', // Teal
+  '#06B6D4', // Cyan
+  '#64748B'  // Slate
+];
+
+export const CATEGORY_ICONS = [
+  'Tag',
+  'Utensils',
+  'ShoppingBag',
+  'Film',
+  'HeartPulse',
+  'Car',
+  'Coffee',
+  'Briefcase',
+  'Dumbbell',
+  'Fuel',
+  'Home',
+  'Gift',
+  'GraduationCap',
+  'Gamepad2',
+  'Plane',
+  'Wifi',
+  'BookOpen',
+  'Music',
+  'Camera',
+  'PawPrint',
+  'DollarSign'
+];
+
+export function getCategoryConfig(categoryName, customList = []) {
+  if (!categoryName) return CATEGORY_CONFIG.Others;
+  
+  if (CATEGORY_CONFIG[categoryName]) {
+    return CATEGORY_CONFIG[categoryName];
+  }
+
+  const customMatch = (customList || []).find(
+    c => c.name && c.name.toLowerCase() === categoryName.toLowerCase()
+  );
+
+  if (customMatch) {
+    return {
+      name: customMatch.name,
+      color: customMatch.color || '#8B5CF6',
+      bgColor: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+      barColor: 'bg-indigo-500',
+      icon: customMatch.icon || 'Tag',
+      isCustom: true
+    };
+  }
+
+  return {
+    name: categoryName,
+    color: '#8B5CF6',
+    bgColor: 'bg-purple-50 text-purple-600 border-purple-100',
+    barColor: 'bg-purple-500',
+    icon: 'Tag',
+    isCustom: true
+  };
+}
+
 /**
  * Returns the public web app domain for invite links.
  * In Android Capacitor or local environment, returns the canonical production URL.
