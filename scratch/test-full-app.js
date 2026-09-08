@@ -840,6 +840,25 @@ async function runAllTests() {
     assert(Array.isArray(splitReports.data?.categoryBreakdown), 'Category breakdown array present');
     assert(Array.isArray(splitReports.data?.groupBreakdown), 'Group breakdown array present');
 
+    // -------------------------------------------------------------
+    // SECTION 13: Latest APK Download & Metadata Synchronization
+    // -------------------------------------------------------------
+    console.log('\n--- SECTION 13: Latest APK Download & Metadata ---');
+    const apkInfoRes = await request('/app/apk-info');
+    assert(apkInfoRes.status === 200, 'APK metadata endpoint responds with 200');
+    assert(apkInfoRes.data?.available === true, 'Latest APK is marked available');
+    assert(apkInfoRes.data?.filename === 'rupeetrack.apk', 'APK filename is rupeetrack.apk');
+    assert(apkInfoRes.data?.downloadUrl === '/rupeetrack.apk', 'Download URL is /rupeetrack.apk');
+    assert(apkInfoRes.data?.sizeBytes > 1000000, `APK size is valid (${apkInfoRes.data?.sizeFormatted})`);
+
+    const rawApkRes = await fetch(`http://localhost:${TEST_PORT}/rupeetrack.apk`);
+    assert(rawApkRes.status === 200, 'Direct /rupeetrack.apk route responds with 200');
+    assert(rawApkRes.headers.get('content-type') === 'application/vnd.android.package-archive', 'Content-Type is Android package archive');
+    assert(rawApkRes.headers.get('content-disposition')?.includes('attachment; filename="rupeetrack.apk"'), 'Content-Disposition attachment header is set');
+
+    const apiDownloadRes = await fetch(`http://localhost:${TEST_PORT}/api/app/download-apk`);
+    assert(apiDownloadRes.status === 200, '/api/app/download-apk route responds with 200');
+
     console.log('\n================================================================');
     console.log(`🎉 FULL-APP COMPREHENSIVE TEST SUITE COMPLETE!`);
     console.log(`   Passed: ${passedCount} tests`);

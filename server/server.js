@@ -52,6 +52,65 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// APK Download & Metadata Endpoints
+const resolveApkFile = () => {
+  const candidates = [
+    path.join(__dirname, '..', 'public', 'rupeetrack.apk'),
+    path.join(__dirname, '..', 'dist', 'rupeetrack.apk'),
+    path.join(__dirname, '..', 'ExpenseApp', 'rupeetrack.apk'),
+    path.join(__dirname, '..', 'ExpenseApp', 'android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk')
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  return null;
+};
+
+const handleApkDownload = (req, res) => {
+  const apkPath = resolveApkFile();
+  if (!apkPath) {
+    return res.status(404).json({ error: 'Latest APK not found on server.' });
+  }
+
+  res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+  res.setHeader('Content-Disposition', 'attachment; filename="rupeetrack.apk"');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+
+  const stat = fs.statSync(apkPath);
+  res.setHeader('Content-Length', stat.size);
+
+  const stream = fs.createReadStream(apkPath);
+  stream.pipe(res);
+};
+
+app.get('/rupeetrack.apk', handleApkDownload);
+app.get('/download/apk', handleApkDownload);
+app.get('/api/app/download-apk', handleApkDownload);
+
+app.get('/api/app/apk-info', (req, res) => {
+  const apkPath = resolveApkFile();
+  if (!apkPath) {
+    return res.json({
+      available: false,
+      version: '1.0.0',
+      message: 'APK not yet compiled.'
+    });
+  }
+
+  const stat = fs.statSync(apkPath);
+  const sizeMB = (stat.size / (1024 * 1024)).toFixed(1);
+
+  res.json({
+    available: true,
+    version: '1.0.0',
+    filename: 'rupeetrack.apk',
+    sizeBytes: stat.size,
+    sizeFormatted: `${sizeMB} MB`,
+    buildTime: new Date(stat.mtime).toISOString(),
+    downloadUrl: '/rupeetrack.apk'
+  });
+});
+
 // Serve frontend in production if built
 const distPath = path.join(__dirname, '..', 'dist');
 if (fs.existsSync(distPath)) {

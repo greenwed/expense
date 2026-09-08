@@ -15,7 +15,8 @@ import {
   Eye,
   EyeOff,
   Sparkles,
-  Info
+  Info,
+  Smartphone
 } from 'lucide-react';
 
 export default function AuthPage({ onSuccess }) {
@@ -824,6 +825,20 @@ export default function AuthPage({ onSuccess }) {
           </div>
 
         </div>
+
+        {/* Android App Download Banner (Web Only) */}
+        {typeof window !== 'undefined' && !window.Capacitor?.isNativePlatform?.() && (
+          <div className="mt-4 text-center">
+            <a
+              href="/rupeetrack.apk"
+              download="rupeetrack.apk"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-300 dark:hover:border-emerald-700/80 shadow-sm transition-all"
+            >
+              <Smartphone className="w-4 h-4 text-emerald-500" />
+              <span>Download RupeeTrack for Android (APK)</span>
+            </a>
+          </div>
+        )}
 
       </div>
     </div>

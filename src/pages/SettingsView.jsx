@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   User,
   Mail,
@@ -15,7 +15,9 @@ import {
   BookOpen,
   Sun,
   Moon,
-  Laptop
+  Laptop,
+  Smartphone,
+  Download
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -31,6 +33,22 @@ export default function SettingsView({ onOpenBudgetModal, onOpenUserGuide, onOpe
   const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [msg, setMsg] = useState({ type: '', text: '' });
   const [loading, setLoading] = useState(false);
+  const [apkInfo, setApkInfo] = useState({
+    version: '1.0.0',
+    sizeFormatted: '6.4 MB',
+    buildTime: null
+  });
+
+  useEffect(() => {
+    fetch(resolveUrl('/api/app/apk-info'))
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.version) {
+          setApkInfo(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const resolveUrl = (endpoint) => {
     return getFullUrl ? getFullUrl(endpoint) : endpoint;
@@ -261,6 +279,58 @@ export default function SettingsView({ onOpenBudgetModal, onOpenUserGuide, onOpe
               <span>Start Tour</span>
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* 📱 RupeeTrack Android App */}
+      <div className="fintech-card p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <Smartphone className="w-4 h-4 text-emerald-500" />
+            <span>RupeeTrack for Android</span>
+          </h4>
+          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/60 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Latest Build Ready</span>
+          </span>
+        </div>
+
+        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+          Install the full native Android app for smooth performance, offline resilience, and fast access on your mobile device.
+        </p>
+
+        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-200/80 dark:border-slate-700/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
+              <Smartphone className="w-6 h-6" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-black text-slate-900 dark:text-white block">
+                  rupeetrack.apk
+                </span>
+                <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/60">
+                  v{apkInfo.version || '1.0.0'}
+                </span>
+              </div>
+              <span className="text-xs text-slate-400 font-mono block">
+                {apkInfo.sizeFormatted || '6.4 MB'} • Android 8.0+
+              </span>
+            </div>
+          </div>
+
+          <a
+            href="/rupeetrack.apk"
+            download="rupeetrack.apk"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2 active:scale-95 shrink-0"
+          >
+            <Download className="w-4 h-4 stroke-[2.5]" />
+            <span>Download Latest APK</span>
+          </a>
+        </div>
+
+        <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
+          💡 <strong>Installation Tip:</strong> When opening the downloaded APK file in Chrome or your browser, tap <em>"Settings"</em> and enable <em>"Allow from this source"</em> if prompted by Android.
         </div>
       </div>
 

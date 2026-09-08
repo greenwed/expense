@@ -7,8 +7,10 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "node server/server.js",
     "client": "vite",
-    "build": "vite build",
+    "build": "node scripts/sync-apk.js && vite build",
     "start": "node server/server.js",
+    "sync:apk": "node scripts/sync-apk.js",
+    "build:apk": "cd ExpenseApp && npx cap sync android && cd android && JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./gradlew assembleDebug && cd ../.. && node scripts/sync-apk.js",
     "test": "node scratch/test-full-app.js",
     "test:full": "node scratch/test-full-app.js",
     "test:api": "node scratch/test-api.js"

@@ -9,7 +9,9 @@ import {
   Plus,
   TrendingUp,
   Calendar,
-  ChevronDown
+  ChevronDown,
+  Smartphone,
+  Download
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getMonthName } from '../utils/formatters';
@@ -97,6 +99,22 @@ export default function Navbar({
               <span>{getMonthName(month)}</span>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 dark:text-slate-400" />
             </button>
+
+            {/* Download Latest Android APK Chip (Web Only) */}
+            {typeof window !== 'undefined' && !window.Capacitor?.isNativePlatform?.() && (
+              <a
+                href="/rupeetrack.apk"
+                download="rupeetrack.apk"
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200/80 dark:border-emerald-800/60 text-xs font-bold text-emerald-700 dark:text-emerald-300 transition-all active:scale-95 shadow-xs"
+                title="Download Latest Android APK (v1.0.0)"
+              >
+                <Smartphone className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span className="hidden md:inline">Download App</span>
+                <span className="text-[10px] px-1 py-0.2 bg-emerald-600 dark:bg-emerald-500 text-white rounded-md font-black">
+                  APK
+                </span>
+              </a>
+            )}
 
             {/* Desktop + Income Button */}
             <button
