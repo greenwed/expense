@@ -79,10 +79,14 @@ export function CategoryProvider({ children }) {
     }
   }, [user, apiFetch]);
 
-  const fetchGroupCategories = useCallback(async (groupId) => {
+  const fetchGroupCategories = useCallback(async (groupId, isSplit = false) => {
     if (!groupId || !user) return;
+    const isSplitGroup = isSplit || String(groupId).startsWith('spg_');
+    const endpoint = isSplitGroup
+      ? `/api/split/groups/${groupId}/categories`
+      : `/api/family/groups/${groupId}/categories`;
     try {
-      const res = await apiFetch(`/api/family/groups/${groupId}/categories`);
+      const res = await apiFetch(endpoint);
       if (res && res.custom && Array.isArray(res.custom)) {
         setGroupCategoriesMap(prev => ({
           ...prev,
@@ -111,9 +115,13 @@ export function CategoryProvider({ children }) {
     return [...STANDARD_CATEGORIES, ...customNames];
   }, [getCustomCategories]);
 
-  const addCategory = useCallback(async ({ name, color, icon, groupId = null }) => {
+  const addCategory = useCallback(async ({ name, color, icon, groupId = null, isSplit = false }) => {
     if (groupId) {
-      const data = await apiFetch(`/api/family/groups/${groupId}/categories`, {
+      const isSplitGroup = isSplit || String(groupId).startsWith('spg_');
+      const endpoint = isSplitGroup
+        ? `/api/split/groups/${groupId}/categories`
+        : `/api/family/groups/${groupId}/categories`;
+      const data = await apiFetch(endpoint, {
         method: 'POST',
         body: JSON.stringify({ name, color, icon })
       });
@@ -145,9 +153,13 @@ export function CategoryProvider({ children }) {
     throw new Error('Failed to create category.');
   }, [apiFetch]);
 
-  const updateCategory = useCallback(async (id, { name, color, icon, groupId = null }) => {
+  const updateCategory = useCallback(async (id, { name, color, icon, groupId = null, isSplit = false }) => {
     if (groupId) {
-      const data = await apiFetch(`/api/family/groups/${groupId}/categories/${id}`, {
+      const isSplitGroup = isSplit || String(groupId).startsWith('spg_');
+      const endpoint = isSplitGroup
+        ? `/api/split/groups/${groupId}/categories/${id}`
+        : `/api/family/groups/${groupId}/categories/${id}`;
+      const data = await apiFetch(endpoint, {
         method: 'PUT',
         body: JSON.stringify({ name, color, icon })
       });
@@ -177,9 +189,13 @@ export function CategoryProvider({ children }) {
     throw new Error('Failed to update category.');
   }, [apiFetch]);
 
-  const deleteCategory = useCallback(async (id, groupId = null) => {
+  const deleteCategory = useCallback(async (id, groupId = null, isSplit = false) => {
     if (groupId) {
-      await apiFetch(`/api/family/groups/${groupId}/categories/${id}`, {
+      const isSplitGroup = isSplit || String(groupId).startsWith('spg_');
+      const endpoint = isSplitGroup
+        ? `/api/split/groups/${groupId}/categories/${id}`
+        : `/api/family/groups/${groupId}/categories/${id}`;
+      await apiFetch(endpoint, {
         method: 'DELETE'
       });
       setGroupCategoriesMap(prev => {

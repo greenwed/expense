@@ -51,6 +51,7 @@ import AddFriendModal from '../components/AddFriendModal';
 import SettleUpModal from '../components/SettleUpModal';
 import SplitGroupSettingsModal from '../components/SplitGroupSettingsModal';
 import { useBackButton } from '../context/BackHandlerContext';
+import { useCategories } from '../context/CategoryContext';
 
 const CATEGORY_ICON_MAP = {
   Food: Utensils,
@@ -76,6 +77,7 @@ const CATEGORY_COLOR_MAP = {
 
 export default function SplitWorkspace({ month: propMonth }) {
   const { apiFetch, user } = useAuth();
+  const { fetchGroupCategories } = useCategories();
   const currentMonth = propMonth || getCurrentMonthStr();
 
   const [mounted, setMounted] = useState(false);
@@ -198,8 +200,11 @@ export default function SplitWorkspace({ month: propMonth }) {
   useEffect(() => {
     if (selectedGroupId) {
       fetchSelectedGroupDetails(selectedGroupId);
+      if (selectedGroupId !== 'all') {
+        fetchGroupCategories(selectedGroupId, true);
+      }
     }
-  }, [selectedGroupId, fetchSelectedGroupDetails]);
+  }, [selectedGroupId, fetchSelectedGroupDetails, fetchGroupCategories]);
 
   const currentUserId = String(user?._id || user?.id || '');
   const { summary, groups, friends, recentActivities } = data;
@@ -1361,6 +1366,7 @@ export default function SplitWorkspace({ month: propMonth }) {
         }}
         friends={friends}
         groups={groups}
+        groupId={selectedGroupId && selectedGroupId !== 'all' ? selectedGroupId : null}
         initialPayerId={settleTarget.payerId}
         initialPayeeId={settleTarget.payeeId}
         suggestedAmount={settleTarget.amount}

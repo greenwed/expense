@@ -15,7 +15,9 @@ function formatSettlement(row) {
     payeeName: row.payee_name || row.payeeName,
     amount: Number(row.amount),
     date: row.date,
-    note: row.note || 'Settled Up',
+    description: row.description || row.note || 'Settled Up',
+    category: row.category || 'Settlement',
+    note: row.note || row.description || 'Settled Up',
     createdAt: row.created_at || row.createdAt
   };
 }
@@ -29,10 +31,13 @@ export const SplitSettlementModel = {
     payeeName,
     amount,
     date = new Date().toISOString(),
+    description = null,
+    category = 'Settlement',
     note = 'Settled Up'
   }) {
     const id = `stl_${uuidv4().replace(/-/g, '').slice(0, 16)}`;
     const parsedAmount = Number(amount);
+    const finalNote = description ? `${description.trim()}` : (note || 'Settled Up');
 
     const pool = getPgPool();
     if (pool) {
@@ -50,10 +55,15 @@ export const SplitSettlementModel = {
           payeeName,
           parsedAmount,
           date,
-          note
+          finalNote
         ]
       );
-      return formatSettlement(res.rows[0]);
+      const row = res.rows[0];
+      return formatSettlement({
+        ...row,
+        description: description ? description.trim() : finalNote,
+        category: category || 'Settlement'
+      });
     }
 
     const inserted = settlementStore.insert({
@@ -65,7 +75,9 @@ export const SplitSettlementModel = {
       payeeName,
       amount: parsedAmount,
       date,
-      note
+      description: description ? description.trim() : finalNote,
+      category: category || 'Settlement',
+      note: finalNote
     });
     return formatSettlement(inserted);
   },

@@ -1207,6 +1207,141 @@ async function runAllTests() {
     });
     assert(getDeletedGroup.status === 404, 'Accessing deleted group returns 404 Not Found');
 
+    // -------------------------------------------------------------
+    // SECTION 17: Split Group Categories & Scoped Settlement Flow
+    // -------------------------------------------------------------
+    console.log('\n--- SECTION 17: Split Group Categories & Scoped Settlement Flow ---');
+
+    // 17.1 Any member (Dave, non-creator) can add a custom category to split group
+    const splitAddCatRes = await request(`/split/groups/${splitGroupId}/categories`, {
+      method: 'POST',
+      headers: daveHeaders,
+      body: { name: 'Snacks & Drinks', color: '#F59E0B', icon: 'Utensils' }
+    });
+    assert(splitAddCatRes.status === 201, 'Group member (non-creator) created custom category in split group (201)');
+    const snacksCat = splitAddCatRes.data.category;
+    const snacksCatId = snacksCat.id || snacksCat._id;
+    assert(snacksCat.name === 'Snacks & Drinks', 'Category name matches');
+    assert(String(snacksCat.groupId) === String(splitGroupId), 'Category is scoped to splitGroupId');
+
+    // 17.2 Duplicate custom category in split group returns 400 with helpful message
+    const splitDupCatRes = await request(`/split/groups/${splitGroupId}/categories`, {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: { name: 'snacks & drinks' }
+    });
+    assert(splitDupCatRes.status === 400, 'Duplicate category in split group returns 400');
+    assert(splitDupCatRes.data.error.includes('already present in this group'), 'Duplicate error includes "already present in this group"');
+
+    // 17.3 Standard category duplicate returns 400 with helpful message
+    const splitStdCatRes = await request(`/split/groups/${splitGroupId}/categories`, {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: { name: 'Food' }
+    });
+    assert(splitStdCatRes.status === 400, 'Standard category duplicate in split group returns 400');
+    assert(splitStdCatRes.data.error.includes('already a standard category'), 'Error mentions "already a standard category"');
+
+    // 17.4 Non-member cannot view or add categories to split group
+    const splitNonMemberAddCat = await request(`/split/groups/${splitGroupId}/categories`, {
+      method: 'POST',
+      headers: frankHeaders, // Frank is not in splitGroupId
+      body: { name: 'Hacks' }
+    });
+    assert(splitNonMemberAddCat.status === 403, 'Non-member cannot add category to split group (403)');
+
+    // 17.5 Different split group does not see this split group's custom categories (Isolation)
+    const splitGroup2Res = await request('/split/groups', {
+      method: 'POST',
+      headers: daveHeaders,
+      body: { name: 'Office Lunch', members: [] }
+    });
+    assert(splitGroup2Res.status === 201, 'Second split group created');
+    const splitGroup2Id = splitGroup2Res.data.group.id || splitGroup2Res.data.group._id;
+
+    const group2CatsRes = await request(`/split/groups/${splitGroup2Id}/categories`, {
+      headers: daveHeaders
+    });
+    assert(group2CatsRes.status === 200, 'Second split group categories fetched');
+    const group2CustomCats = group2CatsRes.data.custom || [];
+    assert(!group2CustomCats.some(c => c.name === 'Snacks & Drinks'), 'Split group 2 cannot see Snacks & Drinks from Split group 1 (Isolation verified)');
+
+    // 17.6 Add split expense tagged with custom category
+    const addExpWithCat = await request('/split/expenses', {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: {
+        groupId: splitGroupId,
+        payerId: charlieUser.id || charlieUser._id,
+        payerName: charlieUser.name,
+        amount: 600,
+        description: 'Beach Party Snacks',
+        category: 'Snacks & Drinks',
+        splitMethod: 'equal',
+        participants: [
+          { userId: charlieUser.id || charlieUser._id, name: charlieUser.name, shareAmount: 300 },
+          { userId: daveUser.id || daveUser._id, name: daveUser.name, shareAmount: 300 }
+        ]
+      }
+    });
+    assert(addExpWithCat.status === 201, 'Added split expense with custom category "Snacks & Drinks"');
+    const expWithCatId = addExpWithCat.data.expense.id || addExpWithCat.data.expense._id;
+
+    // 17.7 Update category name and verify historical split expenses migrate
+    const splitRenameCatRes = await request(`/split/groups/${splitGroupId}/categories/${snacksCatId}`, {
+      method: 'PUT',
+      headers: eveHeaders, // Eve is also a member and can edit
+      body: { name: 'Gourmet Snacks', color: '#10B981' }
+    });
+    assert(splitRenameCatRes.status === 200, 'Member renamed custom category to "Gourmet Snacks"');
+
+    const expAfterRename = await request(`/split/groups/${splitGroupId}`, { headers: charlieHeaders });
+    const matchingExp = (expAfterRename.data.expenses || []).find(e => (e.id || e._id) === expWithCatId);
+    assert(matchingExp && matchingExp.category === 'Gourmet Snacks', 'Historical split expense migrated to renamed category "Gourmet Snacks"');
+
+    // 17.8 Delete category and verify historical split expenses reassign to 'Others'
+    const splitDeleteCatRes = await request(`/split/groups/${splitGroupId}/categories/${snacksCatId}`, {
+      method: 'DELETE',
+      headers: daveHeaders
+    });
+    assert(splitDeleteCatRes.status === 200, 'Member deleted custom category from split group');
+
+    const expAfterDelete = await request(`/split/groups/${splitGroupId}`, { headers: charlieHeaders });
+    const matchingExpAfterDel = (expAfterDelete.data.expenses || []).find(e => (e.id || e._id) === expWithCatId);
+    assert(matchingExpAfterDel && matchingExpAfterDel.category === 'Others', 'Historical split expense reassigned to "Others" after category deletion');
+
+    // 17.9 Record settlement with description and category
+    const splitSettleRes = await request('/split/settle', {
+      method: 'POST',
+      headers: daveHeaders,
+      body: {
+        groupId: splitGroupId,
+        payerId: daveUser.id || daveUser._id,
+        payerName: daveUser.name,
+        payeeId: charlieUser.id || charlieUser._id,
+        payeeName: charlieUser.name,
+        amount: 300,
+        description: 'Settled beach snacks share via UPI',
+        category: 'Settlement',
+        note: 'Settled via UPI'
+      }
+    });
+    assert(splitSettleRes.status === 201, 'Recorded settlement with description and category');
+    assert(splitSettleRes.data.settlement.description === 'Settled beach snacks share via UPI', 'Settlement description matches');
+    assert(splitSettleRes.data.settlement.category === 'Settlement', 'Settlement category matches');
+
+    // 17.10 Delete split group 2 cleans up its custom categories
+    await request(`/split/groups/${splitGroup2Id}/categories`, {
+      method: 'POST',
+      headers: daveHeaders,
+      body: { name: 'Temp Cat', color: '#123456' }
+    });
+    const delGrp2Res = await request(`/split/groups/${splitGroup2Id}`, {
+      method: 'DELETE',
+      headers: daveHeaders
+    });
+    assert(delGrp2Res.status === 200, 'Deleted split group 2 with cascading cleanup');
+
     console.log('\n================================================================');
     console.log(`🎉 FULL-APP COMPREHENSIVE TEST SUITE COMPLETE!`);
     console.log(`   Passed: ${passedCount} tests`);

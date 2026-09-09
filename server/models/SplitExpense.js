@@ -197,6 +197,23 @@ export const SplitExpenseModel = {
 
     splitExpenseStore.delete(e => e.id === idStr || e._id === idStr);
     return true;
+  },
+
+  async renameCategory(groupId, oldCategory, newCategory) {
+    if (!oldCategory || !newCategory) return;
+    const gIdStr = String(groupId);
+    const pool = getPgPool();
+    if (pool) {
+      await pool.query(
+        'UPDATE split_expenses SET category = $1, updated_at = NOW() WHERE group_id = $2 AND LOWER(category) = LOWER($3)',
+        [newCategory, gIdStr, oldCategory]
+      );
+      return;
+    }
+    splitExpenseStore.update(
+      e => String(e.groupId) === gIdStr && String(e.category).toLowerCase() === oldCategory.toLowerCase(),
+      { category: newCategory, updatedAt: new Date().toISOString() }
+    );
   }
 };
 

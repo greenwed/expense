@@ -163,7 +163,7 @@ export default function AddSplitExpenseModal({
   editingExpense = null
 }) {
   const { apiFetch, user } = useAuth();
-  const { categories, customCategories, getCategoryMeta } = useCategories();
+  const { getCategoryList, getCustomCategories, getCategoryMeta, fetchGroupCategories } = useCategories();
   const [mounted, setMounted] = useState(false);
   const [isAddCatOpen, setIsAddCatOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState(null);
@@ -189,6 +189,12 @@ export default function AddSplitExpenseModal({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (isOpen && selectedGroupId) {
+      fetchGroupCategories(selectedGroupId, true);
+    }
+  }, [isOpen, selectedGroupId, fetchGroupCategories]);
 
   const currentUserId = String(user?._id || user?.id || '');
 
@@ -356,9 +362,17 @@ export default function AddSplitExpenseModal({
     }));
   }, [eligibleMembers, currentUserId]);
 
+  const activeCustomCategories = useMemo(() => {
+    return getCustomCategories(selectedGroupId || null);
+  }, [getCustomCategories, selectedGroupId]);
+
+  const activeCategoryList = useMemo(() => {
+    return getCategoryList(selectedGroupId || null);
+  }, [getCategoryList, selectedGroupId]);
+
   const categoryOptions = useMemo(() => {
-    return categories.map(cat => {
-      const meta = getCategoryMeta(cat);
+    return activeCategoryList.map(cat => {
+      const meta = getCategoryMeta(cat, selectedGroupId || null);
       return {
         value: cat,
         label: cat,
@@ -366,7 +380,7 @@ export default function AddSplitExpenseModal({
         color: meta.color || '#8B5CF6'
       };
     });
-  }, [categories, getCategoryMeta]);
+  }, [activeCategoryList, getCategoryMeta, selectedGroupId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -544,18 +558,20 @@ export default function AddSplitExpenseModal({
           </div>
 
           {/* Group & Who Paid Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Group
-              </label>
-              <CustomDropdown
-                value={selectedGroupId}
-                onChange={setSelectedGroupId}
-                options={groupOptions}
-                icon={Users}
-              />
-            </div>
+          <div className={`grid ${initialGroupId ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'} gap-4`}>
+            {!initialGroupId && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Group
+                </label>
+                <CustomDropdown
+                  value={selectedGroupId}
+                  onChange={setSelectedGroupId}
+                  options={groupOptions}
+                  icon={Users}
+                />
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -578,11 +594,11 @@ export default function AddSplitExpenseModal({
                   Category
                 </label>
                 <div className="flex items-center gap-2">
-                  {getCategoryMeta(category).isCustom && (
+                  {getCategoryMeta(category, selectedGroupId || null).isCustom && (
                     <button
                       type="button"
                       onClick={() => {
-                        const customMatch = customCategories.find(c => c.name.toLowerCase() === category.toLowerCase());
+                        const customMatch = activeCustomCategories.find(c => c.name.toLowerCase() === category.toLowerCase());
                         if (customMatch) {
                           setCategoryToEdit(customMatch);
                           setIsAddCatOpen(true);
@@ -860,6 +876,8 @@ export default function AddSplitExpenseModal({
       <AddCategoryModal
         isOpen={isAddCatOpen}
         categoryToEdit={categoryToEdit}
+        groupId={selectedGroupId || null}
+        groupName={groups.find(g => String(g.id || g._id) === String(selectedGroupId))?.name || null}
         onClose={() => {
           setIsAddCatOpen(false);
           setCategoryToEdit(null);
@@ -868,14 +886,23 @@ export default function AddSplitExpenseModal({
           if (newCat && newCat.name) {
             setCategory(newCat.name);
           }
+          if (selectedGroupId) {
+            fetchGroupCategories(selectedGroupId, true);
+          }
         }}
         onUpdated={(updatedCat) => {
           if (updatedCat && updatedCat.name) {
             setCategory(updatedCat.name);
           }
+          if (selectedGroupId) {
+            fetchGroupCategories(selectedGroupId, true);
+          }
         }}
         onDeleted={() => {
           setCategory('Food');
+          if (selectedGroupId) {
+            fetchGroupCategories(selectedGroupId, true);
+          }
         }}
       />
     </div>,

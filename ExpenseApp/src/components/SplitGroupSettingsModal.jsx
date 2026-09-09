@@ -16,9 +16,14 @@ import {
   LogOut,
   AlertCircle,
   AtSign,
-  UserCheck
+  UserCheck,
+  Tag,
+  Plus,
+  Pencil
 } from 'lucide-react';
 import { getAppBaseUrl, formatINR } from '../utils/formatters';
+import { useCategories } from '../context/CategoryContext';
+import AddCategoryModal from './AddCategoryModal';
 
 class ModalErrorBoundary extends React.Component {
   constructor(props) {
@@ -65,8 +70,9 @@ export default function SplitGroupSettingsModal({
   onRemoveMember,
   onDeleteGroup
 }) {
+  const { getCategoryList, getCustomCategories, getCategoryMeta, fetchGroupCategories, deleteCategory } = useCategories();
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState('members'); // 'members' | 'add_member' | 'invite' | 'general'
+  const [activeTab, setActiveTab] = useState('members'); // 'members' | 'categories' | 'add_member' | 'invite' | 'general'
   const [groupNameInput, setGroupNameInput] = useState(group?.name || '');
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameSuccess, setRenameSuccess] = useState(false);
@@ -88,9 +94,21 @@ export default function SplitGroupSettingsModal({
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Categories tab state
+  const [isAddCatModalOpen, setIsAddCatModalOpen] = useState(false);
+  const [categoryToEdit, setCategoryToEdit] = useState(null);
+  const [deletingCatId, setDeletingCatId] = useState(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const groupId = group?.id || group?._id;
+  useEffect(() => {
+    if (isOpen && groupId) {
+      fetchGroupCategories(groupId, true);
+    }
+  }, [isOpen, groupId, fetchGroupCategories]);
 
   useEffect(() => {
     if (group?.name) {
@@ -301,6 +319,19 @@ export default function SplitGroupSettingsModal({
             <span>Members ({members.length})</span>
           </button>
 
+          <button
+            type="button"
+            onClick={() => setActiveTab('categories')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+              activeTab === 'categories'
+                ? 'bg-white dark:bg-[#1E2638] text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/60 dark:border-slate-700/60'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <Tag className="w-3.5 h-3.5" />
+            <span>Categories</span>
+          </button>
+
           {isCreator && (
             <button
               type="button"
@@ -459,6 +490,110 @@ export default function SplitGroupSettingsModal({
                           </button>
                         )}
                       </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* TAB: CATEGORIES MANAGEMENT */}
+          {activeTab === 'categories' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-extrabold text-slate-900 dark:text-white">
+                    Split Group Categories
+                  </h4>
+                  <span className="text-xs text-slate-400 dark:text-slate-400">
+                    Custom categories isolated to this split group
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCategoryToEdit(null);
+                    setIsAddCatModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 active:scale-95 transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Category</span>
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {getCategoryList(groupId).map((catName) => {
+                  const meta = getCategoryMeta(catName, groupId);
+                  const IconComp = meta.IconComponent || Tag;
+                  const customList = getCustomCategories(groupId);
+                  const customObj = customList.find(c => c.name.toLowerCase() === catName.toLowerCase());
+                  const isCustom = Boolean(customObj);
+
+                  return (
+                    <div
+                      key={catName}
+                      className="p-3 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-3 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                          style={{
+                            backgroundColor: `${meta.color || '#6366F1'}20`,
+                            color: meta.color || '#6366F1'
+                          }}
+                        >
+                          <IconComp className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                            {catName}
+                          </p>
+                          <span className={`inline-block text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded-md ${
+                            isCustom
+                              ? 'bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300'
+                              : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                          }`}>
+                            {isCustom ? 'Custom' : 'Standard'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {isCustom && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCategoryToEdit(customObj);
+                              setIsAddCatModalOpen(true);
+                            }}
+                            className="p-1.5 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-colors"
+                            title="Edit category"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={deletingCatId === (customObj.id || customObj._id)}
+                            onClick={async () => {
+                              const confirmMsg = `Are you sure you want to delete category "${customObj.name}"?\n\nExpenses tagged with this category will be reassigned to "Others".`;
+                              if (!window.confirm(confirmMsg)) return;
+                              try {
+                                setDeletingCatId(customObj.id || customObj._id);
+                                await deleteCategory(customObj.id || customObj._id, groupId, true);
+                              } catch (err) {
+                                alert(err.message || 'Failed to delete category.');
+                              } finally {
+                                setDeletingCatId(null);
+                              }
+                            }}
+                            className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors disabled:opacity-50"
+                            title="Delete category"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -716,6 +851,26 @@ export default function SplitGroupSettingsModal({
           )}
 
         </div>
+
+        <AddCategoryModal
+          isOpen={isAddCatModalOpen}
+          categoryToEdit={categoryToEdit}
+          groupId={groupId}
+          groupName={group?.name}
+          onClose={() => {
+            setIsAddCatModalOpen(false);
+            setCategoryToEdit(null);
+          }}
+          onCreated={() => {
+            fetchGroupCategories(groupId, true);
+          }}
+          onUpdated={() => {
+            fetchGroupCategories(groupId, true);
+          }}
+          onDeleted={() => {
+            fetchGroupCategories(groupId, true);
+          }}
+        />
 
         </ModalErrorBoundary>
       </div>

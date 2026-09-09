@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, CheckCircle2, ArrowRight, IndianRupee, Calendar, FileText, Check, ChevronDown, Users, User } from 'lucide-react';
+import { X, CheckCircle2, ArrowRight, IndianRupee, Calendar, FileText, Check, ChevronDown, Users, User, Tag } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useCategories } from '../context/CategoryContext';
 
 function CustomDropdown({
   value,
@@ -92,9 +93,11 @@ export default function SettleUpModal({
   groups = [],
   initialPayeeId = null,
   initialPayerId = null,
-  suggestedAmount = 0
+  suggestedAmount = 0,
+  groupId = null
 }) {
   const { apiFetch, user } = useAuth();
+  const { getCategoryList, getCategoryMeta, fetchGroupCategories } = useCategories();
   const [mounted, setMounted] = useState(false);
 
   const currentUserId = String(user?._id || user?.id || '');
@@ -102,15 +105,22 @@ export default function SettleUpModal({
   const [payerId, setPayerId] = useState(initialPayerId || currentUserId);
   const [payeeId, setPayeeId] = useState(initialPayeeId || (friends[0]?.friendId || ''));
   const [amount, setAmount] = useState(suggestedAmount > 0 ? String(suggestedAmount) : '');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('Settlement');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [note, setNote] = useState('Settled via UPI');
-  const [groupId, setGroupId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (isOpen && groupId) {
+      fetchGroupCategories(groupId, true);
+    }
+  }, [isOpen, groupId, fetchGroupCategories]);
 
   // Candidate users: current user + all friends
   const allUsers = useMemo(() => {
@@ -146,24 +156,32 @@ export default function SettleUpModal({
     }));
   }, [allUsers, currentUserId]);
 
-  const groupOptions = useMemo(() => {
-    return [
-      { value: '', label: 'Direct Settlement' },
-      ...groups.map(g => ({
-        value: g.id || g._id,
-        label: g.name
-      }))
-    ];
-  }, [groups]);
+  const activeCategories = useMemo(() => {
+    const list = getCategoryList(groupId);
+    return list.includes('Settlement') ? list : ['Settlement', ...list];
+  }, [getCategoryList, groupId]);
+
+  const categoryOptions = useMemo(() => {
+    return activeCategories.map(cat => {
+      const meta = getCategoryMeta(cat, groupId);
+      return {
+        value: cat,
+        label: cat,
+        icon: meta.IconComponent || Tag,
+        color: meta.color || '#10B981'
+      };
+    });
+  }, [activeCategories, getCategoryMeta, groupId]);
 
   useEffect(() => {
     if (isOpen) {
       setPayerId(initialPayerId || currentUserId);
       setPayeeId(initialPayeeId || (friends[0]?.friendId || ''));
       setAmount(suggestedAmount > 0 ? String(suggestedAmount) : '');
+      setDescription('');
+      setCategory('Settlement');
       setDate(new Date().toISOString().slice(0, 10));
       setNote('Settled via UPI');
-      setGroupId('');
       setError('');
     }
   }, [isOpen, initialPayeeId, initialPayerId, suggestedAmount, currentUserId, friends]);
@@ -207,6 +225,8 @@ export default function SettleUpModal({
           payeeName: payee.name,
           amount: parsedAmount,
           date,
+          description: description.trim() || note.trim() || 'Settlement',
+          category: category || 'Settlement',
           note: note.trim()
         })
       });
@@ -343,32 +363,46 @@ export default function SettleUpModal({
             />
           </div>
 
-          {/* Date & Optional Group */}
+          {/* Description & Category Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Date
+                Description
               </label>
               <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-200 dark:border-slate-700/80 text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
+                type="text"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="e.g. Settled dinner share via UPI"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-200 dark:border-slate-700/80 text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
               />
             </div>
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Group (Optional)
+                Category
               </label>
               <CustomDropdown
-                value={groupId}
-                onChange={setGroupId}
-                options={groupOptions}
-                placeholder="Direct Settlement"
-                icon={Users}
+                value={category}
+                onChange={setCategory}
+                options={categoryOptions}
+                placeholder="Select Category"
+                icon={Tag}
               />
             </div>
+          </div>
+
+          {/* Date */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Date
+            </label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-200 dark:border-slate-700/80 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+            />
           </div>
 
           {/* Submit Button */}

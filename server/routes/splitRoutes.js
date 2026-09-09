@@ -5,6 +5,7 @@ import SplitGroupModel from '../models/SplitGroup.js';
 import SplitExpenseModel from '../models/SplitExpense.js';
 import SplitSettlementModel from '../models/SplitSettlement.js';
 import SplitActivityModel from '../models/SplitActivity.js';
+import CustomCategoryModel from '../models/CustomCategory.js';
 import { UserModel } from '../models/User.js';
 
 const router = express.Router();
@@ -585,6 +586,7 @@ router.delete('/groups/:id', async (req, res) => {
     }
 
     await SplitGroupModel.deleteGroup(id);
+    await CustomCategoryModel.deleteByGroupId(id);
 
     await SplitActivityModel.log({
       user: req.user,
@@ -596,6 +598,199 @@ router.delete('/groups/:id', async (req, res) => {
   } catch (err) {
     console.error('Delete split group error:', err);
     return res.status(500).json({ error: 'Failed to delete split group.' });
+  }
+});
+
+const VALID_CATEGORIES = ['Food', 'Shopping', 'Entertainment', 'Medical', 'Transport', 'Utilities', 'Travel', 'Others'];
+
+const DEFAULT_CATEGORY_COLORS = {
+  Food: '#0EA5E9',
+  Shopping: '#F97316',
+  Entertainment: '#8B5CF6',
+  Medical: '#10B981',
+  Transport: '#6366F1',
+  Utilities: '#F59E0B',
+  Travel: '#10B981',
+  Others: '#F43F5E'
+};
+
+const DEFAULT_CATEGORY_ICONS = {
+  Food: 'Utensils',
+  Shopping: 'ShoppingBag',
+  Entertainment: 'Film',
+  Medical: 'HeartPulse',
+  Transport: 'Car',
+  Utilities: 'Zap',
+  Travel: 'Plane',
+  Others: 'MoreHorizontal'
+};
+
+async function requireSplitGroupMember(req, res, next) {
+  try {
+    const groupId = req.params.groupId || req.params.id;
+    const userId = String(req.user._id || req.user.id);
+    const group = await SplitGroupModel.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ error: 'Split group not found.' });
+    }
+    const isMember = (group.members || []).some(m => String(m.userId) === userId) || String(group.createdBy) === userId;
+    if (!isMember) {
+      return res.status(403).json({ error: 'You are not a member of this split group.' });
+    }
+    req.splitGroup = group;
+    next();
+  } catch (err) {
+    console.error('requireSplitGroupMember error:', err);
+    return res.status(500).json({ error: 'Failed to verify group membership.' });
+  }
+}
+
+// 8g. GET /api/split/groups/:groupId/categories - Get split group categories (Standard + Group Custom)
+router.get('/groups/:groupId/categories', requireSplitGroupMember, async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const custom = await CustomCategoryModel.findByGroupId(groupId);
+    return res.json({
+      standard: VALID_CATEGORIES.map(cat => ({
+        name: cat,
+        color: DEFAULT_CATEGORY_COLORS[cat] || '#8B5CF6',
+        icon: DEFAULT_CATEGORY_ICONS[cat] || 'Tag',
+        isCustom: false
+      })),
+      custom: custom.map(c => ({
+        ...c,
+        isCustom: true
+      }))
+    });
+  } catch (err) {
+    console.error('Fetch split group categories error:', err);
+    return res.status(500).json({ error: 'Failed to fetch split group categories.' });
+  }
+});
+
+// 8h. POST /api/split/groups/:groupId/categories - Create split group category (Any member can create)
+router.post('/groups/:groupId/categories', requireSplitGroupMember, async (req, res) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const { groupId } = req.params;
+    const { name, color, icon } = req.body;
+
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return res.status(400).json({ error: 'Category name is required.' });
+    }
+
+    const trimmedName = name.trim();
+    if (trimmedName.length > 50) {
+      return res.status(400).json({ error: 'Category name cannot exceed 50 characters.' });
+    }
+
+    if (VALID_CATEGORIES.some(c => c.toLowerCase() === trimmedName.toLowerCase())) {
+      return res.status(400).json({ error: `"${trimmedName}" is already a standard category.` });
+    }
+
+    // Check duplicate in this split group (case-insensitive)
+    const duplicate = await CustomCategoryModel.findByNameInGroup(groupId, trimmedName);
+    if (duplicate) {
+      return res.status(400).json({ error: `Category "${trimmedName}" is already present in this group.` });
+    }
+
+    const cleanColor = color && typeof color === 'string' && color.trim().length > 0 ? color.trim() : '#6366F1';
+    const cleanIcon = icon && typeof icon === 'string' && icon.trim().length > 0 ? icon.trim() : 'Tag';
+
+    const category = await CustomCategoryModel.create({
+      userId,
+      groupId,
+      name: trimmedName,
+      color: cleanColor,
+      icon: cleanIcon
+    });
+
+    return res.status(201).json({
+      message: 'Category added to split group successfully!',
+      category
+    });
+  } catch (err) {
+    console.error('Create split group category error:', err);
+    return res.status(500).json({ error: 'Failed to create split group category.' });
+  }
+});
+
+// 8i. PUT /api/split/groups/:groupId/categories/:id - Update split group category (Any member can edit)
+router.put('/groups/:groupId/categories/:id', requireSplitGroupMember, async (req, res) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const { groupId, id } = req.params;
+    const { name, color, icon } = req.body;
+
+    const existing = await CustomCategoryModel.findById(id);
+    if (!existing || String(existing.groupId) !== String(groupId)) {
+      return res.status(404).json({ error: 'Split group category not found.' });
+    }
+
+    let trimmedName = existing.name;
+    if (name !== undefined) {
+      if (!name || typeof name !== 'string' || name.trim().length === 0) {
+        return res.status(400).json({ error: 'Category name cannot be empty.' });
+      }
+      trimmedName = name.trim();
+      if (trimmedName.length > 50) {
+        return res.status(400).json({ error: 'Category name cannot exceed 50 characters.' });
+      }
+
+      if (VALID_CATEGORIES.some(c => c.toLowerCase() === trimmedName.toLowerCase())) {
+        return res.status(400).json({ error: `"${trimmedName}" is already a standard category.` });
+      }
+
+      const duplicate = await CustomCategoryModel.findByNameInGroup(groupId, trimmedName);
+      if (duplicate && String(duplicate.id || duplicate._id) !== String(id)) {
+        return res.status(400).json({ error: `Category "${trimmedName}" is already present in this group.` });
+      }
+    }
+
+    const updatedCategory = await CustomCategoryModel.update(id, userId, {
+      name: trimmedName,
+      color: color !== undefined ? String(color).trim() : undefined,
+      icon: icon !== undefined ? String(icon).trim() : undefined,
+      groupId
+    });
+
+    // If category name was renamed, migrate all group expenses using the old name
+    if (trimmedName.toLowerCase() !== existing.name.toLowerCase()) {
+      await SplitExpenseModel.renameCategory(groupId, existing.name, trimmedName);
+    }
+
+    return res.json({
+      message: 'Split group category updated successfully!',
+      category: updatedCategory
+    });
+  } catch (err) {
+    console.error('Update split group category error:', err);
+    return res.status(500).json({ error: 'Failed to update split group category.' });
+  }
+});
+
+// 8j. DELETE /api/split/groups/:groupId/categories/:id - Delete split group category (Any member can delete)
+router.delete('/groups/:groupId/categories/:id', requireSplitGroupMember, async (req, res) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const { groupId, id } = req.params;
+
+    const existing = await CustomCategoryModel.findById(id);
+    if (!existing || String(existing.groupId) !== String(groupId)) {
+      return res.status(404).json({ error: 'Split group category not found.' });
+    }
+
+    // Reassign historical group expenses tagged with this category to 'Others'
+    await SplitExpenseModel.renameCategory(groupId, existing.name, 'Others');
+
+    await CustomCategoryModel.delete(id, userId, { groupId });
+
+    return res.json({
+      message: 'Split group category deleted successfully!'
+    });
+  } catch (err) {
+    console.error('Delete split group category error:', err);
+    return res.status(500).json({ error: 'Failed to delete split group category.' });
   }
 });
 
@@ -893,6 +1088,8 @@ router.post('/settle', async (req, res) => {
       payeeName,
       amount,
       date = new Date().toISOString(),
+      description = null,
+      category = 'Settlement',
       note = 'Settled Up'
     } = req.body;
 
@@ -915,6 +1112,8 @@ router.post('/settle', async (req, res) => {
       payeeName,
       amount: parsedAmount,
       date,
+      description,
+      category,
       note
     });
 
@@ -926,6 +1125,8 @@ router.post('/settle', async (req, res) => {
         payerName,
         payeeName,
         amount: parsedAmount,
+        description: description || note,
+        category,
         note
       }
     });
