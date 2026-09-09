@@ -21,10 +21,11 @@ import {
   Camera,
   PawPrint,
   DollarSign,
-  MoreHorizontal
+  MoreHorizontal,
+  Zap
 } from 'lucide-react';
 import { useAuth } from './AuthContext';
-import { CATEGORY_CONFIG, CATEGORY_PALETTE, getCategoryConfig } from '../utils/formatters';
+import { CATEGORY_CONFIG, CATEGORY_PALETTE, GLOBAL_CATEGORIES, getCategoryConfig } from '../utils/formatters';
 
 export const ICON_COMPONENTS = {
   Tag,
@@ -48,10 +49,11 @@ export const ICON_COMPONENTS = {
   Camera,
   PawPrint,
   DollarSign,
-  MoreHorizontal
+  MoreHorizontal,
+  Zap
 };
 
-const STANDARD_CATEGORIES = ['Food', 'Shopping', 'Entertainment', 'Medical', 'Transport', 'Others'];
+export const STANDARD_CATEGORIES = GLOBAL_CATEGORIES.map(c => c.name);
 
 const CategoryContext = createContext(null);
 
@@ -214,6 +216,69 @@ export function CategoryProvider({ children }) {
     setCustomCategories(prev => prev.filter(c => c.id !== id));
   }, [apiFetch]);
 
+  const mergeCategories = useCallback(async ({ groupId, isSplit = false, sourceCategory, targetCategory }) => {
+    if (!groupId) throw new Error('GroupId is required for merge.');
+    const isSplitGroup = isSplit || String(groupId).startsWith('spg_');
+    const endpoint = isSplitGroup
+      ? `/api/split/groups/${groupId}/categories/merge`
+      : `/api/family/groups/${groupId}/categories/merge`;
+    const res = await apiFetch(endpoint, {
+      method: 'POST',
+      body: JSON.stringify({ sourceCategory, targetCategory })
+    });
+    await fetchGroupCategories(groupId, isSplitGroup);
+    return res;
+  }, [apiFetch, fetchGroupCategories]);
+
+  const fetchCategorySuggestions = useCallback(async (groupId, isSplit = false) => {
+    if (!groupId) return [];
+    const isSplitGroup = isSplit || String(groupId).startsWith('spg_');
+    const endpoint = isSplitGroup
+      ? `/api/split/groups/${groupId}/category-suggestions`
+      : `/api/family/groups/${groupId}/category-suggestions`;
+    const res = await apiFetch(endpoint);
+    return res?.suggestions || [];
+  }, [apiFetch]);
+
+  const submitCategorySuggestion = useCallback(async ({ groupId, isSplit = false, name, reason = '' }) => {
+    if (!groupId) throw new Error('GroupId is required.');
+    const isSplitGroup = isSplit || String(groupId).startsWith('spg_');
+    const endpoint = isSplitGroup
+      ? `/api/split/groups/${groupId}/category-suggestions`
+      : `/api/family/groups/${groupId}/category-suggestions`;
+    const res = await apiFetch(endpoint, {
+      method: 'POST',
+      body: JSON.stringify({ name, reason })
+    });
+    return res?.suggestion;
+  }, [apiFetch]);
+
+  const approveCategorySuggestion = useCallback(async (id, { groupId, isSplit = false, color, icon } = {}) => {
+    if (!groupId) throw new Error('GroupId is required.');
+    const isSplitGroup = isSplit || String(groupId).startsWith('spg_');
+    const endpoint = isSplitGroup
+      ? `/api/split/groups/${groupId}/category-suggestions/${id}/approve`
+      : `/api/family/groups/${groupId}/category-suggestions/${id}/approve`;
+    const res = await apiFetch(endpoint, {
+      method: 'POST',
+      body: JSON.stringify({ color, icon })
+    });
+    await fetchGroupCategories(groupId, isSplitGroup);
+    return res;
+  }, [apiFetch, fetchGroupCategories]);
+
+  const rejectCategorySuggestion = useCallback(async (id, { groupId, isSplit = false } = {}) => {
+    if (!groupId) throw new Error('GroupId is required.');
+    const isSplitGroup = isSplit || String(groupId).startsWith('spg_');
+    const endpoint = isSplitGroup
+      ? `/api/split/groups/${groupId}/category-suggestions/${id}/reject`
+      : `/api/family/groups/${groupId}/category-suggestions/${id}/reject`;
+    const res = await apiFetch(endpoint, {
+      method: 'POST'
+    });
+    return res;
+  }, [apiFetch]);
+
   const categories = useMemo(() => {
     const customNames = customCategories.map(c => c.name);
     return [...STANDARD_CATEGORIES, ...customNames];
@@ -242,9 +307,15 @@ export function CategoryProvider({ children }) {
     addCategory,
     updateCategory,
     deleteCategory,
+    mergeCategories,
+    fetchCategorySuggestions,
+    submitCategorySuggestion,
+    approveCategorySuggestion,
+    rejectCategorySuggestion,
     getCategoryMeta,
     refreshCategories: fetchCategories,
     standardCategories: STANDARD_CATEGORIES,
+    globalCategories: GLOBAL_CATEGORIES,
     palette: CATEGORY_PALETTE,
     iconComponents: ICON_COMPONENTS
   }), [
@@ -258,6 +329,11 @@ export function CategoryProvider({ children }) {
     addCategory,
     updateCategory,
     deleteCategory,
+    mergeCategories,
+    fetchCategorySuggestions,
+    submitCategorySuggestion,
+    approveCategorySuggestion,
+    rejectCategorySuggestion,
     getCategoryMeta,
     fetchCategories
   ]);

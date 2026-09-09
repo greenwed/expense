@@ -6,7 +6,9 @@ import SplitExpenseModel from '../models/SplitExpense.js';
 import SplitSettlementModel from '../models/SplitSettlement.js';
 import SplitActivityModel from '../models/SplitActivity.js';
 import CustomCategoryModel from '../models/CustomCategory.js';
+import CategorySuggestionModel from '../models/CategorySuggestion.js';
 import { UserModel } from '../models/User.js';
+import { VALID_CATEGORIES, GLOBAL_CATEGORIES } from '../models/PersonalExpense.js';
 
 const router = express.Router();
 
@@ -587,6 +589,7 @@ router.delete('/groups/:id', async (req, res) => {
 
     await SplitGroupModel.deleteGroup(id);
     await CustomCategoryModel.deleteByGroupId(id);
+    await CategorySuggestionModel.deleteByGroupId(id);
 
     await SplitActivityModel.log({
       user: req.user,
@@ -601,28 +604,46 @@ router.delete('/groups/:id', async (req, res) => {
   }
 });
 
-const VALID_CATEGORIES = ['Food', 'Shopping', 'Entertainment', 'Medical', 'Transport', 'Utilities', 'Travel', 'Others'];
-
 const DEFAULT_CATEGORY_COLORS = {
+  'Food & Dining': '#0EA5E9',
+  'Transport': '#6366F1',
+  'Rent & Housing': '#F59E0B',
+  'Groceries': '#10B981',
+  'Healthcare': '#EC4899',
+  'Entertainment': '#8B5CF6',
+  'Utilities & Bills': '#3B82F6',
+  'Travel': '#14B8A6',
+  'Education': '#F97316',
+  'Shopping': '#EAB308',
+  'Work & Business': '#475569',
+  'Gifts': '#F43F5E',
+  'Fitness': '#06B6D4',
+  'Pet Care': '#A855F7',
+  'Others': '#64748B',
   Food: '#0EA5E9',
-  Shopping: '#F97316',
-  Entertainment: '#8B5CF6',
-  Medical: '#10B981',
-  Transport: '#6366F1',
-  Utilities: '#F59E0B',
-  Travel: '#10B981',
-  Others: '#F43F5E'
+  Medical: '#EC4899',
+  Utilities: '#3B82F6'
 };
 
 const DEFAULT_CATEGORY_ICONS = {
+  'Food & Dining': 'Utensils',
+  'Transport': 'Car',
+  'Rent & Housing': 'Home',
+  'Groceries': 'ShoppingBag',
+  'Healthcare': 'HeartPulse',
+  'Entertainment': 'Film',
+  'Utilities & Bills': 'Zap',
+  'Travel': 'Plane',
+  'Education': 'GraduationCap',
+  'Shopping': 'ShoppingBag',
+  'Work & Business': 'Briefcase',
+  'Gifts': 'Gift',
+  'Fitness': 'Dumbbell',
+  'Pet Care': 'PawPrint',
+  'Others': 'MoreHorizontal',
   Food: 'Utensils',
-  Shopping: 'ShoppingBag',
-  Entertainment: 'Film',
   Medical: 'HeartPulse',
-  Transport: 'Car',
-  Utilities: 'Zap',
-  Travel: 'Plane',
-  Others: 'MoreHorizontal'
+  Utilities: 'Zap'
 };
 
 async function requireSplitGroupMember(req, res, next) {
@@ -645,16 +666,36 @@ async function requireSplitGroupMember(req, res, next) {
   }
 }
 
+async function requireSplitGroupAdmin(req, res, next) {
+  try {
+    const groupId = req.params.groupId || req.params.id;
+    const userId = String(req.user._id || req.user.id);
+    const group = req.splitGroup || await SplitGroupModel.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ error: 'Split group not found.' });
+    }
+    if (String(group.createdBy) !== userId) {
+      return res.status(403).json({ error: 'Admin / Creator privileges required for this action.' });
+    }
+    req.splitGroup = group;
+    next();
+  } catch (err) {
+    console.error('requireSplitGroupAdmin error:', err);
+    return res.status(500).json({ error: 'Failed to verify group admin privileges.' });
+  }
+}
+
 // 8g. GET /api/split/groups/:groupId/categories - Get split group categories (Standard + Group Custom)
 router.get('/groups/:groupId/categories', requireSplitGroupMember, async (req, res) => {
   try {
     const { groupId } = req.params;
     const custom = await CustomCategoryModel.findByGroupId(groupId);
     return res.json({
-      standard: VALID_CATEGORIES.map(cat => ({
-        name: cat,
-        color: DEFAULT_CATEGORY_COLORS[cat] || '#8B5CF6',
-        icon: DEFAULT_CATEGORY_ICONS[cat] || 'Tag',
+      standard: GLOBAL_CATEGORIES.map(cat => ({
+        name: cat.name,
+        color: cat.color,
+        icon: cat.icon,
+        emoji: cat.emoji,
         isCustom: false
       })),
       custom: custom.map(c => ({
@@ -668,8 +709,8 @@ router.get('/groups/:groupId/categories', requireSplitGroupMember, async (req, r
   }
 });
 
-// 8h. POST /api/split/groups/:groupId/categories - Create split group category (Any member can create)
-router.post('/groups/:groupId/categories', requireSplitGroupMember, async (req, res) => {
+// 8h. POST /api/split/groups/:groupId/categories - Create split group category (Admin/Creator only)
+router.post('/groups/:groupId/categories', requireSplitGroupMember, requireSplitGroupAdmin, async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
     const { groupId } = req.params;
@@ -686,6 +727,12 @@ router.post('/groups/:groupId/categories', requireSplitGroupMember, async (req, 
 
     if (VALID_CATEGORIES.some(c => c.toLowerCase() === trimmedName.toLowerCase())) {
       return res.status(400).json({ error: `"${trimmedName}" is already a standard category.` });
+    }
+
+    // Check 20 custom categories cap
+    const existingCount = await CustomCategoryModel.countByGroupId(groupId);
+    if (existingCount >= 20) {
+      return res.status(400).json({ error: 'Maximum limit of 20 custom categories reached for this group.' });
     }
 
     // Check duplicate in this split group (case-insensitive)
@@ -715,8 +762,8 @@ router.post('/groups/:groupId/categories', requireSplitGroupMember, async (req, 
   }
 });
 
-// 8i. PUT /api/split/groups/:groupId/categories/:id - Update split group category (Any member can edit)
-router.put('/groups/:groupId/categories/:id', requireSplitGroupMember, async (req, res) => {
+// 8i. PUT /api/split/groups/:groupId/categories/:id - Update split group category (Admin/Creator only)
+router.put('/groups/:groupId/categories/:id', requireSplitGroupMember, requireSplitGroupAdmin, async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
     const { groupId, id } = req.params;
@@ -769,8 +816,8 @@ router.put('/groups/:groupId/categories/:id', requireSplitGroupMember, async (re
   }
 });
 
-// 8j. DELETE /api/split/groups/:groupId/categories/:id - Delete split group category (Any member can delete)
-router.delete('/groups/:groupId/categories/:id', requireSplitGroupMember, async (req, res) => {
+// 8j. DELETE /api/split/groups/:groupId/categories/:id - Delete split group category (Admin/Creator only)
+router.delete('/groups/:groupId/categories/:id', requireSplitGroupMember, requireSplitGroupAdmin, async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
     const { groupId, id } = req.params;
@@ -791,6 +838,156 @@ router.delete('/groups/:groupId/categories/:id', requireSplitGroupMember, async 
   } catch (err) {
     console.error('Delete split group category error:', err);
     return res.status(500).json({ error: 'Failed to delete split group category.' });
+  }
+});
+
+// 8k. POST /api/split/groups/:groupId/categories/merge - Merge categories (Admin/Creator only)
+router.post('/groups/:groupId/categories/merge', requireSplitGroupMember, requireSplitGroupAdmin, async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { sourceCategory, targetCategory } = req.body;
+
+    if (!sourceCategory || !targetCategory) {
+      return res.status(400).json({ error: 'Source and target categories are required.' });
+    }
+    if (sourceCategory.trim().toLowerCase() === targetCategory.trim().toLowerCase()) {
+      return res.status(400).json({ error: 'Source and target categories cannot be the same.' });
+    }
+
+    const updatedCount = await SplitExpenseModel.renameCategory(groupId, sourceCategory.trim(), targetCategory.trim());
+
+    // If sourceCategory was a custom category in this group, delete it
+    const sourceCustom = await CustomCategoryModel.findByNameInGroup(groupId, sourceCategory.trim());
+    if (sourceCustom) {
+      await CustomCategoryModel.delete(sourceCustom.id || sourceCustom._id, req.user._id || req.user.id, { groupId });
+    }
+
+    return res.json({
+      message: `Successfully merged "${sourceCategory}" into "${targetCategory}".`,
+      updatedCount: updatedCount || 0
+    });
+  } catch (err) {
+    console.error('Merge split group categories error:', err);
+    return res.status(500).json({ error: 'Failed to merge categories.' });
+  }
+});
+
+// 8l. POST /api/split/groups/:groupId/category-suggestions - Submit Category Suggestion (Any member)
+router.post('/groups/:groupId/category-suggestions', requireSplitGroupMember, async (req, res) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const userName = req.user.name || 'Member';
+    const { groupId } = req.params;
+    const { name, reason = '' } = req.body;
+
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return res.status(400).json({ error: 'Category name is required.' });
+    }
+    const trimmedName = name.trim();
+    if (trimmedName.length > 50) {
+      return res.status(400).json({ error: 'Category name cannot exceed 50 characters.' });
+    }
+
+    if (VALID_CATEGORIES.some(c => c.toLowerCase() === trimmedName.toLowerCase())) {
+      return res.status(400).json({ error: `"${trimmedName}" is already a standard category.` });
+    }
+
+    const duplicate = await CustomCategoryModel.findByNameInGroup(groupId, trimmedName);
+    if (duplicate) {
+      return res.status(400).json({ error: `Category "${trimmedName}" is already present in this group.` });
+    }
+
+    const suggestion = await CategorySuggestionModel.create({
+      groupId,
+      groupType: 'split',
+      userId,
+      userName,
+      name: trimmedName,
+      reason
+    });
+
+    return res.status(201).json({
+      message: 'Category suggestion submitted successfully!',
+      suggestion
+    });
+  } catch (err) {
+    console.error('Submit category suggestion error:', err);
+    return res.status(500).json({ error: 'Failed to submit category suggestion.' });
+  }
+});
+
+// 8m. GET /api/split/groups/:groupId/category-suggestions - Get Category Suggestions (Group members)
+router.get('/groups/:groupId/category-suggestions', requireSplitGroupMember, async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const suggestions = await CategorySuggestionModel.findByGroupId(groupId);
+    return res.json({ suggestions });
+  } catch (err) {
+    console.error('Get category suggestions error:', err);
+    return res.status(500).json({ error: 'Failed to fetch category suggestions.' });
+  }
+});
+
+// 8n. POST /api/split/groups/:groupId/category-suggestions/:id/approve - Approve Category Suggestion (Admin/Creator only)
+router.post('/groups/:groupId/category-suggestions/:id/approve', requireSplitGroupMember, requireSplitGroupAdmin, async (req, res) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const { groupId, id } = req.params;
+    const { color = '#6366F1', icon = 'Tag' } = req.body || {};
+
+    const suggestion = await CategorySuggestionModel.findById(id);
+    if (!suggestion || String(suggestion.groupId) !== String(groupId)) {
+      return res.status(404).json({ error: 'Suggestion not found.' });
+    }
+
+    const existingCount = await CustomCategoryModel.countByGroupId(groupId);
+    if (existingCount >= 20) {
+      return res.status(400).json({ error: 'Maximum limit of 20 custom categories reached for this group.' });
+    }
+
+    const duplicate = await CustomCategoryModel.findByNameInGroup(groupId, suggestion.name);
+    let category = duplicate;
+    if (!duplicate) {
+      category = await CustomCategoryModel.create({
+        userId,
+        groupId,
+        name: suggestion.name,
+        color,
+        icon
+      });
+    }
+
+    const updatedSuggestion = await CategorySuggestionModel.updateStatus(id, 'approved');
+
+    return res.json({
+      message: `Suggestion "${suggestion.name}" approved and added to group!`,
+      category,
+      suggestion: updatedSuggestion || { ...suggestion, status: 'approved' }
+    });
+  } catch (err) {
+    console.error('Approve category suggestion error:', err);
+    return res.status(500).json({ error: 'Failed to approve category suggestion.' });
+  }
+});
+
+// 8o. POST /api/split/groups/:groupId/category-suggestions/:id/reject - Reject Category Suggestion (Admin/Creator only)
+router.post('/groups/:groupId/category-suggestions/:id/reject', requireSplitGroupMember, requireSplitGroupAdmin, async (req, res) => {
+  try {
+    const { groupId, id } = req.params;
+    const suggestion = await CategorySuggestionModel.findById(id);
+    if (!suggestion || String(suggestion.groupId) !== String(groupId)) {
+      return res.status(404).json({ error: 'Suggestion not found.' });
+    }
+
+    const updatedSuggestion = await CategorySuggestionModel.updateStatus(id, 'rejected');
+
+    return res.json({
+      message: `Suggestion "${suggestion.name}" rejected.`,
+      suggestion: updatedSuggestion || { ...suggestion, status: 'rejected' }
+    });
+  } catch (err) {
+    console.error('Reject category suggestion error:', err);
+    return res.status(500).json({ error: 'Failed to reject category suggestion.' });
   }
 });
 

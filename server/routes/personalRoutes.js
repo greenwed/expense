@@ -1,25 +1,67 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import PersonalIncomeModel from '../models/PersonalIncome.js';
-import PersonalExpenseModel, { VALID_CATEGORIES } from '../models/PersonalExpense.js';
+import PersonalExpenseModel, { VALID_CATEGORIES, GLOBAL_CATEGORIES } from '../models/PersonalExpense.js';
 import CustomCategoryModel from '../models/CustomCategory.js';
 
 const DEFAULT_CATEGORY_COLORS = {
+  'Food & Dining': '#0EA5E9',
+  'Transport': '#6366F1',
+  'Rent & Housing': '#F59E0B',
+  'Groceries': '#10B981',
+  'Healthcare': '#EC4899',
+  'Entertainment': '#8B5CF6',
+  'Utilities & Bills': '#3B82F6',
+  'Travel': '#14B8A6',
+  'Education': '#F97316',
+  'Shopping': '#EAB308',
+  'Work & Business': '#475569',
+  'Gifts': '#F43F5E',
+  'Fitness': '#06B6D4',
+  'Pet Care': '#A855F7',
+  'Others': '#64748B',
   Food: '#0EA5E9',
-  Shopping: '#F97316',
-  Entertainment: '#8B5CF6',
-  Medical: '#10B981',
-  Transport: '#6366F1',
-  Others: '#F43F5E'
+  Medical: '#EC4899',
+  Utilities: '#3B82F6'
 };
 
 const DEFAULT_CATEGORY_ICONS = {
+  'Food & Dining': 'Utensils',
+  'Transport': 'Car',
+  'Rent & Housing': 'Home',
+  'Groceries': 'ShoppingBag',
+  'Healthcare': 'HeartPulse',
+  'Entertainment': 'Film',
+  'Utilities & Bills': 'Zap',
+  'Travel': 'Plane',
+  'Education': 'GraduationCap',
+  'Shopping': 'ShoppingBag',
+  'Work & Business': 'Briefcase',
+  'Gifts': 'Gift',
+  'Fitness': 'Dumbbell',
+  'Pet Care': 'PawPrint',
+  'Others': 'MoreHorizontal',
   Food: 'Utensils',
-  Shopping: 'ShoppingBag',
-  Entertainment: 'Film',
   Medical: 'HeartPulse',
-  Transport: 'Car',
-  Others: 'MoreHorizontal'
+  Utilities: 'Zap'
+};
+
+const DEFAULT_CATEGORY_EMOJIS = {
+  'Food & Dining': '🍔',
+  'Transport': '🚗',
+  'Rent & Housing': '🏠',
+  'Groceries': '🛒',
+  'Healthcare': '💊',
+  'Entertainment': '🎬',
+  'Utilities & Bills': '📱',
+  'Travel': '✈️',
+  'Education': '🎓',
+  'Shopping': '👗',
+  'Work & Business': '💼',
+  'Gifts': '🎁',
+  'Fitness': '🏋️',
+  'Pet Care': '🐾',
+  'Others': '📦'
 };
 
 const router = express.Router();
@@ -38,8 +80,9 @@ router.get('/categories', async (req, res) => {
     const userId = req.user._id || req.user.id;
     const custom = await CustomCategoryModel.findByUserId(userId);
     return res.json({
-      standard: VALID_CATEGORIES.map(cat => ({
+      standard: (GLOBAL_CATEGORIES || VALID_CATEGORIES).map(cat => ({
         name: cat,
+        emoji: DEFAULT_CATEGORY_EMOJIS[cat] || '🏷️',
         color: DEFAULT_CATEGORY_COLORS[cat] || '#8B5CF6',
         icon: DEFAULT_CATEGORY_ICONS[cat] || 'Tag',
         isCustom: false

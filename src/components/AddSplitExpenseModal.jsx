@@ -27,6 +27,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useCategories } from '../context/CategoryContext';
 import AddCategoryModal from './AddCategoryModal';
+import SuggestCategoryModal from './SuggestCategoryModal';
 import { CATEGORY_CONFIG } from '../utils/formatters';
 
 const CATEGORIES = [
@@ -103,7 +104,17 @@ function CustomDropdown({
         <>
           <div className="fixed inset-0 z-30" onClick={() => setIsOpen(false)} />
           <div className="absolute left-0 right-0 top-full mt-1.5 z-40 max-h-56 overflow-y-auto rounded-2xl bg-white dark:bg-[#151C2C] border border-slate-200 dark:border-slate-700 shadow-xl p-1.5 space-y-1 animate-fadeIn">
-            {options.map((opt) => {
+            {options.map((opt, optIdx) => {
+              if (opt.isHeader) {
+                return (
+                  <div
+                    key={`hdr-${opt.label}-${optIdx}`}
+                    className="px-2.5 pt-2 pb-1 text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 select-none border-b border-slate-100 dark:border-slate-800/80 mb-1"
+                  >
+                    {opt.label}
+                  </div>
+                );
+              }
               const isSelected = String(opt.value) === String(value);
               return (
                 <button
@@ -163,14 +174,15 @@ export default function AddSplitExpenseModal({
   editingExpense = null
 }) {
   const { apiFetch, user } = useAuth();
-  const { getCategoryList, getCustomCategories, getCategoryMeta, fetchGroupCategories } = useCategories();
+  const { getCategoryList, getCustomCategories, getCategoryMeta, fetchGroupCategories, globalCategories } = useCategories();
   const [mounted, setMounted] = useState(false);
   const [isAddCatOpen, setIsAddCatOpen] = useState(false);
+  const [isSuggestCatOpen, setIsSuggestCatOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState(null);
 
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('Food');
+  const [category, setCategory] = useState('Food & Dining');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [selectedGroupId, setSelectedGroupId] = useState(initialGroupId || '');
   const [payerId, setPayerId] = useState('');
@@ -197,6 +209,14 @@ export default function AddSplitExpenseModal({
   }, [isOpen, selectedGroupId, fetchGroupCategories]);
 
   const currentUserId = String(user?._id || user?.id || '');
+
+  const isGroupCreator = useMemo(() => {
+    if (!selectedGroupId) return true;
+    const g = groups.find(grp => String(grp.id || grp._id) === String(selectedGroupId));
+    if (!g) return true;
+    const creatorId = String(g.createdBy?._id || g.createdBy?.id || g.createdBy || '');
+    return Boolean(creatorId && creatorId === currentUserId);
+  }, [groups, selectedGroupId, currentUserId]);
 
   // Determine eligible candidates based on group selection
   const eligibleMembers = useMemo(() => {
@@ -243,7 +263,7 @@ export default function AddSplitExpenseModal({
       if (editingExpense) {
         setDescription(editingExpense.description || '');
         setAmount(String(editingExpense.amount || ''));
-        setCategory(editingExpense.category || 'Food');
+        setCategory(editingExpense.category || 'Food & Dining');
         setDate(editingExpense.date ? editingExpense.date.slice(0, 10) : new Date().toISOString().slice(0, 10));
         setSelectedGroupId(editingExpense.groupId || initialGroupId || '');
         setPayerId(String(editingExpense.payerId || currentUserId));
@@ -266,7 +286,7 @@ export default function AddSplitExpenseModal({
       } else {
         setDescription('');
         setAmount('');
-        setCategory('Food');
+        setCategory('Food & Dining');
         setDate(new Date().toISOString().slice(0, 10));
         setSelectedGroupId(initialGroupId || (groups[0]?.id || groups[0]?._id || ''));
         setPayerId(currentUserId);
@@ -371,16 +391,43 @@ export default function AddSplitExpenseModal({
   }, [getCategoryList, selectedGroupId]);
 
   const categoryOptions = useMemo(() => {
-    return activeCategoryList.map(cat => {
+    const options = [];
+
+    // Group Custom Categories or My Custom Categories
+    if (activeCustomCategories && activeCustomCategories.length > 0) {
+      options.push({
+        isHeader: true,
+        label: selectedGroupId ? "👥 This Group's Categories" : "👤 My Custom Categories"
+      });
+      activeCustomCategories.forEach(c => {
+        const meta = getCategoryMeta(c.name, selectedGroupId || null);
+        options.push({
+          value: c.name,
+          label: c.name,
+          icon: meta.IconComponent || MoreHorizontal,
+          color: meta.color || '#8B5CF6'
+        });
+      });
+    }
+
+    // Global Categories
+    options.push({
+      isHeader: true,
+      label: "📌 Global Categories"
+    });
+    (globalCategories || []).forEach(catObj => {
+      const cat = catObj.name;
       const meta = getCategoryMeta(cat, selectedGroupId || null);
-      return {
+      options.push({
         value: cat,
         label: cat,
         icon: meta.IconComponent || MoreHorizontal,
         color: meta.color || '#8B5CF6'
-      };
+      });
     });
-  }, [activeCategoryList, getCategoryMeta, selectedGroupId]);
+
+    return options;
+  }, [activeCustomCategories, globalCategories, getCategoryMeta, selectedGroupId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -594,7 +641,7 @@ export default function AddSplitExpenseModal({
                   Category
                 </label>
                 <div className="flex items-center gap-2">
-                  {getCategoryMeta(category, selectedGroupId || null).isCustom && (
+                  {getCategoryMeta(category, selectedGroupId || null).isCustom && isGroupCreator && (
                     <button
                       type="button"
                       onClick={() => {
@@ -611,17 +658,30 @@ export default function AddSplitExpenseModal({
                       <span>Edit</span>
                     </button>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCategoryToEdit(null);
-                      setIsAddCatOpen(true);
-                    }}
-                    className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1"
-                  >
-                    <Plus className="w-3 h-3" />
-                    <span>New</span>
-                  </button>
+                  {isGroupCreator ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCategoryToEdit(null);
+                        setIsAddCatOpen(true);
+                      }}
+                      className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>New</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsSuggestCatOpen(true);
+                      }}
+                      className="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:text-amber-700 flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Suggest</span>
+                    </button>
+                  )}
                 </div>
               </div>
               <CustomDropdown
@@ -878,6 +938,8 @@ export default function AddSplitExpenseModal({
         categoryToEdit={categoryToEdit}
         groupId={selectedGroupId || null}
         groupName={groups.find(g => String(g.id || g._id) === String(selectedGroupId))?.name || null}
+        isSplit={Boolean(selectedGroupId)}
+        onSelectCategory={(catName) => setCategory(catName)}
         onClose={() => {
           setIsAddCatOpen(false);
           setCategoryToEdit(null);
@@ -899,11 +961,19 @@ export default function AddSplitExpenseModal({
           }
         }}
         onDeleted={() => {
-          setCategory('Food');
+          setCategory('Food & Dining');
           if (selectedGroupId) {
             fetchGroupCategories(selectedGroupId, true);
           }
         }}
+      />
+
+      <SuggestCategoryModal
+        isOpen={isSuggestCatOpen}
+        onClose={() => setIsSuggestCatOpen(false)}
+        groupId={selectedGroupId || null}
+        groupType="split"
+        groupName={groups.find(g => String(g.id || g._id) === String(selectedGroupId))?.name || null}
       />
     </div>,
     document.body

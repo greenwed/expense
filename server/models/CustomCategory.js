@@ -215,6 +215,17 @@ export const CustomCategoryModel = {
     return count > 0;
   },
 
+  async countByGroupId(groupId) {
+    if (!groupId) return 0;
+    const gId = String(groupId);
+    const pool = getPgPool();
+    if (pool) {
+      const res = await pool.query('SELECT COUNT(*) FROM custom_categories WHERE group_id = $1', [gId]);
+      return parseInt(res.rows[0].count, 10) || 0;
+    }
+    return categoryStore.find(c => String(c.groupId) === gId).length;
+  },
+
   async deleteByGroupId(groupId) {
     const gId = String(groupId);
     const pool = getPgPool();

@@ -84,50 +84,42 @@ export function groupExpensesByDay(expenses = []) {
   return Object.values(groups).sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 
-export const CATEGORY_CONFIG = {
-  Food: {
-    name: 'Food',
-    color: '#0EA5E9',
-    bgColor: 'bg-sky-50 text-sky-600 border-sky-100',
-    barColor: 'bg-sky-500',
-    icon: 'Utensils'
-  },
-  Shopping: {
-    name: 'Shopping',
-    color: '#F97316',
-    bgColor: 'bg-orange-50 text-orange-600 border-orange-100',
-    barColor: 'bg-orange-500',
-    icon: 'ShoppingBag'
-  },
-  Entertainment: {
-    name: 'Entertainment',
-    color: '#8B5CF6',
-    bgColor: 'bg-purple-50 text-purple-600 border-purple-100',
-    barColor: 'bg-purple-500',
-    icon: 'Film'
-  },
-  Medical: {
-    name: 'Medical',
-    color: '#10B981',
-    bgColor: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-    barColor: 'bg-emerald-500',
-    icon: 'HeartPulse'
-  },
-  Transport: {
-    name: 'Transport',
-    color: '#6366F1',
-    bgColor: 'bg-indigo-50 text-indigo-600 border-indigo-100',
-    barColor: 'bg-indigo-500',
-    icon: 'Car'
-  },
-  Others: {
-    name: 'Others',
-    color: '#F43F5E',
-    bgColor: 'bg-rose-50 text-rose-600 border-rose-100',
-    barColor: 'bg-rose-500',
-    icon: 'MoreHorizontal'
-  }
+export const GLOBAL_CATEGORIES = [
+  { name: 'Food & Dining', emoji: '🍔', icon: 'Utensils', color: '#0EA5E9', bgColor: 'bg-sky-50 text-sky-600 border-sky-100', barColor: 'bg-sky-500' },
+  { name: 'Transport', emoji: '🚗', icon: 'Car', color: '#6366F1', bgColor: 'bg-indigo-50 text-indigo-600 border-indigo-100', barColor: 'bg-indigo-500' },
+  { name: 'Rent & Housing', emoji: '🏠', icon: 'Home', color: '#F59E0B', bgColor: 'bg-amber-50 text-amber-600 border-amber-100', barColor: 'bg-amber-500' },
+  { name: 'Groceries', emoji: '🛒', icon: 'ShoppingBag', color: '#10B981', bgColor: 'bg-emerald-50 text-emerald-600 border-emerald-100', barColor: 'bg-emerald-500' },
+  { name: 'Healthcare', emoji: '💊', icon: 'HeartPulse', color: '#EC4899', bgColor: 'bg-pink-50 text-pink-600 border-pink-100', barColor: 'bg-pink-500' },
+  { name: 'Entertainment', emoji: '🎬', icon: 'Film', color: '#8B5CF6', bgColor: 'bg-purple-50 text-purple-600 border-purple-100', barColor: 'bg-purple-500' },
+  { name: 'Utilities & Bills', emoji: '📱', icon: 'Zap', color: '#3B82F6', bgColor: 'bg-blue-50 text-blue-600 border-blue-100', barColor: 'bg-blue-500' },
+  { name: 'Travel', emoji: '✈️', icon: 'Plane', color: '#14B8A6', bgColor: 'bg-teal-50 text-teal-600 border-teal-100', barColor: 'bg-teal-500' },
+  { name: 'Education', emoji: '🎓', icon: 'GraduationCap', color: '#F97316', bgColor: 'bg-orange-50 text-orange-600 border-orange-100', barColor: 'bg-orange-500' },
+  { name: 'Shopping', emoji: '👗', icon: 'ShoppingBag', color: '#EAB308', bgColor: 'bg-yellow-50 text-yellow-600 border-yellow-100', barColor: 'bg-yellow-500' },
+  { name: 'Work & Business', emoji: '💼', icon: 'Briefcase', color: '#475569', bgColor: 'bg-slate-50 text-slate-600 border-slate-200', barColor: 'bg-slate-600' },
+  { name: 'Gifts', emoji: '🎁', icon: 'Gift', color: '#F43F5E', bgColor: 'bg-rose-50 text-rose-600 border-rose-100', barColor: 'bg-rose-500' },
+  { name: 'Fitness', emoji: '🏋️', icon: 'Dumbbell', color: '#06B6D4', bgColor: 'bg-cyan-50 text-cyan-600 border-cyan-100', barColor: 'bg-cyan-500' },
+  { name: 'Pet Care', emoji: '🐾', icon: 'PawPrint', color: '#A855F7', bgColor: 'bg-fuchsia-50 text-fuchsia-600 border-fuchsia-100', barColor: 'bg-fuchsia-500' },
+  { name: 'Others', emoji: '📦', icon: 'MoreHorizontal', color: '#64748B', bgColor: 'bg-slate-100 text-slate-600 border-slate-200', barColor: 'bg-slate-500' }
+];
+
+export const CATEGORY_ALIASES = {
+  food: 'Food & Dining',
+  medical: 'Healthcare',
+  utilities: 'Utilities & Bills',
+  housing: 'Rent & Housing',
+  rent: 'Rent & Housing'
 };
+
+export const CATEGORY_CONFIG = GLOBAL_CATEGORIES.reduce((acc, cat) => {
+  acc[cat.name] = cat;
+  return acc;
+}, {
+  Food: { name: 'Food & Dining', emoji: '🍔', icon: 'Utensils', color: '#0EA5E9', bgColor: 'bg-sky-50 text-sky-600 border-sky-100', barColor: 'bg-sky-500' },
+  Medical: { name: 'Healthcare', emoji: '💊', icon: 'HeartPulse', color: '#EC4899', bgColor: 'bg-pink-50 text-pink-600 border-pink-100', barColor: 'bg-pink-500' },
+  Utilities: { name: 'Utilities & Bills', emoji: '📱', icon: 'Zap', color: '#3B82F6', bgColor: 'bg-blue-50 text-blue-600 border-blue-100', barColor: 'bg-blue-500' },
+  Housing: { name: 'Rent & Housing', emoji: '🏠', icon: 'Home', color: '#F59E0B', bgColor: 'bg-amber-50 text-amber-600 border-amber-100', barColor: 'bg-amber-500' },
+  Settlement: { name: 'Settlement', emoji: '🤝', icon: 'CheckCircle2', color: '#10B981', bgColor: 'bg-emerald-50 text-emerald-600 border-emerald-100', barColor: 'bg-emerald-500' }
+});
 
 export const CATEGORY_PALETTE = [
   '#0EA5E9', // Sky Blue
@@ -177,8 +169,13 @@ export function getCategoryConfig(categoryName, customList = []) {
     return CATEGORY_CONFIG[categoryName];
   }
 
+  const lower = String(categoryName).toLowerCase();
+  if (CATEGORY_ALIASES[lower] && CATEGORY_CONFIG[CATEGORY_ALIASES[lower]]) {
+    return CATEGORY_CONFIG[CATEGORY_ALIASES[lower]];
+  }
+
   const customMatch = (customList || []).find(
-    c => c.name && c.name.toLowerCase() === categoryName.toLowerCase()
+    c => c.name && c.name.toLowerCase() === lower
   );
 
   if (customMatch) {

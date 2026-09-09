@@ -17,8 +17,17 @@ import {
   Mail,
   Edit3,
   LogOut,
-  AlertCircle
+  AlertCircle,
+  Tag,
+  Plus,
+  Pencil,
+  GitMerge,
+  Sparkles
 } from 'lucide-react';
+import { useCategories } from '../context/CategoryContext';
+import AddCategoryModal from './AddCategoryModal';
+import MergeCategoriesModal from './MergeCategoriesModal';
+import SuggestCategoryModal from './SuggestCategoryModal';
 
 class ModalErrorBoundary extends React.Component {
   constructor(props) {
@@ -91,9 +100,59 @@ export default function FamilyGroupSettingsModal({
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Categories tab state
+  const {
+    getCategoryList,
+    getCustomCategories,
+    getCategoryMeta,
+    fetchGroupCategories,
+    deleteCategory,
+    fetchCategorySuggestions,
+    approveCategorySuggestion,
+    rejectCategorySuggestion,
+    globalCategories,
+    iconComponents
+  } = useCategories();
+
+  const [isAddCatModalOpen, setIsAddCatModalOpen] = useState(false);
+  const [categoryToEdit, setCategoryToEdit] = useState(null);
+  const [deletingCatId, setDeletingCatId] = useState(null);
+  const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
+  const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [actionSuggestionId, setActionSuggestionId] = useState(null);
+
+  const groupId = group ? (group.id || group._id) : null;
+
+  const loadSuggestions = React.useCallback(async () => {
+    if (!groupId) return;
+    try {
+      setLoadingSuggestions(true);
+      const list = await fetchCategorySuggestions(groupId, false);
+      setSuggestions(list);
+    } catch (err) {
+      console.error('Failed to load family category suggestions:', err);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  }, [groupId, fetchCategorySuggestions]);
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (isOpen && groupId) {
+      fetchGroupCategories(groupId, false);
+    }
+  }, [isOpen, groupId, fetchGroupCategories]);
+
+  useEffect(() => {
+    if (isOpen && activeTab === 'categories' && groupId) {
+      loadSuggestions();
+    }
+  }, [isOpen, activeTab, groupId, loadSuggestions]);
 
   useEffect(() => {
     if (group?.name) {
@@ -343,6 +402,19 @@ export default function FamilyGroupSettingsModal({
           >
             <UserPlus className="w-3.5 h-3.5" />
             <span>Invite Link</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('categories')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+              activeTab === 'categories'
+                ? 'bg-white dark:bg-[#1E2638] text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/60 dark:border-slate-700/60'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <Tag className="w-3.5 h-3.5" />
+            <span>Categories</span>
           </button>
 
           <button
@@ -615,6 +687,245 @@ export default function FamilyGroupSettingsModal({
             </div>
           )}
 
+          {/* TAB: CATEGORIES MANAGEMENT */}
+          {activeTab === 'categories' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                    Family Categories
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800">
+                      {getCustomCategories(groupId).length}/20 Custom
+                    </span>
+                  </h4>
+                  <span className="text-xs text-slate-400 dark:text-slate-400">
+                    Layer 1 Global Defaults & Layer 3 Family Custom
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {isAdmin ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setIsMergeModalOpen(true)}
+                        className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center gap-1.5 transition-colors"
+                        title="Merge duplicate categories"
+                      >
+                        <GitMerge className="w-3.5 h-3.5 text-indigo-500" />
+                        <span className="hidden sm:inline">Merge</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCategoryToEdit(null);
+                          setIsAddCatModalOpen(true);
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 active:scale-95 transition-all"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Category</span>
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsSuggestModalOpen(true)}
+                      className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 active:scale-95 transition-all"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Suggest Category</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Category Suggestions Section */}
+              {suggestions.length > 0 && (
+                <div className="p-3.5 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      Category Suggestions ({suggestions.filter(s => s.status === 'pending').length} pending)
+                    </span>
+                  </div>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {suggestions.map((s) => {
+                      const isPending = s.status === 'pending';
+                      return (
+                        <div
+                          key={s.id}
+                          className="p-2.5 rounded-xl bg-white dark:bg-[#111726] border border-amber-200/60 dark:border-slate-800 flex items-center justify-between gap-3 text-xs"
+                        >
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-extrabold text-slate-900 dark:text-white">
+                                {s.name}
+                              </span>
+                              <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-md ${
+                                s.status === 'approved'
+                                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300'
+                                  : s.status === 'rejected'
+                                  ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300'
+                                  : 'bg-amber-100 text-amber-700 dark:bg-amber-950/80 dark:text-amber-300'
+                              }`}>
+                                {s.status}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                              By {s.userName || 'Member'}{s.reason ? ` • "${s.reason}"` : ''}
+                            </p>
+                          </div>
+                          {isAdmin && isPending && (
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                disabled={actionSuggestionId === s.id}
+                                onClick={async () => {
+                                  try {
+                                    setActionSuggestionId(s.id);
+                                    await approveCategorySuggestion(s.id, { groupId, isSplit: false });
+                                    await loadSuggestions();
+                                    await fetchGroupCategories(groupId, false);
+                                  } catch (err) {
+                                    alert(err.message || 'Failed to approve suggestion');
+                                  } finally {
+                                    setActionSuggestionId(null);
+                                  }
+                                }}
+                                className="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition-colors"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                type="button"
+                                disabled={actionSuggestionId === s.id}
+                                onClick={async () => {
+                                  try {
+                                    setActionSuggestionId(s.id);
+                                    await rejectCategorySuggestion(s.id, { groupId, isSplit: false });
+                                    await loadSuggestions();
+                                  } catch (err) {
+                                    alert(err.message || 'Failed to reject suggestion');
+                                  } finally {
+                                    setActionSuggestionId(null);
+                                  }
+                                }}
+                                className="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-rose-100 dark:hover:bg-rose-950/60 hover:text-rose-600 text-slate-600 dark:text-slate-300 font-bold text-[11px] transition-colors"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Group Custom Categories */}
+              <div className="space-y-2">
+                <h5 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  This Family's Categories ({getCustomCategories(groupId).length})
+                </h5>
+                {getCustomCategories(groupId).length === 0 ? (
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400">
+                    No custom categories created yet. {isAdmin ? 'Click "+ Add Category" to create one.' : 'Click "+ Suggest Category" to request one.'}
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {getCustomCategories(groupId).map((cat) => {
+                      const meta = getCategoryMeta(cat.name, groupId);
+                      const IconComp = meta.IconComponent || Tag;
+                      return (
+                        <div
+                          key={cat.id || cat._id}
+                          className="p-2.5 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-3"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div
+                              className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-white"
+                              style={{ backgroundColor: cat.color || '#6366F1' }}
+                            >
+                              <IconComp className="w-4 h-4" />
+                            </div>
+                            <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                              {cat.name}
+                            </span>
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300">
+                              Custom
+                            </span>
+                          </div>
+
+                          {isAdmin && (
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCategoryToEdit(cat);
+                                  setIsAddCatModalOpen(true);
+                                }}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-colors"
+                                title="Edit category"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={deletingCatId === (cat.id || cat._id)}
+                                onClick={async () => {
+                                  const confirmMsg = `Are you sure you want to delete category "${cat.name}"?\n\nExpenses tagged with this category will be reassigned to "Others".`;
+                                  if (!window.confirm(confirmMsg)) return;
+                                  try {
+                                    setDeletingCatId(cat.id || cat._id);
+                                    await deleteCategory(cat.id || cat._id, groupId, false);
+                                  } catch (err) {
+                                    alert(err.message || 'Failed to delete category.');
+                                  } finally {
+                                    setDeletingCatId(null);
+                                  }
+                                }}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors disabled:opacity-50"
+                                title="Delete category"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Global Categories */}
+              <div className="space-y-2 pt-1">
+                <h5 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Global Categories (15 Predefined - Read Only)
+                </h5>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {(globalCategories || []).map((cat) => (
+                    <div
+                      key={cat.name}
+                      className="p-2 rounded-xl bg-slate-50/70 dark:bg-[#1A2234]/70 border border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-base shrink-0">{cat.emoji}</span>
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">
+                          {cat.name}
+                        </span>
+                      </div>
+                      <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-200/80 dark:bg-slate-700/80 text-slate-500 dark:text-slate-400 shrink-0">
+                        Global
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* TAB 4: GROUP DETAILS & DANGER ZONE */}
           {activeTab === 'general' && (
             <div className="space-y-6">
@@ -722,6 +1033,49 @@ export default function FamilyGroupSettingsModal({
           )}
 
         </div>
+
+        <AddCategoryModal
+          isOpen={isAddCatModalOpen}
+          categoryToEdit={categoryToEdit}
+          groupId={groupId}
+          groupName={group?.name}
+          isSplit={false}
+          onClose={() => {
+            setIsAddCatModalOpen(false);
+            setCategoryToEdit(null);
+          }}
+          onCreated={() => {
+            fetchGroupCategories(groupId, false);
+          }}
+          onUpdated={() => {
+            fetchGroupCategories(groupId, false);
+          }}
+          onDeleted={() => {
+            fetchGroupCategories(groupId, false);
+          }}
+        />
+
+        <MergeCategoriesModal
+          isOpen={isMergeModalOpen}
+          onClose={() => setIsMergeModalOpen(false)}
+          groupId={groupId}
+          groupType="family"
+          groupName={group?.name}
+          onMerged={() => {
+            fetchGroupCategories(groupId, false);
+          }}
+        />
+
+        <SuggestCategoryModal
+          isOpen={isSuggestModalOpen}
+          onClose={() => setIsSuggestModalOpen(false)}
+          groupId={groupId}
+          groupType="family"
+          groupName={group?.name}
+          onSuggested={() => {
+            loadSuggestions();
+          }}
+        />
 
         </ModalErrorBoundary>
       </div>

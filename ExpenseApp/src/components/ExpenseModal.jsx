@@ -12,11 +12,11 @@ export default function ExpenseModal({
   groupId = null,
   groupName = null
 }) {
-  const { getCategoryList, getCustomCategories, getCategoryMeta, fetchGroupCategories } = useCategories();
+  const { getCategoryList, getCustomCategories, getCategoryMeta, fetchGroupCategories, globalCategories, standardCategories } = useCategories();
   const [isAddCatOpen, setIsAddCatOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState(null);
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('Food');
+  const [category, setCategory] = useState('Food & Dining');
   const [description, setDescription] = useState('');
   const [dateTime, setDateTime] = useState('');
   const [error, setError] = useState('');
@@ -34,7 +34,7 @@ export default function ExpenseModal({
   useEffect(() => {
     if (initialData) {
       setAmount(initialData.amount ? String(initialData.amount) : '');
-      setCategory(initialData.category || 'Food');
+      setCategory(initialData.category || 'Food & Dining');
       setDescription(initialData.description || '');
       if (initialData.date) {
         const d = new Date(initialData.date);
@@ -45,7 +45,7 @@ export default function ExpenseModal({
       }
     } else {
       setAmount('');
-      setCategory('Food');
+      setCategory('Food & Dining');
       setDescription('');
       setNow();
     }
@@ -201,37 +201,80 @@ export default function ExpenseModal({
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto p-1">
-              {activeCategories.map((cat) => {
-                const conf = getCategoryMeta(cat, groupId);
-                const Icon = conf.IconComponent;
-                const isSelected = category === cat;
-                return (
+            <div className="max-h-52 overflow-y-auto p-1 space-y-3">
+              {/* Custom Categories Section */}
+              {activeCustomCategories.length > 0 && (
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1.5 px-1">
+                    {groupId ? "👥 Group Custom Categories" : "👤 My Custom Categories"}
+                  </span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {activeCustomCategories.map((c) => {
+                      const conf = getCategoryMeta(c.name, groupId);
+                      const Icon = conf.IconComponent;
+                      const isSelected = category.toLowerCase() === c.name.toLowerCase();
+                      return (
+                        <button
+                          type="button"
+                          key={c.id || c.name}
+                          onClick={() => setCategory(c.name)}
+                          className={`py-2 px-2.5 rounded-2xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                            isSelected
+                              ? 'border-indigo-600 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 shadow-sm ring-1 ring-indigo-500/20'
+                              : 'border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-[#1A2234] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#222C42]'
+                          }`}
+                        >
+                          <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: conf.color }} />
+                          <span className="truncate">{c.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Global Default Categories */}
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1.5 px-1">
+                  📌 Global Categories
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  {(globalCategories || []).map((catObj) => {
+                    const cat = catObj.name;
+                    const conf = getCategoryMeta(cat, groupId);
+                    const Icon = conf.IconComponent;
+                    const isSelected = category.toLowerCase() === cat.toLowerCase();
+                    return (
+                      <button
+                        type="button"
+                        key={cat}
+                        onClick={() => setCategory(cat)}
+                        className={`py-2 px-2.5 rounded-2xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                          isSelected
+                            ? 'border-indigo-600 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 shadow-sm ring-1 ring-indigo-500/20'
+                            : 'border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-[#1A2234] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#222C42]'
+                        }`}
+                      >
+                        <span className="text-sm shrink-0">{catObj.emoji}</span>
+                        <span className="truncate">{cat}</span>
+                      </button>
+                    );
+                  })}
+
+                  {/* Add New Category Chip */}
                   <button
                     type="button"
-                    key={cat}
-                    onClick={() => setCategory(cat)}
-                    className={`py-2.5 px-3 rounded-2xl border text-xs font-bold flex items-center justify-center gap-2 transition-all ${
-                      isSelected
-                        ? 'border-indigo-600 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 shadow-sm ring-1 ring-indigo-500/20'
-                        : 'border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-[#1A2234] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#222C42]'
-                    }`}
+                    onClick={() => {
+                      setCategoryToEdit(null);
+                      setIsAddCatOpen(true);
+                    }}
+                    className="py-2 px-2.5 rounded-2xl border border-dashed border-indigo-300 dark:border-indigo-700 bg-indigo-50/40 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
                   >
-                    <Icon className="w-4 h-4 shrink-0" style={{ color: conf.color }} />
-                    <span className="truncate">{cat}</span>
+                    <Plus className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">+ New</span>
                   </button>
-                );
-              })}
-
-              {/* Add New Category Chip */}
-              <button
-                type="button"
-                onClick={() => setIsAddCatOpen(true)}
-                className="py-2.5 px-3 rounded-2xl border border-dashed border-indigo-300 dark:border-indigo-700 bg-indigo-50/40 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
-              >
-                <Plus className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">+ New</span>
-              </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -300,6 +343,7 @@ export default function ExpenseModal({
         categoryToEdit={categoryToEdit}
         groupId={groupId}
         groupName={groupName}
+        onSelectCategory={(catName) => setCategory(catName)}
         onClose={() => {
           setIsAddCatOpen(false);
           setCategoryToEdit(null);
@@ -315,7 +359,7 @@ export default function ExpenseModal({
           }
         }}
         onDeleted={() => {
-          setCategory('Food');
+          setCategory('Food & Dining');
         }}
       />
     </div>

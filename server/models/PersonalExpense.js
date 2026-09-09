@@ -1,7 +1,31 @@
 import { getPgPool, JsonStore } from '../config/db.js';
 import { v4 as uuidv4 } from 'uuid';
 
-export const VALID_CATEGORIES = ['Food', 'Shopping', 'Entertainment', 'Medical', 'Transport', 'Others'];
+export const GLOBAL_CATEGORIES = [
+  'Food & Dining',
+  'Transport',
+  'Rent & Housing',
+  'Groceries',
+  'Healthcare',
+  'Entertainment',
+  'Utilities & Bills',
+  'Travel',
+  'Education',
+  'Shopping',
+  'Work & Business',
+  'Gifts',
+  'Fitness',
+  'Pet Care',
+  'Others'
+];
+
+export const VALID_CATEGORIES = [
+  ...GLOBAL_CATEGORIES,
+  'Food',
+  'Medical',
+  'Utilities',
+  'Housing'
+];
 const expenseStore = new JsonStore('personal_expenses');
 
 export const PersonalExpenseModel = {

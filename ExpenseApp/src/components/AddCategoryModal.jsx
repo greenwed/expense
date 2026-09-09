@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { X, Plus, Sparkles, Check, Pencil, Trash2, AlertCircle } from 'lucide-react';
-import { useCategories } from '../context/CategoryContext';
-import { useBackButton } from '../context/BackHandlerContext';
-import { CATEGORY_PALETTE, CATEGORY_ICONS } from '../utils/formatters';
+import React, { useState, useEffect } from "react";
+import { X, Plus, Sparkles, Check, Pencil, Trash2, AlertCircle, AlertTriangle, Lightbulb } from "lucide-react";
+import { useCategories } from "../context/CategoryContext";
+import { useBackButton } from "../context/BackHandlerContext";
+import { CATEGORY_PALETTE, CATEGORY_ICONS } from "../utils/formatters";
 
 export default function AddCategoryModal({
   isOpen,
@@ -12,30 +12,41 @@ export default function AddCategoryModal({
   onDeleted,
   categoryToEdit = null,
   groupId = null,
-  groupName = null
+  groupName = null,
+  isSplit = false,
+  onSelectCategory = null
 }) {
-  const { addCategory, updateCategory, deleteCategory, iconComponents } = useCategories();
-  const [name, setName] = useState('');
+  const {
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    iconComponents,
+    globalCategories,
+    getCustomCategories,
+    groupCategoriesMap
+  } = useCategories();
+
+  const [name, setName] = useState("");
   const [selectedColor, setSelectedColor] = useState(CATEGORY_PALETTE[0]);
-  const [selectedIcon, setSelectedIcon] = useState('Tag');
-  const [customHex, setCustomHex] = useState('');
-  const [error, setError] = useState('');
+  const [selectedIcon, setSelectedIcon] = useState("Tag");
+  const [customHex, setCustomHex] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (categoryToEdit) {
-      setName(categoryToEdit.name || '');
+      setName(categoryToEdit.name || "");
       setSelectedColor(categoryToEdit.color || CATEGORY_PALETTE[0]);
-      setSelectedIcon(categoryToEdit.icon || 'Tag');
-      setCustomHex(categoryToEdit.color || '');
+      setSelectedIcon(categoryToEdit.icon || "Tag");
+      setCustomHex(categoryToEdit.color || "");
     } else {
-      setName('');
+      setName("");
       setSelectedColor(CATEGORY_PALETTE[0]);
-      setSelectedIcon('Tag');
-      setCustomHex('');
+      setSelectedIcon("Tag");
+      setCustomHex("");
     }
-    setError('');
+    setError("");
   }, [categoryToEdit, isOpen]);
 
   // Pressing back button closes this modal first
@@ -49,13 +60,52 @@ export default function AddCategoryModal({
   const activeColor = customHex && /^#[0-9A-F]{6}$/i.test(customHex) ? customHex : selectedColor;
   const PreviewIcon = iconComponents[selectedIcon] || iconComponents.Tag;
 
+  // Group custom categories check & 20-cap
+  const groupCustoms = groupId
+    ? (groupCategoriesMap[groupId] || (getCustomCategories ? getCustomCategories(groupId) : []))
+    : [];
+  const customCount = groupCustoms.length;
+  const isCapReached = Boolean(groupId) && !categoryToEdit && customCount >= 20;
+
+  // Duplicate and Smart Search checks
+  const trimmed = name.trim();
+  const lower = trimmed.toLowerCase();
+
+  const exactGlobal = (globalCategories || []).find(c => c.name.toLowerCase() === lower);
+  const exactCustom = (categoryToEdit ? [] : groupCustoms).find(c => c.name.toLowerCase() === lower);
+
+  const similarMatch = (!exactGlobal && !exactCustom && lower.length >= 3)
+    ? ((globalCategories || []).find(c => {
+        const cLower = c.name.toLowerCase();
+        return cLower.includes(lower) || (lower.length >= 4 && lower.includes(cLower));
+      }) ||
+      groupCustoms.find(c => {
+        const cLower = c.name.toLowerCase();
+        return cLower.includes(lower) || (lower.length >= 4 && lower.includes(cLower));
+      }))
+    : null;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
-    const trimmedName = name.trim();
-    if (!trimmedName) {
-      setError('Please enter a category name.');
+    if (!trimmed) {
+      setError("Please enter a category name.");
+      return;
+    }
+
+    if (exactGlobal) {
+      setError(`"${exactGlobal.name}" is already a global default category.`);
+      return;
+    }
+
+    if (exactCustom) {
+      setError(`Category "${exactCustom.name}" already exists in this group.`);
+      return;
+    }
+
+    if (isCapReached) {
+      setError("Maximum limit of 20 custom categories reached for this group.");
       return;
     }
 
@@ -64,24 +114,26 @@ export default function AddCategoryModal({
       if (categoryToEdit) {
         const catId = categoryToEdit.id || categoryToEdit._id;
         const updated = await updateCategory(catId, {
-          name: trimmedName,
+          name: trimmed,
           color: activeColor,
           icon: selectedIcon,
-          groupId
+          groupId,
+          isSplit
         });
         if (onUpdated) onUpdated(updated);
       } else {
         const newCat = await addCategory({
-          name: trimmedName,
+          name: trimmed,
           color: activeColor,
           icon: selectedIcon,
-          groupId
+          groupId,
+          isSplit
         });
         if (onCreated) onCreated(newCat);
       }
       onClose();
     } catch (err) {
-      setError(err.message || 'Failed to save category.');
+      setError(err.message || "Failed to save category.");
     } finally {
       setLoading(false);
     }
@@ -97,11 +149,11 @@ export default function AddCategoryModal({
 
     try {
       setDeleting(true);
-      await deleteCategory(catId, groupId);
+      await deleteCategory(catId, groupId, isSplit);
       if (onDeleted) onDeleted(catId);
       onClose();
     } catch (err) {
-      setError(err.message || 'Failed to delete category.');
+      setError(err.message || "Failed to delete category.");
     } finally {
       setDeleting(false);
     }
@@ -114,23 +166,34 @@ export default function AddCategoryModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800">
           <div>
-            <h3 className="text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              {categoryToEdit ? (
-                <>
-                  <Pencil className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                  {groupId ? 'Edit Group Category' : 'Edit Category'}
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                  {groupId ? `New Category for ${groupName || 'Group'}` : 'New Category'}
-                </>
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                {categoryToEdit ? (
+                  <>
+                    <Pencil className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                    {groupId ? "Edit Group Category" : "Edit Category"}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                    {groupId ? `New Category for ${groupName || "Group"}` : "New Category"}
+                  </>
+                )}
+              </h3>
+              {groupId && !categoryToEdit && (
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  customCount >= 20
+                    ? "bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
+                    : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                }`}>
+                  {customCount}/20
+                </span>
               )}
-            </h3>
+            </div>
             <span className="text-xs text-slate-400">
               {groupId
-                ? 'Shared with all members of this group'
-                : (categoryToEdit ? 'Modify category name, color or icon' : 'Create a custom expense category')}
+                ? "Shared with all members of this group (Capped at 20)"
+                : (categoryToEdit ? "Modify category name, color or icon" : "Create a private custom category for your personal expenses")}
             </span>
           </div>
           <button
@@ -143,7 +206,7 @@ export default function AddCategoryModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
             <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -151,8 +214,63 @@ export default function AddCategoryModal({
             </div>
           )}
 
+          {isCapReached && (
+            <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+              <div>
+                <span className="font-bold">20 Category Limit Reached:</span> This group has reached the limit of 20 custom categories. Please merge or delete existing categories to add a new one.
+              </div>
+            </div>
+          )}
+
+          {exactGlobal && (
+            <div className="p-3.5 rounded-2xl bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 text-sky-800 dark:text-sky-200 text-xs flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2">
+                <Lightbulb className="w-4 h-4 shrink-0 text-sky-600 dark:text-sky-400 mt-0.5" />
+                <div>
+                  <span className="font-bold">Global Category:</span> "{exactGlobal.name}" is already available everywhere.
+                </div>
+              </div>
+              {onSelectCategory && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelectCategory(exactGlobal.name);
+                    onClose();
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-sky-600 text-white font-bold text-[11px] shrink-0 hover:bg-sky-500 transition-colors"
+                >
+                  Use This
+                </button>
+              )}
+            </div>
+          )}
+
+          {similarMatch && (
+            <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                <div>
+                  <span className="font-bold">Did you mean:</span> "{similarMatch.name}"? A similar category already exists.
+                </div>
+              </div>
+              {onSelectCategory && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelectCategory(similarMatch.name);
+                    onClose();
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-amber-600 text-white font-bold text-[11px] shrink-0 hover:bg-amber-500 transition-colors"
+                >
+                  Use Existing
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Preview Badge */}
-          <div className="flex items-center justify-center p-4 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-center p-3 rounded-2xl bg-slate-50 dark:bg-[#1A2234] border border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-white dark:bg-[#111726] shadow-sm border border-slate-200 dark:border-slate-700/80">
               <div
                 className="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-sm transition-colors"
@@ -161,7 +279,7 @@ export default function AddCategoryModal({
                 <PreviewIcon className="w-4 h-4" />
               </div>
               <span className="text-sm font-bold text-slate-900 dark:text-white">
-                {name.trim() || 'Category Name'}
+                {trimmed || "Category Name"}
               </span>
             </div>
           </div>
@@ -175,7 +293,7 @@ export default function AddCategoryModal({
               type="text"
               required
               maxLength={50}
-              placeholder="e.g. Fitness, Pets, Books, Utilities"
+              placeholder="e.g. Badminton, Netflix, Cleaning"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#1A2234] border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white text-sm font-medium focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1E2638] transition-colors"
@@ -197,10 +315,10 @@ export default function AddCategoryModal({
                     key={color}
                     onClick={() => {
                       setSelectedColor(color);
-                      setCustomHex('');
+                      setCustomHex("");
                     }}
                     className={`w-7 h-7 rounded-full flex items-center justify-center transition-transform ${
-                      isSelected ? 'ring-2 ring-offset-2 ring-indigo-500 scale-110' : 'hover:scale-105'
+                      isSelected ? "ring-2 ring-offset-2 ring-indigo-500 scale-110" : "hover:scale-105"
                     }`}
                     style={{ backgroundColor: color }}
                     title={color}
@@ -244,7 +362,7 @@ export default function AddCategoryModal({
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
               Select Icon *
             </label>
-            <div className="grid grid-cols-7 gap-2 max-h-36 overflow-y-auto p-1 bg-slate-50/50 dark:bg-[#1A2234]/50 rounded-2xl border border-slate-200/60 dark:border-slate-700/60">
+            <div className="grid grid-cols-7 gap-2 max-h-32 overflow-y-auto p-1 bg-slate-50/50 dark:bg-[#1A2234]/50 rounded-2xl border border-slate-200/60 dark:border-slate-700/60">
               {CATEGORY_ICONS.map((iconKey) => {
                 const IconComp = iconComponents[iconKey] || iconComponents.Tag;
                 const isSelected = selectedIcon === iconKey;
@@ -255,8 +373,8 @@ export default function AddCategoryModal({
                     onClick={() => setSelectedIcon(iconKey)}
                     className={`h-9 rounded-xl flex items-center justify-center transition-all ${
                       isSelected
-                        ? 'bg-indigo-600 text-white shadow-sm scale-105'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        ? "bg-indigo-600 text-white shadow-sm scale-105"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
                     }`}
                     title={iconKey}
                   >
@@ -279,11 +397,11 @@ export default function AddCategoryModal({
                   title="Delete category"
                 >
                   <Trash2 className="w-4 h-4" />
-                  <span>{deleting ? 'Deleting...' : 'Delete'}</span>
+                  <span>{deleting ? "Deleting..." : "Delete"}</span>
                 </button>
                 <button
                   type="submit"
-                  disabled={loading || deleting || !name.trim()}
+                  disabled={loading || deleting || !trimmed}
                   className="flex-1 py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {loading ? (
@@ -307,7 +425,7 @@ export default function AddCategoryModal({
                 </button>
                 <button
                   type="submit"
-                  disabled={loading || !name.trim()}
+                  disabled={loading || !trimmed || isCapReached || Boolean(exactGlobal) || Boolean(exactCustom)}
                   className="flex-1 py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {loading ? (

@@ -1031,10 +1031,22 @@ async function runAllTests() {
     assert(!!daveFoundBills, 'Dave can see category "Bills" created by Charlie in the group');
     assert(daveFoundBills?.color === '#3B82F6', 'Category metadata preserved for Dave');
 
-    // 15.4 Dave attempts to create duplicate category "Bills" (or "bills") in the same group -> Rejected with 400
-    const dupFamCatRes = await request(`/family/groups/${famGroupId}/categories`, {
+    // 15.4 Non-admin Dave attempts to create category in famGroupId -> Rejected with 403
+    const nonAdminAddRes = await request(`/family/groups/${famGroupId}/categories`, {
       method: 'POST',
       headers: daveHeaders,
+      body: {
+        name: 'bills',
+        color: '#10B981',
+        icon: 'CreditCard'
+      }
+    });
+    assert(nonAdminAddRes.status === 403, 'Non-admin Dave blocked from directly adding category to family group (403)');
+
+    // 15.4b Admin Charlie attempts duplicate category "Bills" (or "bills") in the same group -> Rejected with 400
+    const dupFamCatRes = await request(`/family/groups/${famGroupId}/categories`, {
+      method: 'POST',
+      headers: charlieHeaders,
       body: {
         name: 'bills',
         color: '#10B981',
@@ -1212,13 +1224,21 @@ async function runAllTests() {
     // -------------------------------------------------------------
     console.log('\n--- SECTION 17: Split Group Categories & Scoped Settlement Flow ---');
 
-    // 17.1 Any member (Dave, non-creator) can add a custom category to split group
-    const splitAddCatRes = await request(`/split/groups/${splitGroupId}/categories`, {
+    // 17.1 Non-creator Dave blocked from creating category in split group (403 Forbidden)
+    const nonCreatorSplitAdd = await request(`/split/groups/${splitGroupId}/categories`, {
       method: 'POST',
       headers: daveHeaders,
+      body: { name: 'Snacks & Drinks' }
+    });
+    assert(nonCreatorSplitAdd.status === 403, 'Non-creator member blocked from creating split category directly (403)');
+
+    // 17.1b Creator (Charlie) can add custom category to split group
+    const splitAddCatRes = await request(`/split/groups/${splitGroupId}/categories`, {
+      method: 'POST',
+      headers: charlieHeaders,
       body: { name: 'Snacks & Drinks', color: '#F59E0B', icon: 'Utensils' }
     });
-    assert(splitAddCatRes.status === 201, 'Group member (non-creator) created custom category in split group (201)');
+    assert(splitAddCatRes.status === 201, 'Split group creator created custom category in split group (201)');
     const snacksCat = splitAddCatRes.data.category;
     const snacksCatId = snacksCat.id || snacksCat._id;
     assert(snacksCat.name === 'Snacks & Drinks', 'Category name matches');
@@ -1287,24 +1307,39 @@ async function runAllTests() {
     assert(addExpWithCat.status === 201, 'Added split expense with custom category "Snacks & Drinks"');
     const expWithCatId = addExpWithCat.data.expense.id || addExpWithCat.data.expense._id;
 
-    // 17.7 Update category name and verify historical split expenses migrate
-    const splitRenameCatRes = await request(`/split/groups/${splitGroupId}/categories/${snacksCatId}`, {
+    // 17.7 Non-creator member (Eve) blocked from renaming category (403)
+    const nonCreatorRename = await request(`/split/groups/${splitGroupId}/categories/${snacksCatId}`, {
       method: 'PUT',
-      headers: eveHeaders, // Eve is also a member and can edit
+      headers: eveHeaders,
       body: { name: 'Gourmet Snacks', color: '#10B981' }
     });
-    assert(splitRenameCatRes.status === 200, 'Member renamed custom category to "Gourmet Snacks"');
+    assert(nonCreatorRename.status === 403, 'Non-creator Eve blocked from renaming split category (403)');
+
+    // Creator Charlie renames category and verify historical split expenses migrate
+    const splitRenameCatRes = await request(`/split/groups/${splitGroupId}/categories/${snacksCatId}`, {
+      method: 'PUT',
+      headers: charlieHeaders,
+      body: { name: 'Gourmet Snacks', color: '#10B981' }
+    });
+    assert(splitRenameCatRes.status === 200, 'Creator Charlie renamed custom category to "Gourmet Snacks"');
 
     const expAfterRename = await request(`/split/groups/${splitGroupId}`, { headers: charlieHeaders });
     const matchingExp = (expAfterRename.data.expenses || []).find(e => (e.id || e._id) === expWithCatId);
     assert(matchingExp && matchingExp.category === 'Gourmet Snacks', 'Historical split expense migrated to renamed category "Gourmet Snacks"');
 
-    // 17.8 Delete category and verify historical split expenses reassign to 'Others'
-    const splitDeleteCatRes = await request(`/split/groups/${splitGroupId}/categories/${snacksCatId}`, {
+    // 17.8 Non-creator member (Dave) blocked from deleting category (403)
+    const nonCreatorDelete = await request(`/split/groups/${splitGroupId}/categories/${snacksCatId}`, {
       method: 'DELETE',
       headers: daveHeaders
     });
-    assert(splitDeleteCatRes.status === 200, 'Member deleted custom category from split group');
+    assert(nonCreatorDelete.status === 403, 'Non-creator Dave blocked from deleting split category (403)');
+
+    // Creator Charlie deletes category and verify historical split expenses reassign to 'Others'
+    const splitDeleteCatRes = await request(`/split/groups/${splitGroupId}/categories/${snacksCatId}`, {
+      method: 'DELETE',
+      headers: charlieHeaders
+    });
+    assert(splitDeleteCatRes.status === 200, 'Creator Charlie deleted custom category from split group');
 
     const expAfterDelete = await request(`/split/groups/${splitGroupId}`, { headers: charlieHeaders });
     const matchingExpAfterDel = (expAfterDelete.data.expenses || []).find(e => (e.id || e._id) === expWithCatId);
@@ -1341,6 +1376,201 @@ async function runAllTests() {
       headers: daveHeaders
     });
     assert(delGrp2Res.status === 200, 'Deleted split group 2 with cascading cleanup');
+
+    // -------------------------------------------------------------
+    // SECTION 18: 3-Layer Category System Architecture & Advanced Capabilities
+    // -------------------------------------------------------------
+    console.log('\n--- SECTION 18: 3-Layer Category System Architecture & Advanced Capabilities ---');
+
+    // 18.1 Verify 15 Global Default Categories returned in personal categories endpoint
+    const pCats = await request('/personal/categories', { headers: charlieHeaders });
+    assert(pCats.status === 200, 'Personal categories endpoint returned 200');
+    assert(Array.isArray(pCats.data.standard) && pCats.data.standard.length === 15, '15 Global Default Categories returned in personal categories');
+    const expectedGlobals = [
+      'Food & Dining', 'Transport', 'Rent & Housing', 'Groceries', 'Healthcare',
+      'Entertainment', 'Utilities & Bills', 'Travel', 'Education', 'Shopping',
+      'Work & Business', 'Gifts', 'Fitness', 'Pet Care', 'Others'
+    ];
+    for (const gName of expectedGlobals) {
+      assert(pCats.data.standard.some(c => c.name === gName), `Global category "${gName}" is present in personal categories`);
+    }
+
+    // 18.2 Verify 15 Global Categories returned in Family & Split group endpoints
+    const famCats18 = await request(`/family/groups/${famGroupId}/categories`, { headers: charlieHeaders });
+    assert(famCats18.data.standard.length === 15, '15 Global Categories returned in family categories');
+    const splitCats18 = await request(`/split/groups/${splitGroupId}/categories`, { headers: charlieHeaders });
+    assert(splitCats18.data.standard.length === 15, '15 Global Categories returned in split categories');
+
+    // 18.3 Personal custom category isolation (Layer 2)
+    // Charlie creates personal custom category "Charlie Private Fund"
+    const charliePriv = await request('/personal/categories', {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: { name: 'Charlie Private Fund', color: '#6366F1' }
+    });
+    assert(charliePriv.status === 201, 'Charlie created personal category "Charlie Private Fund"');
+    // Verify it is NOT visible in family group categories or split group categories or to Dave
+    const famCheck18 = await request(`/family/groups/${famGroupId}/categories`, { headers: charlieHeaders });
+    assert(!famCheck18.data.custom.some(c => c.name === 'Charlie Private Fund'), 'Personal category not present in family group');
+    const splitCheck18 = await request(`/split/groups/${splitGroupId}/categories`, { headers: charlieHeaders });
+    assert(!splitCheck18.data.custom.some(c => c.name === 'Charlie Private Fund'), 'Personal category not present in split group');
+    const davePersonalCheck = await request('/personal/categories', { headers: daveHeaders });
+    assert(!davePersonalCheck.data.custom.some(c => c.name === 'Charlie Private Fund'), 'Personal category not visible to Dave');
+
+    // 18.4 Category Suggestions Flow in Family Group (Layer 3)
+    // Dave (non-admin) submits category suggestion to famGroupId
+    const famSuggRes = await request(`/family/groups/${famGroupId}/category-suggestions`, {
+      method: 'POST',
+      headers: daveHeaders,
+      body: { name: 'Organic Milk', reason: 'Track dairy spending' }
+    });
+    assert(famSuggRes.status === 201, 'Dave (member) submitted category suggestion in family group');
+    const famSuggId = famSuggRes.data.suggestion.id || famSuggRes.data.suggestion._id;
+    assert(famSuggRes.data.suggestion.name === 'Organic Milk', 'Suggestion name is Organic Milk');
+    assert(famSuggRes.data.suggestion.status === 'pending', 'Suggestion status is pending');
+
+    // Member and admin can view suggestions
+    const famSuggsList = await request(`/family/groups/${famGroupId}/category-suggestions`, { headers: daveHeaders });
+    assert(famSuggsList.status === 200, 'Member can fetch category suggestions');
+    assert(famSuggsList.data.suggestions.some(s => (s.id || s._id) === famSuggId), 'Suggestion is in list');
+
+    // Non-admin Dave cannot approve suggestions (403 Forbidden)
+    const daveApproveAttempt = await request(`/family/groups/${famGroupId}/category-suggestions/${famSuggId}/approve`, {
+      method: 'POST',
+      headers: daveHeaders
+    });
+    assert(daveApproveAttempt.status === 403, 'Non-admin Dave blocked from approving suggestion (403)');
+
+    // Admin Charlie approves suggestion -> creates category and marks suggestion approved
+    const charlieApprove = await request(`/family/groups/${famGroupId}/category-suggestions/${famSuggId}/approve`, {
+      method: 'POST',
+      headers: charlieHeaders
+    });
+    assert(charlieApprove.status === 200, 'Admin Charlie approved category suggestion');
+    assert(charlieApprove.data.category.name === 'Organic Milk', 'Approved category created with name Organic Milk');
+    assert(charlieApprove.data.suggestion.status === 'approved', 'Suggestion status changed to approved');
+
+    // Verify Organic Milk is now an active group category
+    const famCatsAfterApprove = await request(`/family/groups/${famGroupId}/categories`, { headers: daveHeaders });
+    assert(famCatsAfterApprove.data.custom.some(c => c.name === 'Organic Milk'), 'Organic Milk now in family group custom categories');
+
+    // Dave submits another suggestion to be rejected
+    const rejSuggRes = await request(`/family/groups/${famGroupId}/category-suggestions`, {
+      method: 'POST',
+      headers: daveHeaders,
+      body: { name: 'Video Games', reason: 'Gaming budget' }
+    });
+    const rejSuggId = rejSuggRes.data.suggestion.id || rejSuggRes.data.suggestion._id;
+    const charlieReject = await request(`/family/groups/${famGroupId}/category-suggestions/${rejSuggId}/reject`, {
+      method: 'POST',
+      headers: charlieHeaders
+    });
+    assert(charlieReject.status === 200, 'Admin Charlie rejected category suggestion');
+    assert(charlieReject.data.suggestion.status === 'rejected', 'Suggestion status changed to rejected');
+
+    // 18.5 Category Suggestions Flow in Split Group (Layer 3)
+    // Dave submits suggestion in splitGroupId
+    const splitSuggRes = await request(`/split/groups/${splitGroupId}/category-suggestions`, {
+      method: 'POST',
+      headers: daveHeaders,
+      body: { name: 'Scuba Gear', reason: 'Water sports expenses' }
+    });
+    assert(splitSuggRes.status === 201, 'Member submitted category suggestion in split group');
+    const splitSuggId = splitSuggRes.data.suggestion.id || splitSuggRes.data.suggestion._id;
+
+    // Creator Charlie approves suggestion
+    const charlieSplitApprove = await request(`/split/groups/${splitGroupId}/category-suggestions/${splitSuggId}/approve`, {
+      method: 'POST',
+      headers: charlieHeaders
+    });
+    assert(charlieSplitApprove.status === 200, 'Creator Charlie approved split category suggestion');
+    assert(charlieSplitApprove.data.category.name === 'Scuba Gear', 'Approved split category created');
+
+    // 18.6 Category Merge Feature (Admin/Creator Merge Tool)
+    // Create source category "Snack Packs" and add expense with it
+    const createSnackCat = await request(`/split/groups/${splitGroupId}/categories`, {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: { name: 'Snack Packs', color: '#EF4444' }
+    });
+    assert(createSnackCat.status === 201, 'Created source category Snack Packs in split group');
+    const sourceCatId = createSnackCat.data.category.id || createSnackCat.data.category._id;
+
+    const splitExpSnack = await request('/split/expenses', {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: {
+        groupId: splitGroupId,
+        payerId: charlieUser.id || charlieUser._id,
+        payerName: charlieUser.name,
+        amount: 450,
+        description: 'Snack boxes for diving',
+        category: 'Snack Packs',
+        splitMethod: 'equal',
+        participants: [
+          { userId: charlieUser.id || charlieUser._id, name: charlieUser.name, shareAmount: 225 },
+          { userId: daveUser.id || daveUser._id, name: daveUser.name, shareAmount: 225 }
+        ]
+      }
+    });
+    assert(splitExpSnack.status === 201, 'Added split expense with Snack Packs category');
+    const snackExpId = splitExpSnack.data.expense.id || splitExpSnack.data.expense._id;
+
+    // Non-creator Dave cannot merge categories (403 Forbidden)
+    const daveMergeAttempt = await request(`/split/groups/${splitGroupId}/categories/merge`, {
+      method: 'POST',
+      headers: daveHeaders,
+      body: { sourceCategory: 'Snack Packs', targetCategory: 'Food & Dining' }
+    });
+    assert(daveMergeAttempt.status === 403, 'Non-creator Dave blocked from merging categories (403)');
+
+    // Creator Charlie merges "Snack Packs" into "Food & Dining" (Global target category)
+    const mergeRes = await request(`/split/groups/${splitGroupId}/categories/merge`, {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: { sourceCategory: 'Snack Packs', targetCategory: 'Food & Dining' }
+    });
+    assert(mergeRes.status === 200, 'Creator merged Snack Packs into Food & Dining');
+    assert(mergeRes.data.updatedCount >= 1, 'At least 1 expense migrated');
+
+    // Verify historical expense is now under "Food & Dining"
+    const splitDetailsAfterMerge = await request(`/split/groups/${splitGroupId}`, { headers: charlieHeaders });
+    const mergedExp = (splitDetailsAfterMerge.data.expenses || []).find(e => (e.id || e._id) === snackExpId);
+    assert(mergedExp && mergedExp.category === 'Food & Dining', 'Historical expense migrated to target category Food & Dining');
+
+    // Verify source category "Snack Packs" is deleted
+    const splitCatsAfterMerge = await request(`/split/groups/${splitGroupId}/categories`, { headers: charlieHeaders });
+    assert(!splitCatsAfterMerge.data.custom.some(c => c.name === 'Snack Packs'), 'Source category deleted after merge');
+
+    // 18.7 Group 20-Category Cap Enforcement
+    // Create new test group for cap test
+    const capGroupRes = await request('/family/groups', {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: { name: 'Cap Test Family' }
+    });
+    const capGroupId = capGroupRes.data.group.id || capGroupRes.data.group._id;
+    // Current count is 0. Add 20 custom categories
+    for (let i = 1; i <= 20; i++) {
+      const addRes = await request(`/family/groups/${capGroupId}/categories`, {
+        method: 'POST',
+        headers: charlieHeaders,
+        body: { name: `Custom Cat ${i}` }
+      });
+      assert(addRes.status === 201, `Created category ${i}/20 in cap test group`);
+    }
+
+    // Attempting to add 21st category fails with 400
+    const cat21Res = await request(`/family/groups/${capGroupId}/categories`, {
+      method: 'POST',
+      headers: charlieHeaders,
+      body: { name: 'Custom Cat 21' }
+    });
+    assert(cat21Res.status === 400, 'Adding 21st category rejected with 400');
+    assert(cat21Res.data.error.includes('Maximum limit of 20'), 'Error message specifies 20 category limit');
+
+    // Clean up cap test group
+    await request(`/family/groups/${capGroupId}`, { method: 'DELETE', headers: charlieHeaders });
 
     console.log('\n================================================================');
     console.log(`🎉 FULL-APP COMPREHENSIVE TEST SUITE COMPLETE!`);

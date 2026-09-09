@@ -186,20 +186,33 @@ export const FamilyExpenseModel = {
   },
 
   async renameCategory(groupId, oldCategory, newCategory) {
-    if (!oldCategory || !newCategory) return;
+    if (!oldCategory || !newCategory) return 0;
     const gIdStr = String(groupId);
     const pool = getPgPool();
     if (pool) {
-      await pool.query(
+      const res = await pool.query(
         'UPDATE family_expenses SET category = $1, updated_at = NOW() WHERE group_id = $2 AND LOWER(category) = LOWER($3)',
         [newCategory, gIdStr, oldCategory]
       );
-      return;
+      return res?.rowCount || 0;
     }
-    familyExpenseStore.update(
-      e => String(e.groupId) === gIdStr && String(e.category).toLowerCase() === oldCategory.toLowerCase(),
-      { category: newCategory }
-    );
+    const items = familyExpenseStore.read();
+    let count = 0;
+    const nextItems = items.map(item => {
+      if (String(item.groupId || item.group_id) === gIdStr && String(item.category).toLowerCase() === oldCategory.toLowerCase()) {
+        count++;
+        return {
+          ...item,
+          category: newCategory,
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return item;
+    });
+    if (count > 0) {
+      familyExpenseStore.write(nextItems);
+    }
+    return count;
   },
 
   async deleteByGroupId(groupId) {
