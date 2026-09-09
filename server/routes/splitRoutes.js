@@ -672,6 +672,26 @@ function computeSplitParticipants({ splitMethod, parsedAmount, participants }) {
   }
 }
 
+// 8f. GET /api/split/expenses - Fetch user split expenses (optionally filtered by groupId)
+router.get('/expenses', async (req, res) => {
+  try {
+    const userId = String(req.user._id || req.user.id);
+    const { groupId } = req.query;
+
+    let expenses = [];
+    if (groupId && groupId !== 'all') {
+      expenses = await SplitExpenseModel.findByGroup(groupId);
+    } else {
+      expenses = await SplitExpenseModel.findUserExpenses(userId);
+    }
+
+    return res.json({ expenses });
+  } catch (err) {
+    console.error('Fetch split expenses error:', err);
+    return res.status(500).json({ error: 'Failed to fetch split expenses.' });
+  }
+});
+
 // 9. POST /api/split/expenses - Add an expense with Equal, Exact, or Percentage split
 router.post('/expenses', async (req, res) => {
   try {

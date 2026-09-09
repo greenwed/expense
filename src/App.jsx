@@ -614,7 +614,7 @@ export default function App() {
 
           {/* TAB 4: SPLIT */}
           {activeTab === 'split' && (
-            <SplitWorkspace />
+            <SplitWorkspace month={month} />
           )}
 
           {/* TAB 5: SETTINGS (Accessed from top navbar profile icon) */}

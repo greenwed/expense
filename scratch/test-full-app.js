@@ -816,6 +816,12 @@ async function runAllTests() {
     });
     assert(charlieDeleteGroup.status === 200, 'Group creator (Charlie) can delete group');
 
+    // 10B.15 GET /split/expenses returns user split expenses
+    const getSplitExpenses = await request('/split/expenses', { headers: charlieHeaders });
+    assert(getSplitExpenses.status === 200, 'GET /split/expenses returns 200');
+    assert(Array.isArray(getSplitExpenses.data?.expenses), 'GET /split/expenses returns expenses array');
+    assert(getSplitExpenses.data?.expenses?.length > 0, 'GET /split/expenses contains user expenses');
+
     // -------------------------------------------------------------
     // SECTION 11: Activity Log Audit Trail
     // -------------------------------------------------------------
